@@ -15,15 +15,15 @@ jobs:
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     permissions:
-       id-token: write
-       contents: read
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: true
           lfs: false
 
-      - name: Use Node 20 for Frontend build
+      - name: Use Node 20
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
@@ -34,14 +34,11 @@ jobs:
           mkdir -p frontend
           cp -R Frontend/. frontend/
 
-      - name: Clean install dependencies (Frontend isolated)
+      - name: Install frontend dependencies
         run: |
-          echo "Cleaning isolated node_modules and lockfile"
           rm -rf node_modules package-lock.json
-          echo "Disabling npm workspaces and using nested install strategy"
           npm config set workspaces false
           npm config set install-strategy nested
-          echo "Installing Frontend deps"
           npm install --no-audit --no-fund --workspaces=false --install-strategy=nested
         working-directory: frontend
         env:
@@ -54,7 +51,7 @@ jobs:
         run: npm rebuild rollup --force || true
         working-directory: frontend
 
-      - name: Build Frontend
+      - name: Build frontend
         run: npm run build
         working-directory: frontend
         env:
@@ -64,12 +61,10 @@ jobs:
 
       - name: Verify build artifact exists
         run: |
-          echo "Listing contents of frontend and dist before deploy"
-          ls -la frontend || true
+          echo "Listing contents of frontend/dist before deploy"
           ls -la frontend/dist || true
 
-      - name: Sanity check deployment token presence
-        shell: bash
+      - name: Ensure deployment token exists
         run: |
           if [ -z "${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_SALMON_BEACH_039140210 }}" ]; then
             echo "ERROR: Deployment token secret is empty or not defined." >&2
@@ -77,28 +72,14 @@ jobs:
           fi
           echo "Deployment token is present."
 
-      - name: Pre-check Static Web App connection
-        shell: bash
-        run: |
-          echo "Validating Azure Static Web App connection..."
-          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
-            -H "x-functions-key: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_SALMON_BEACH_039140210 }}" \
-            https://salmon-beach-039140210.2.azurestaticapps.net/index.html || true)
-          if [ "$RESPONSE" != "200" ]; then
-            echo "ERROR: Cannot connect to Azure Static Web App. HTTP code: $RESPONSE" >&2
-            exit 1
-          fi
-          echo "Connection validated successfully."
-
-      - name: Build And Deploy
-        id: builddeploy
+      - name: Build And Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_SALMON_BEACH_039140210 }}
           action: "upload"
-          app_location: "frontend/dist"
-          api_location: ""
-          output_location: ""
+          app_location: "frontend/dist"   # Carpeta con los archivos ya construidos
+          api_location: ""                # Vacío si no hay API
+          output_location: ""             # Vacío cuando skip_app_build=true
           production_branch: "main"
           deployment_environment: "production"
           skip_app_build: true
@@ -108,9 +89,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Close Pull Request Job
     steps:
-      - name: Close Pull Request
-        id: closepullrequest
-        uses: Azure/static-web-apps-deploy@v1
+      - uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_SALMON_BEACH_039140210 }}
           action: "close"
