@@ -83,8 +83,9 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_SALMON_BEACH_039140210 }}
           action: "upload"
-          app_location: "frontend/dist"
-          api_location: ""
+          app_location: "frontend"               # Código fuente
+          api_location: ""                        # Vacío si no hay API
+          app_artifact_location: "frontend/dist"  # Carpeta build final
           production_branch: "main"
           deployment_environment: "production"
           skip_app_build: true
