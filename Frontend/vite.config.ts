@@ -24,6 +24,7 @@ export default defineConfig({
     },
     target: 'es2020',
     minify: 'esbuild',
+    assetsDir: 'assets',
   },
   optimizeDeps: {
     include: ['react', 'react-dom', '@supabase/supabase-js'],
@@ -31,4 +32,5 @@ export default defineConfig({
   esbuild: {
     target: 'es2020',
   },
+  base: './',
 });
