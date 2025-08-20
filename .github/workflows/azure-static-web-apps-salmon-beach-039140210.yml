@@ -15,25 +15,34 @@ jobs:
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     permissions:
-      id-token: write
-      contents: read
+       id-token: write
+       contents: read
     steps:
-      # 1. Clonar el repo
       - uses: actions/checkout@v3
         with:
           submodules: true
           lfs: false
 
-      # 2. Usar Node 20
-      - name: Setup Node 20
+      - name: Use Node 20 for Frontend build
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
 
-      # 3. Instalar dependencias del frontend
-      - name: Install Frontend Dependencies
+      - name: Prepare isolated build workspace
         run: |
-          npm install --no-audit --no-fund
+          rm -rf frontend
+          mkdir -p frontend
+          cp -R Frontend/. frontend/
+
+      - name: Clean install dependencies (Frontend isolated)
+        run: |
+          echo "Cleaning isolated node_modules and lockfile"
+          rm -rf node_modules package-lock.json
+          echo "Disabling npm workspaces and using nested install strategy"
+          npm config set workspaces false
+          npm config set install-strategy nested
+          echo "Installing Frontend deps"
+          npm install --no-audit --no-fund --workspaces=false --install-strategy=nested
         working-directory: frontend
         env:
           NPM_CONFIG_WORKSPACES: "false"
@@ -41,7 +50,10 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
 
-      # 4. Build Frontend
+      - name: Fix Rollup optional deps
+        run: npm rebuild rollup --force || true
+        working-directory: frontend
+
       - name: Build Frontend
         run: npm run build
         working-directory: frontend
@@ -50,13 +62,12 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
 
-      # 5. Verificar que el build existe
-      - name: Verify build artifact
+      - name: Verify build artifact exists
         run: |
-          echo "Contenido de frontend/dist:"
+          echo "Listing contents of frontend and dist before deploy"
+          ls -la frontend || true
           ls -la frontend/dist || true
 
-      # 6. Deploy a Azure Static Web App
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
@@ -68,3 +79,16 @@ jobs:
           output_location: ""
           app_artifact_location: "frontend/dist"
           skip_app_build: true
+
+  close_pull_request_job:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    name: Close Pull Request Job
+    steps:
+      - name: Close Pull Request
+        id: closepullrequest
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_SALMON_BEACH_039140210 }}
+          action: "close"
+          app_location: "frontend"
