@@ -1,17 +1,23 @@
 # Frontend Demo
 
-Stack: React + Vite + TypeScript + Bun (monorepo workspace).
+Stack: React + Vite + TypeScript.
 
-Scripts:
-- `bun run dev` arranca entorno local (Vite + React Refresh).
-- `bun run build` genera producción.
-- `bun run preview` sirve build.
+Scripts (npm):
+- `npm run dev` arranca entorno local (Vite + React Refresh).
+- `npm run build` genera producción.
+- `npm run preview` sirve el build.
 
-Siguientes pasos sugeridos:
-1. Instalar SDK Supabase (ya agregado): `bun install`.
-2. Crear cliente y contexto de sesión.
-3. Implementar flujo de login/signup.
-4. Consumir RPC `crear_pedido` (cuando backend listo).
+Instalación:
+1. `cd Frontend`
+2. `npm install`
+3. Copia `.env.example` a `.env.local` y completa tus variables:
+  - `VITE_SUPABASE_URL`
+  - `VITE_SUPABASE_ANON_KEY`
+  - `VITE_BACKEND_URL` (opcional)
+
+Notas:
+- Vite sólo expone variables con prefijo `VITE_`.
+- Si no configuras Supabase, la app mostrará errores controlados en consola y funcionalidad limitada.
 
 Estructura:
 ```
@@ -22,4 +28,12 @@ Frontend/
     modules/
       App.tsx
       Landing.tsx
+
+Desarrollo en Windows (PowerShell):
+```
+cd Frontend
+npm install
+copy .env.example .env.local
+npm run dev
+```
 ```
