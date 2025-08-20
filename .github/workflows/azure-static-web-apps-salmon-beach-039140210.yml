@@ -36,9 +36,12 @@ jobs:
 
       - name: Clean install dependencies (Frontend isolated)
         run: |
+          echo "Cleaning isolated node_modules and lockfile"
           rm -rf node_modules package-lock.json
+          echo "Disabling npm workspaces and using nested install strategy"
           npm config set workspaces false
           npm config set install-strategy nested
+          echo "Installing Frontend deps"
           npm install --no-audit --no-fund --workspaces=false --install-strategy=nested
         working-directory: frontend
         env:
@@ -80,7 +83,7 @@ jobs:
           echo "Validating Azure Static Web App connection..."
           RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "x-functions-key: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_SALMON_BEACH_039140210 }}" \
-            https://<tu-app-name>.azurestaticapps.net/api/health || true)
+            https://salmon-beach-039140210.2.azurestaticapps.net/index.html || true)
           if [ "$RESPONSE" != "200" ]; then
             echo "ERROR: Cannot connect to Azure Static Web App. HTTP code: $RESPONSE" >&2
             exit 1
