@@ -30,14 +30,10 @@ jobs:
 
       - name: Clean install dependencies (Frontend)
         run: |
-          # Clean root in case previous steps created artifacts
-          rm -rf "$GITHUB_WORKSPACE/node_modules" "$GITHUB_WORKSPACE/package-lock.json" || true
-          # Clean Frontend workspace and install fresh without workspaces hoisting
           rm -rf node_modules package-lock.json
           npm install --no-audit --no-fund
         working-directory: Frontend
         env:
-          NPM_CONFIG_WORKSPACES: "false"
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
