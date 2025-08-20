@@ -1,0 +1,32 @@
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": [
+      "/assets/*",
+      "/assert/*",
+      "/favicon.svg",
+      "/logo.svg",
+      "/Administrador/*",
+      "/Archivos e imagenes/*",
+      "/Autenticacion/*",
+      "/Carrito y checkout/*",
+      "/Catálogo y producto/*",
+      "/Estados y Feedback/*",
+      "/Navegación principal/*",
+      "/Pedidos/*",
+      "/Usuario/*",
+      "/Vendedor/*"
+    ]
+  },
+  "responseOverrides": {
+    "404": {
+      "rewrite": "/index.html",
+      "statusCode": 200
+    }
+  },
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "geolocation=(self), microphone=(), camera=()"
+  }
+}
