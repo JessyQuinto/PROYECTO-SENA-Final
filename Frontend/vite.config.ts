@@ -22,5 +22,10 @@ export default defineConfig({
         },
       },
     },
+    target: 'es2020',
+    minify: 'esbuild',
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', '@supabase/supabase-js'],
   },
 });
