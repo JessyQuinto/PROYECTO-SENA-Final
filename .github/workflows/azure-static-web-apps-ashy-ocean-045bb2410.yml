@@ -34,14 +34,17 @@ jobs:
         run: |
           node -v
           npm -v
-      - name: Clean workspace
+      - name: Clean workspace and fix npm cache
         run: |
           rm -rf node_modules
           rm -rf Frontend/node_modules
           rm -rf Backend/node_modules
-      - name: Install workspace dependencies
+          rm -f package-lock.json
+          rm -f Frontend/package-lock.json
+          npm cache clean --force
+      - name: Install workspace dependencies with optional packages
         run: |
-          npm ci --no-audit --no-fund
+          npm install --no-audit --no-fund --include=optional
       - name: Build Frontend
         working-directory: Frontend
         env:
@@ -50,6 +53,7 @@ jobs:
           VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
           NODE_OPTIONS: '--max-old-space-size=4096'
         run: |
+          echo "📦 Starting build process..."
           npm run build
       - name: Build And Deploy
         id: builddeploy
