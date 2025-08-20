@@ -92,8 +92,10 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
           app_location: "Frontend"
+          api_location: ""
           output_location: "dist"
           skip_app_build: true
+          production_branch: "main"
         continue-on-error: true
         id: swa_deploy
 
