@@ -13,6 +13,7 @@ export default defineConfig({
     chunkSizeWarningLimit: 1200,
     rollupOptions: {
       output: {
+        format: 'es',
         manualChunks: {
           react: ['react', 'react-dom', 'react-router-dom'],
           supabase: ['@supabase/supabase-js'],
@@ -25,6 +26,9 @@ export default defineConfig({
     target: 'es2020',
     minify: 'esbuild',
     assetsDir: 'assets',
+    modulePreload: {
+      polyfill: false
+    }
   },
   optimizeDeps: {
     include: ['react', 'react-dom', '@supabase/supabase-js'],

@@ -30,11 +30,11 @@
     "Permissions-Policy": "geolocation=(self), microphone=(), camera=()"
   },
   "mimeTypes": {
-    ".js": "text/javascript; charset=utf-8",
-    ".mjs": "text/javascript; charset=utf-8",
-    ".jsx": "text/javascript; charset=utf-8",
-    ".ts": "text/javascript; charset=utf-8",
-    ".tsx": "text/javascript; charset=utf-8",
+    ".js": "application/javascript; charset=utf-8",
+    ".mjs": "application/javascript; charset=utf-8",
+    ".jsx": "application/javascript; charset=utf-8",
+    ".ts": "application/javascript; charset=utf-8",
+    ".tsx": "application/javascript; charset=utf-8",
     ".css": "text/css; charset=utf-8",
     ".json": "application/json; charset=utf-8",
     ".wasm": "application/wasm",
@@ -44,10 +44,23 @@
   },
   "routes": [
     {
-      "route": "/assets/*",
+      "route": "/assets/*.js",
       "headers": {
         "Cache-Control": "public, max-age=31536000, immutable",
         "Content-Type": "application/javascript; charset=utf-8"
+      }
+    },
+    {
+      "route": "/assets/*.css",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "Content-Type": "text/css; charset=utf-8"
+      }
+    },
+    {
+      "route": "/assets/*",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
       }
     }
   ]
