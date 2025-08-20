@@ -1,0 +1,709 @@
+@import 'tailwindcss';
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans:wght@400;500;700;900&family=Noto+Serif:wght@400;500;700;900&display=swap');
+
+@theme {
+  /* shadcn/ui tokens -> mapeo a nuestro tema (Tailwind v4 usa --color-*) */
+  --color-background: var(--color-marfil);
+  --color-foreground: var(--color-marron-cacao);
+  --color-card: #ffffff;
+  --color-card-foreground: var(--color-marron-cacao);
+  --color-popover: #ffffff;
+  --color-popover-foreground: var(--color-marron-cacao);
+  --color-primary: var(--color-terracotta-suave);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--color-ocre-africano);
+  --color-secondary-foreground: #ffffff;
+  --color-muted: #f3f4f6;
+  --color-muted-foreground: #6b7280;
+  --color-accent: var(--color-verde-oliva-tenue);
+  --color-accent-foreground: #ffffff;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+  --color-border: #e5e7eb;
+  --color-input: #e5e7eb;
+  --color-ring: var(--color-terracotta-suave);
+
+  /* Paleta base clara (actual) */
+  --color-terracotta-suave: #00A67E; /* Primary */
+  --color-ocre-africano: #0F766E;   /* Primary dark */
+  --color-verde-oliva-tenue: #0EA5A5; /* Accent */
+  --color-arena-calida: #FFFFFF;    /* Surfaces */
+  --color-marfil: #F5F7F7;          /* App background */
+  --color-marron-cacao: #101828;    /* Text */
+  --color-carbon-suave: #1F2937;    /* Headings/dark */
+
+  /* Mapas de compatibilidad (clases bg-*, text-*) */
+  --color-primary-100: color-mix(in oklab, var(--color-terracotta-suave) 12%, white);
+  --color-primary-600: var(--color-terracotta-suave);
+  --color-primary-500: color-mix(in oklab, var(--color-terracotta-suave) 85%, white);
+  --color-primary-700: color-mix(in oklab, var(--color-terracotta-suave) 85%, black);
+  --color-primary-800: color-mix(in oklab, var(--color-terracotta-suave) 70%, black);
+  --color-secondary-100: color-mix(in oklab, var(--color-ocre-africano) 10%, white);
+  --color-secondary-500: color-mix(in oklab, var(--color-ocre-africano) 85%, white);
+  --color-secondary-600: var(--color-ocre-africano);
+  --color-secondary-700: color-mix(in oklab, var(--color-ocre-africano) 85%, black);
+  --color-accent-100: color-mix(in oklab, var(--color-verde-oliva-tenue) 12%, white);
+  --color-accent-500: var(--color-verde-oliva-tenue);
+  --color-accent-600: color-mix(in oklab, var(--color-verde-oliva-tenue) 85%, black);
+  --color-accent-700: color-mix(in oklab, var(--color-verde-oliva-tenue) 70%, black);
+
+  /* Tipografías */
+  --font-sans: "Manrope", "Noto Sans", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  --font-display: "Manrope", "Noto Serif", Georgia, serif;
+
+  /* Radii y sombras para look moderno (inspiración estilo cards/botones pill) */
+  /* Bordes cuadrados por defecto */
+  --radius-pill: 0px;
+  --radius-lg: 0px;
+  --shadow-soft: 0 1px 2px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.06);
+  --shadow-strong: 0 2px 6px rgba(0,0,0,.08), 0 16px 40px rgba(0,0,0,.12);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  
+  body {
+    @apply font-sans antialiased;
+    background-color: var(--color-marfil);
+    color: var(--color-marron-cacao);
+  }
+
+  * {
+    @apply box-border;
+  }
+}
+
+/* Nordic Dark Theme (Nord palette inspired) */
+/* Apply by adding class .nord-dark on <html> */
+:root.nord-dark {
+  /* Nord colors */
+  --nord0: #2E3440; /* polar night */
+  --nord1: #3B4252;
+  --nord2: #434C5E;
+  --nord3: #4C566A;
+  --nord4: #D8DEE9; /* snow storm */
+  --nord5: #E5E9F0;
+  --nord6: #ECEFF4;
+  --nord7: #8FBCBB; /* frost */
+  --nord8: #88C0D0;
+  --nord9: #81A1C1;
+  --nord10: #5E81AC;
+  --nord11: #BF616A; /* aurora */
+  --nord12: #D08770;
+  --nord13: #EBCB8B;
+  --nord14: #A3BE8C;
+  --nord15: #B48EAD;
+
+  /* Map to app tokens */
+  --color-background: var(--nord0);
+  --color-foreground: var(--nord6);
+  --color-card: var(--nord1);
+  --color-card-foreground: var(--nord6);
+  --color-popover: var(--nord1);
+  --color-popover-foreground: var(--nord6);
+  --color-primary: var(--nord8);
+  --color-primary-foreground: #0b1220; /* dark text on light primary */
+  --color-secondary: var(--nord10);
+  --color-secondary-foreground: #0b1220;
+  --color-muted: var(--nord2);
+  --color-muted-foreground: var(--nord5);
+  --color-accent: var(--nord7);
+  --color-accent-foreground: #0b1220;
+  --color-destructive: var(--nord11);
+  --color-destructive-foreground: #0b1220;
+  --color-border: var(--nord3);
+  --color-input: var(--nord3);
+  --color-ring: var(--nord8);
+
+  /* Base palette remap */
+  --color-terracotta-suave: var(--nord8);
+  --color-ocre-africano: var(--nord10);
+  --color-verde-oliva-tenue: var(--nord7);
+  --color-arena-calida: var(--nord1);
+  --color-marfil: var(--nord0);
+  --color-marron-cacao: var(--nord6);
+  --color-carbon-suave: var(--nord4);
+
+  /* Compat classes */
+  --color-primary-100: color-mix(in oklab, var(--color-terracotta-suave) 24%, black);
+  --color-primary-500: var(--color-terracotta-suave);
+  --color-primary-600: color-mix(in oklab, var(--color-terracotta-suave) 90%, white);
+  --color-primary-700: color-mix(in oklab, var(--color-terracotta-suave) 70%, white);
+  --color-secondary-100: color-mix(in oklab, var(--color-ocre-africano) 24%, black);
+  --color-secondary-500: var(--color-ocre-africano);
+  --color-secondary-600: color-mix(in oklab, var(--color-ocre-africano) 90%, white);
+  --color-secondary-700: color-mix(in oklab, var(--color-ocre-africano) 70%, white);
+  --color-accent-100: color-mix(in oklab, var(--color-verde-oliva-tenue) 24%, black);
+  --color-accent-500: var(--color-verde-oliva-tenue);
+  --color-accent-600: color-mix(in oklab, var(--color-verde-oliva-tenue) 90%, white);
+  --color-accent-700: color-mix(in oklab, var(--color-verde-oliva-tenue) 70%, white);
+}
+
+/* Prefer system dark as default when no explicit theme is stored */
+@media (prefers-color-scheme: dark) {
+  :root:not(.nord-light):not(.nord-dark) body {
+    background-color: var(--color-marfil);
+    color: var(--color-marron-cacao);
+  }
+}
+
+@layer components {
+  /* Toasts */
+  .toast-container {
+    position: fixed; inset-inline-end: 1rem; inset-block-start: 1rem; z-index: 9999;
+    display: flex; flex-direction: column; gap: .5rem;
+  }
+  .toast {
+    @apply border rounded-lg shadow-md bg-white;
+    min-width: 280px; max-width: 380px; overflow: hidden;
+    border-left-width: 4px;
+  }
+  .toast-head { display: flex; align-items: center; justify-content: space-between; padding: .5rem .75rem; border-bottom: 1px solid #eee; }
+  .toast-title { font-weight: 700; font-size: .9rem; }
+  .toast-body { padding: .5rem .75rem; font-size: .85rem; color: #374151; }
+  .toast-close { background: transparent; border: 0; font-size: 1rem; line-height: 1; color: #6b7280; cursor: pointer; }
+  .toast-success { border-color: #10b981; }
+  .toast-error { border-color: #ef4444; }
+  .toast-warning { border-color: #f59e0b; }
+  .toast-info { border-color: #0ea5a5; }
+  /* Botones estilo moderno (pill + sombra) */
+  .button_primary {
+    @apply px-6 py-3 font-bold transition-colors text-white;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-terracotta-suave);
+    box-shadow: var(--shadow-soft);
+  }
+  .button_primary:hover { background-color: color-mix(in oklab, var(--color-terracotta-suave) 92%, black); box-shadow: var(--shadow-strong); }
+
+  .button_secondary {
+    @apply px-5 py-2.5 transition-colors text-white font-semibold;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-ocre-africano);
+    box-shadow: var(--shadow-soft);
+  }
+  .button_secondary:hover { background-color: color-mix(in oklab, var(--color-ocre-africano) 92%, black); box-shadow: var(--shadow-strong); }
+
+  /* CTA grande estilo "Show me the money" */
+  .btn-cta {
+    @apply inline-flex items-center gap-2 text-base font-extrabold text-white px-6 py-3;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-terracotta-suave);
+    box-shadow: var(--shadow-strong);
+    letter-spacing: 0.2px;
+  }
+  .btn-cta:hover { filter: brightness(.96); transform: translateY(-1px); }
+
+  .input_field {
+    @apply px-4 py-3 border focus:outline-none focus:ring-2;
+    border-radius: var(--radius-lg);
+    background-color: var(--color-arena-calida);
+    border-color: transparent;
+    --tw-ring-color: var(--color-terracotta-suave);
+    color: var(--color-marron-cacao);
+  }
+
+  /* Input grande para héroe/busqueda */
+  .input-hero {
+  @apply w-full px-6 py-4 border focus:outline-none focus:ring-2 text-lg;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-card);
+  color: var(--color-foreground);
+  border-color: var(--color-input);
+  --tw-ring-color: var(--color-ring);
+  box-shadow: var(--shadow-soft);
+  }
+
+  /* Stronger border hint for hero inputs on dark for better contrast */
+  :root.nord-dark .input-hero { border-color: var(--nord4); }
+
+  /* Elevated search inputs (used in product catalog search) */
+  .search-input { box-shadow: var(--shadow-soft); }
+  :root.nord-dark .search-input { border-color: var(--nord4) !important; }
+
+  /* Botones */
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-white;
+    background-color: var(--color-terracotta-suave);
+    --tw-ring-color: var(--color-terracotta-suave);
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-white;
+    background-color: var(--color-ocre-africano);
+  }
+
+  .btn-accent {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-white;
+    background-color: var(--color-verde-oliva-tenue);
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-gray-500;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+  }
+
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+
+  .btn-lg {
+    @apply px-6 py-3 text-base;
+  }
+
+  /* Mobile responsive adjustments for buttons and forms */
+  @media (max-width: 640px) {
+    .btn,
+    .btn-primary,
+    .btn-secondary,
+    .btn-accent,
+    .btn-outline {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem; /* text-sm */
+      border-radius: 6px;
+    }
+    .btn-lg {
+      padding: 0.5rem 0.875rem;
+      font-size: 0.95rem;
+    }
+    .button_primary,
+    .button_secondary,
+    .btn-cta {
+      padding: 0.625rem 0.875rem;
+      font-size: 0.95rem;
+      border-radius: 8px;
+    }
+    .form-input,
+    .form-select,
+    .form-textarea {
+      padding-block: 0.55rem;
+      font-size: 0.95rem;
+    }
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-white overflow-hidden border border-gray-200;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+    position: relative;
+  }
+
+  /* Fondo decorativo coherente (patrón tribal suave) para todas las cards */
+  .card-pattern::before,
+  .card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url('/assert/motif-de-fond-sans-couture-tribal-dessin-geometrique-noir-et-blanc-vecteur/v1045-03.jpg');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.06;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .card-pattern > *,
+  .card > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-md hover:-translate-y-1;
+  }
+
+  .card-body {
+    @apply p-6;
+  }
+
+  .card-header {
+    @apply px-6 py-4 border-b border-gray-200 bg-gray-50;
+  }
+
+  .card-footer {
+    @apply px-6 py-4 border-t border-gray-200 bg-gray-50;
+  }
+
+  /* Forms */
+  .form-group {
+    @apply space-y-2;
+  }
+
+  .form-label {
+    @apply block text-sm font-medium text-gray-700;
+  }
+
+  /* Selectable cards (rol registro) */
+  .select-card {
+  @apply border-2 border-gray-200 transition-all cursor-pointer;
+    border-radius: var(--radius-lg);
+  /* Use design tokens so it adapts to light/dark themes */
+  background-color: var(--color-card);
+  border-color: var(--color-border);
+  }
+  .select-card:hover { box-shadow: var(--shadow-soft); }
+  .select-card.selected {
+    border-color: var(--color-terracotta-suave);
+    box-shadow: var(--shadow-strong);
+  }
+
+  /* Headings modernos */
+  .heading-hero {
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    font-size: clamp(1.75rem, 2.8vw + 1rem, 3rem);
+    line-height: 1.1;
+  }
+  .heading-lg {
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    font-size: clamp(1.25rem, 1.2vw + 1rem, 2rem);
+  }
+
+  .form-input {
+  @apply block w-full px-3 py-2 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm;
+  background-color: var(--color-card);
+  color: var(--color-foreground);
+  border: 1px solid var(--color-input);
+  --tw-ring-color: var(--color-ring);
+  }
+
+  .form-textarea {
+  @apply block w-full px-3 py-2 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm min-h-[120px] resize-y;
+  background-color: var(--color-card);
+  color: var(--color-foreground);
+  border: 1px solid var(--color-input);
+  --tw-ring-color: var(--color-ring);
+  }
+
+  .form-select {
+  @apply block w-full px-3 py-2 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm pr-10;
+  background-color: var(--color-card);
+  color: var(--color-foreground);
+  border: 1px solid var(--color-input);
+  --tw-ring-color: var(--color-ring);
+  }
+
+  .form-error {
+    @apply text-sm text-red-600;
+  }
+  .error-text { @apply text-sm text-red-600; }
+
+  .form-help {
+    @apply text-sm text-gray-500;
+  }
+
+  /* Navigation */
+  .nav-link {
+    @apply px-3 py-2 rounded-lg font-medium transition-all duration-200;
+    color: var(--color-marron-cacao);
+  }
+  .nav-link:hover {
+    background-color: color-mix(in oklab, var(--color-marfil) 85%, black);
+    color: var(--color-terracotta-suave);
+  }
+
+  .nav-link-active {
+    color: var(--color-terracotta-suave);
+    background-color: color-mix(in oklab, var(--color-marfil) 85%, black);
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-primary {
+    @apply bg-primary-100 text-primary-800;
+  }
+
+  .badge-secondary {
+    @apply bg-gray-100 text-gray-800;
+  }
+
+  .badge-success {
+    @apply bg-green-100 text-green-800;
+  }
+
+  .badge-warning {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+
+  .badge-danger {
+    @apply bg-red-100 text-red-800;
+  }
+
+  /* Layout */
+  .container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .container-sm {
+    @apply max-w-3xl mx-auto px-4 sm:px-6;
+  }
+
+  /* Animations */
+  .animate-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  .loading-spinner {
+    @apply inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin;
+  }
+
+  /* Mobile Tab Bar */
+  .mobile-tabbar {
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: 0;
+    z-index: 40;
+  /* Fallback for older browsers */
+  background: rgba(255,255,255,0.92);
+  /* Theme-aware translucent surface (adapts to light/dark) */
+  background: color-mix(in oklab, var(--color-card) 92%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid var(--color-border);
+  color: var(--color-foreground);
+  box-shadow: 0 -1px 2px rgba(0,0,0,0.04);
+  }
+  .mobile-tabbar-list {
+    /* Use flex so items always distribute evenly regardless of count */
+    display: flex;
+    align-items: stretch;
+  }
+  .mobile-tabbar-list > li { flex: 1 1 0; }
+  .mobile-tabbar-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.6rem 0.25rem;
+  width: 100%;
+    color: var(--color-marron-cacao);
+    text-decoration: none;
+    font-size: 0.75rem;
+  /* Normalize buttons to look like links */
+  background: transparent;
+  border: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+  }
+  .mobile-tabbar-item .label { font-size: 0.7rem; opacity: .8; }
+  .mobile-tabbar-item.active { color: var(--color-terracotta-suave); }
+  .mobile-tabbar-item.active .label { opacity: 1; font-weight: 700; }
+  .mobile-tabbar-item:active { background: color-mix(in oklab, var(--color-card) 88%, black); }
+  .badge-count {
+    position: absolute;
+    top: -6px;
+    right: -10px;
+    background: #ef4444;
+    color: white;
+    font-size: 10px;
+    line-height: 1;
+    padding: 2px 5px;
+    border-radius: 999px;
+    min-width: 18px;
+    text-align: center;
+    box-shadow: var(--shadow-soft);
+  }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+
+  /* Dark mode: make bottom bar icons visible by inverting to light */
+  :root.nord-dark .mobile-tabbar .mobile-tabbar-item img {
+    filter: invert(1) brightness(1.05);
+  }
+  /* Optional: slightly emphasize active tab icon */
+  :root.nord-dark .mobile-tabbar .mobile-tabbar-item.active img {
+    filter: invert(1) brightness(1.15);
+  }
+
+  /* Dark mode: invert navbar auth icons (login/register) for visibility */
+  :root.nord-dark .nav-auth-icon img {
+    filter: invert(1) brightness(1.1);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .bg-grid {
+    background-image: 
+      linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  .glass {
+  @apply bg-white/80 backdrop-blur-md border border-white/20;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  }
+
+  .gradient-primary {
+    @apply bg-gradient-to-br from-primary-500 to-primary-700;
+  }
+
+  .gradient-secondary {
+    @apply bg-gradient-to-br from-secondary-500 to-secondary-700;
+  }
+
+  .gradient-accent {
+    @apply bg-gradient-to-br from-accent-500 to-accent-700;
+  }
+
+  /* Theme-aware translucent surface backgrounds */
+  .bg-surface-90 { background-color: color-mix(in oklab, var(--color-card) 90%, transparent); }
+  .bg-surface-80 { background-color: color-mix(in oklab, var(--color-card) 80%, transparent); }
+
+  /* Responsive helpers */
+  .grid-auto-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .aspect-4-3 { aspect-ratio: 4 / 3; }
+  .aspect-16-9 { aspect-ratio: 16 / 9; }
+  .aspect-square { aspect-ratio: 1 / 1; }
+
+  /* Safari vendor prefix for user-select utilities */
+  .select-none { -webkit-user-select: none; user-select: none; }
+  .select-text { -webkit-user-select: text; user-select: text; }
+}
+
+/* Nordic dark overrides for common utility colors */
+:root.nord-dark .glass {
+  background: rgba(46, 52, 64, 0.6);
+  border-color: var(--color-border);
+}
+
+:root.nord-dark .card,
+:root.nord-dark .card-pattern {
+  background-color: var(--color-card);
+  border-color: var(--color-border);
+}
+
+:root.nord-dark .card-header,
+:root.nord-dark .card-footer {
+  background-color: var(--nord1);
+  border-color: var(--color-border);
+}
+
+:root.nord-dark .bg-gray-50 { background-color: var(--nord1) !important; }
+:root.nord-dark .bg-gray-100 { background-color: var(--nord2) !important; }
+:root.nord-dark .bg-gray-200 { background-color: var(--nord2) !important; }
+:root.nord-dark .bg-white { background-color: var(--color-card) !important; }
+:root.nord-dark .bg-white\/90 { background-color: color-mix(in oklab, var(--color-card) 90%, transparent) !important; }
+:root.nord-dark .bg-white\/80 { background-color: color-mix(in oklab, var(--color-card) 80%, transparent) !important; }
+:root.nord-dark .bg-white\/20 { background-color: color-mix(in oklab, var(--color-card) 20%, transparent) !important; }
+:root.nord-dark .bg-gray-50\/60 { background-color: color-mix(in oklab, var(--nord1) 60%, transparent) !important; }
+:root.nord-dark .border-gray-200 { border-color: var(--color-border) !important; }
+:root.nord-dark .border-gray-300 { border-color: var(--color-border) !important; }
+:root.nord-dark .text-gray-800,
+:root.nord-dark .text-gray-700 { color: var(--nord6) !important; }
+:root.nord-dark .text-gray-600 { color: var(--nord5) !important; }
+:root.nord-dark .text-gray-500 { color: #C7CFDD !important; }
+:root.nord-dark .text-gray-400 { color: #A7B1C1 !important; }
+/* Hard white/black utility guards for dark theme */
+:root.nord-dark .text-gray-900 { color: var(--nord6) !important; }
+
+/* Outline buttons on dark theme */
+:root.nord-dark .btn-outline {
+  background-color: var(--color-card) !important;
+  color: var(--color-foreground) !important;
+  border-color: var(--color-border) !important;
+}
+:root.nord-dark .btn-outline:hover {
+  background-color: var(--nord2) !important;
+}
+
+/* Segmented Theme Toggle control */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--color-border);
+  background: var(--color-card);
+  color: var(--color-foreground);
+  border-radius: 999px;
+  box-shadow: var(--shadow-soft);
+}
+.theme-toggle .seg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  transition: background-color .2s ease, box-shadow .2s ease, color .2s ease;
+}
+.theme-toggle .seg:hover {
+  background: color-mix(in oklab, var(--color-marfil) 85%, black);
+}
+.theme-toggle .seg.active {
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-primary) 70%, transparent);
+}
+.theme-toggle:focus-within {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-ring);
+}
+  /* Theme toggle icon animations */
+  .theme-toggle .sun-icon,
+  .theme-toggle .moon-icon {
+    transition: transform .35s ease, opacity .35s ease;
+  }
+  /* When the light segment is active, give sun a gentle spin+pop */
+  .theme-toggle .seg.active .sun-icon {
+    animation: sun-pop .45s ease both;
+  }
+  /* When the dark segment is active, give moon a gentle slide-in */
+  .theme-toggle .seg.active .moon-icon {
+    animation: moon-slide .45s ease both;
+  }
+  @keyframes sun-pop {
+    0% { transform: scale(.6) rotate(-90deg); opacity: 0; }
+    60% { transform: scale(1.1) rotate(20deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  @keyframes moon-slide {
+    0% { transform: translateY(6px) rotate(-10deg); opacity: 0; }
+    60% { transform: translateY(-1px) rotate(3deg); opacity: 1; }
+    100% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  }
+  /* Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .theme-toggle .sun-icon, .theme-toggle .moon-icon {
+      transition: none;
+      animation: none !important;
+    }
+  }
+/* Mobile-friendly tap targets */
+@media (max-width: 640px) {
+  .theme-toggle { gap: 4px; padding: 4px; }
+  .theme-toggle .seg { width: 36px; height: 36px; }
+}

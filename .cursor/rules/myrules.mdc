@@ -1,0 +1,178 @@
+---
+description: Reglas específicas para el proyecto Tesoros Chocó - Marketplace de productos artesanales del Chocó (Colombia). Sistema con frontend React + Vite, backend Supabase (Auth + Postgres + Storage), y roles específicos (admin, vendedor, comprador).
+globs: ["**/*.{ts,tsx,js,jsx,sql,md}"]
+alwaysApply: true
+---
+
+# Reglas del Proyecto Tesoros Chocó
+
+## Arquitectura y Stack Tecnológico
+- **Frontend**: React + Vite + TypeScript
+- **Backend**: Supabase único (Auth + Postgres + Storage + Edge Functions)
+- **Base de datos**: PostgreSQL (gestionado por Supabase)
+- **Autenticación**: Supabase Auth con JWT + claims de rol
+- **Storage**: Supabase Storage (bucket `product-images`)
+- **Emails**: Resend (vía Edge Functions)
+- **Panel Admin**: React Admin
+
+## Convenciones de Nomenclatura
+
+### Archivos y Directorios
+- Componentes React: PascalCase (ej: `AuthForms.tsx`, `ProductCard.tsx`)
+- Hooks personalizados: camelCase con prefijo `use` (ej: `useProducts.ts`)
+- Utilities: camelCase (ej: `supabaseClient.ts`)
+- Páginas: PascalCase (ej: `VendorDashboard.tsx`)
+
+### Base de Datos (SQL)
+- Tablas: snake_case singular (ej: `user`, `producto`, `order_item`)
+- Columnas: snake_case (ej: `vendedor_id`, `created_at`, `updated_at`)
+- ENUMs: `<entidad>_estado` (ej: `user_role`, `vendedor_estado`, `producto_estado`)
+- Funciones RPC: verbo + objeto (ej: `crear_pedido`, `pedido_cambiar_estado`)
+- Índices: `idx_<tabla>__<col1>[_<col2>]`
+- Triggers: `trg_<tabla>__<accion>`
+- Vistas: `vw_` para vistas normales, `mv_` para materializadas
+
+### JavaScript/TypeScript
+- Variables y funciones: camelCase
+- Constantes: UPPER_SNAKE_CASE
+- Tipos e interfaces: PascalCase
+- Componentes React: PascalCase
+
+## Roles y Permisos del Sistema
+
+### Roles Definidos
+1. **admin**: Aprobar vendedores, gestionar categorías, ver métricas globales
+2. **vendedor**: Publicar productos, gestionar pedidos (requiere aprobación previa)
+3. **comprador**: Navegar, comprar productos, calificar compras
+
+### Estados Importantes
+- **vendedor_estado**: pendiente, aprobado, rechazado
+- **producto_estado**: activo, inactivo, bloqueado  
+- **pedido_estado**: pendiente, procesando, enviado, entregado, cancelado
+
+## Seguridad y RLS (Row Level Security)
+
+### Principios de Seguridad
+- **NUNCA** exponer `service_role` en el frontend
+- Usar solo `anon_key` en cliente
+- Implementar RLS en todas las tablas sensibles
+- Auditar cambios críticos en tabla `audit_log`
+- Validar transiciones de estado vía RPCs
+
+### Políticas RLS Requeridas
+- Usuarios solo ven sus propios datos
+- Vendedores solo gestionan sus productos
+- Compradores solo ven productos activos
+- Administradores tienen acceso completo controlado
+
+## Estructura de Datos
+
+### Entidades Principales
+```sql
+-- ENUMs requeridos
+user_role: admin, vendedor, comprador
+vendedor_estado: pendiente, aprobado, rechazado
+producto_estado: activo, inactivo, bloqueado
+pedido_estado: pendiente, procesando, enviado, entregado, cancelado
+
+-- Tablas principales
+users (id, email, role, vendedor_estado, nombre_completo, created_at)
+categorias (id, nombre, slug, created_at)
+productos (id, vendedor_id, categoria_id, nombre, precio, stock, imagen_url, estado)
+orders (id, comprador_id, estado, total, created_at, updated_at)
+order_items (id, order_id, producto_id, vendedor_id, cantidad, precio_unitario, subtotal)
+evaluaciones (id, comprador_id, producto_id, order_item_id, puntuacion, comentario)
+```
+
+## Flujos de Negocio Críticos
+
+### Registro y Autenticación
+- Compradores: acceso inmediato tras registro
+- Vendedores: requieren aprobación de admin antes de publicar
+
+### Gestión de Productos  
+- Solo vendedores aprobados pueden crear productos
+- Imágenes van a Supabase Storage (bucket `product-images`)
+- Productos inactivos/bloqueados no visibles a compradores
+
+### Proceso de Compra
+- Carrito → RPC `crear_pedido` (transaccional)
+- Decrementar stock con `SELECT ... FOR UPDATE`
+- Múltiples vendedores por pedido (order_items por vendedor)
+- Estados: pendiente → procesando → enviado → entregado
+
+### Calificaciones
+- Solo en productos comprados (order_item en estado enviado/entregado)
+- Una evaluación por (comprador, order_item)
+- No editables ni eliminables
+
+## Patrones de Desarrollo
+
+### Componentes React
+- Usar TypeScript estricto
+- Implementar guards de ruta por rol
+- Validar formularios con Zod
+- Manejar estados de carga y error
+
+### Interacción con Supabase
+- Usar contexto de autenticación
+- Implementar hooks personalizados para datos
+- Manejar errores de RLS apropiadamente
+- No hacer queries directas desde componentes
+
+### RPCs y Funciones
+- Usar RPCs para operaciones complejas/transaccionales
+- Implementar SECURITY DEFINER para operaciones privilegiadas
+- Validar entrada y manejar errores consistentemente
+
+## Testing y Calidad
+
+### Estrategia de Tests
+- Unitarios: hooks, utilities (Vitest + Testing Library)
+- Integración: RPCs con datos de prueba
+- E2E: flujos críticos (Playwright)
+- Seguridad: verificar RLS y transiciones de estado
+
+### Datos de Prueba
+- Semillas mínimas: 2 compradores, 2 vendedores, 5 productos
+- Dataset extendido para stress testing
+- IDs estables para tests E2E
+
+## Restricciones Importantes
+
+### Integridad de Datos
+- No eliminar productos con order_items asociados
+- No eliminar usuarios con relaciones activas
+- Transiciones de estado solo por FSM válida
+- Stock no puede ser negativo
+
+### Validaciones de Negocio
+- Precios positivos obligatorios
+- Stock mínimo cero
+- Evaluaciones solo en productos comprados
+- Vendedores solo ven sus propios datos
+
+## Configuración de Desarrollo
+
+### Variables de Entorno
+```
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE= (solo backend/Edge Functions)
+RESEND_API_KEY= (solo Edge Functions)
+```
+
+### Scripts Importantes
+- `npm run dev`: desarrollo frontend
+- `npm run build`: build producción
+- Migrations SQL en `Docs/sql_bootstrap.sql`
+
+## Documentación de Referencia
+- Arquitectura: `Docs/arquitectura.md`
+- Modelo datos: `Docs/modelado_datos.md`  
+- Reglas negocio: `Docs/reglas_negocio.md`
+- Políticas RLS: `Docs/rls_policies.md`
+- Seguridad: `Docs/SECURITY.md`
+- Tests: `Docs/TEST_STRATEGY.md`
+
+IMPORTANTE: Este es un proyecto educativo del SENA para marketplace de artesanías del Chocó, Colombia. Mantener enfoque en simplicidad, seguridad y escalabilidad apropiada para el contexto académico.
