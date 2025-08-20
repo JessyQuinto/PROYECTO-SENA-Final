@@ -8,4 +8,4 @@ if (!rootElement) {
   throw new Error('Failed to find the root element');
 }
 
-createRoot(rootElement).render(<App />);
+createRoot(rootElement).render(React.createElement(App, null));
