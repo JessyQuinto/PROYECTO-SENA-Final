@@ -22,6 +22,10 @@ jobs:
         with:
           submodules: true
           lfs: false
+      - name: Use Node 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
       - name: Install OIDC Client from Core Package
         run: npm install @actions/core@1.6.0 @actions/http-client
       - name: Get Id Token
@@ -32,17 +36,17 @@ jobs:
             const coredemo = require('@actions/core')
             return await coredemo.getIDToken()
           result-encoding: string
-      - name: Build And Deploy
+      - name: Install and Build Frontend
+        working-directory: Frontend
         env:
-          # Vite: variables de entorno de build-time (defínelas en GitHub Secrets)
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
-          # Workaround: Oryx puede deshabilitar deps opcionales. Rollup 4 usa binario nativo opcional.
-          # Fuerza instalación de opcionales y usa implementación JS de Rollup.
-          NPM_CONFIG_OPTIONAL: true
-          NPM_CONFIG_PRODUCTION: false
           ROLLUP_SKIP_NODEJS_NATIVE: true
+        run: |
+          npm install --include=dev
+          npm run build
+      - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
@@ -53,7 +57,7 @@ jobs:
           app_location: "./Frontend" # App source code path
           api_location: "" # Api source code path - optional
           output_location: "dist" # Built app content directory - optional
-          app_build_command: "npm install --include=dev && npm run build"
+          skip_app_build: true
           github_id_token: ${{ steps.idtoken.outputs.result }}
           ###### End of Repository/Build Configurations ######
 
