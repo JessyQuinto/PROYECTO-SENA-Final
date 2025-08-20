@@ -27,12 +27,16 @@ jobs:
         with:
           node-version: '20.19.0'
           cache: 'npm'
-          cache-dependency-path: 'package-lock.json'
+          cache-dependency-path: 'Frontend/package-lock.json'
       - name: Show Node & npm versions
         run: |
           node -v
           npm -v
+      - name: Ensure no root node_modules
+        run: |
+          rm -rf node_modules
       - name: Install and Build Frontend
+        working-directory: Frontend
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
@@ -42,8 +46,13 @@ jobs:
           NODE_OPTIONS: '--max-old-space-size=4096'
           npm_config_ignore_optional: 'true'
         run: |
-          npm ci --workspace Frontend
-          npm run --workspace Frontend build
+          rm -rf ../node_modules
+          npm ci --workspaces=false --no-audit --no-fund
+          node -e "console.log('rollup resolves to:', require.resolve('rollup/package.json')); console.log('vite resolves to:', require.resolve('vite/package.json'));"
+          export ROLLUP_SKIP_NODEJS_NATIVE=1
+          export ROLLUP_BINDINGS=wasm
+          export NODE_PATH=$PWD/node_modules
+          npm run build
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
