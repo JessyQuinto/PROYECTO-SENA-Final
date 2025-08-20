@@ -28,23 +28,35 @@ jobs:
         with:
           node-version: '20.x'
 
-      - name: Clean install dependencies (Frontend)
+      - name: Prepare isolated build workspace
         run: |
+          rm -rf frontend_build
+          mkdir -p frontend_build
+          cp -R Frontend/. frontend_build/
+
+      - name: Clean install dependencies (Frontend isolated)
+        run: |
+          echo "Cleaning isolated node_modules and lockfile"
           rm -rf node_modules package-lock.json
-          npm install --no-audit --no-fund
-        working-directory: Frontend
+          echo "Disabling npm workspaces and using nested install strategy"
+          npm config set workspaces false
+          npm config set install-strategy nested
+          echo "Installing Frontend deps"
+          npm install --no-audit --no-fund --workspaces=false --install-strategy=nested
+        working-directory: frontend_build
         env:
+          NPM_CONFIG_WORKSPACES: "false"
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
 
       - name: Fix Rollup optional deps
-        run: npm rebuild rollup --force
-        working-directory: Frontend
+        run: npm rebuild rollup --force || true
+        working-directory: frontend_build
 
       - name: Build Frontend
         run: npm run build
-        working-directory: Frontend
+        working-directory: frontend_build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
@@ -56,10 +68,10 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_SALMON_BEACH_039140210 }}
           action: "upload"
-          app_location: "Frontend"
+          app_location: "frontend_build"
           api_location: ""
           output_location: "dist"
-          app_artifact_location: "Frontend/dist"
+          app_artifact_location: "frontend_build/dist"
           skip_app_build: true
 
   close_pull_request_job:
