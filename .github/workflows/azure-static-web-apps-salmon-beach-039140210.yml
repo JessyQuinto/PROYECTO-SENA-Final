@@ -36,12 +36,9 @@ jobs:
 
       - name: Clean install dependencies (Frontend isolated)
         run: |
-          echo "Cleaning isolated node_modules and lockfile"
           rm -rf node_modules package-lock.json
-          echo "Disabling npm workspaces and using nested install strategy"
           npm config set workspaces false
           npm config set install-strategy nested
-          echo "Installing Frontend deps"
           npm install --no-audit --no-fund --workspaces=false --install-strategy=nested
         working-directory: frontend
         env:
@@ -77,21 +74,18 @@ jobs:
           fi
           echo "Deployment token is present."
 
-      - name: Pre-check Azure Static Web App Token
+      - name: Pre-check Static Web App connection
         shell: bash
         run: |
-          echo "Validando conexión con Azure Static Web Apps..."
-          # Cambia TU_URL_SWA por la URL de tu Static Web App
+          echo "Validating Azure Static Web App connection..."
           RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
-            -H "Authorization: Bearer ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_SALMON_BEACH_039140210 }}" \
-            https://salmon-beach-039140210.azurestaticapps.net/) || true
-
-          if [ "$RESPONSE" -ne 200 ] && [ "$RESPONSE" -ne 403 ]; then
-            echo "❌ ERROR: El token parece inválido o no corresponde con la Static Web App."
+            -H "x-functions-key: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_SALMON_BEACH_039140210 }}" \
+            https://<tu-app-name>.azurestaticapps.net/api/health || true)
+          if [ "$RESPONSE" != "200" ]; then
+            echo "ERROR: Cannot connect to Azure Static Web App. HTTP code: $RESPONSE" >&2
             exit 1
-          else
-            echo "✅ Token válido, la conexión a Azure responde con código $RESPONSE"
           fi
+          echo "Connection validated successfully."
 
       - name: Build And Deploy
         id: builddeploy
@@ -118,4 +112,4 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_SALMON_BEACH_039140210 }}
           action: "close"
           app_location: "frontend/dist"
-          output_location: "/"
+          output_location: ""
