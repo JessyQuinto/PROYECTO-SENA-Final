@@ -30,13 +30,21 @@ jobs:
 
       - name: Clean install dependencies (Frontend)
         run: |
+          # Clean root in case previous steps created artifacts
+          rm -rf "$GITHUB_WORKSPACE/node_modules" "$GITHUB_WORKSPACE/package-lock.json" || true
+          # Clean Frontend workspace and install fresh without workspaces hoisting
           rm -rf node_modules package-lock.json
-          npm install
+          npm install --no-audit --no-fund
         working-directory: Frontend
         env:
+          NPM_CONFIG_WORKSPACES: "false"
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
+
+      - name: Fix Rollup optional deps
+        run: npm rebuild rollup --force
+        working-directory: Frontend
 
       - name: Build Frontend
         run: npm run build
@@ -52,9 +60,11 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_SALMON_BEACH_039140210 }}
           action: "upload"
-          app_location: "Frontend/dist" # usa directamente la carpeta generada
+          app_location: "Frontend"
           api_location: ""
-          output_location: ""
+          output_location: "dist"
+          app_artifact_location: "Frontend/dist"
+          skip_app_build: true
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
