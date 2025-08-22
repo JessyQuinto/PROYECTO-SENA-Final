@@ -19,7 +19,8 @@ export default defineConfig({
           supabase: ['@supabase/supabase-js'],
           pdf: ['jspdf', 'html2canvas'],
           radix: ['@radix-ui/react-slot', '@radix-ui/react-dialog', '@radix-ui/react-label', '@radix-ui/react-checkbox'],
-          shadcn_misc: ['class-variance-authority', 'clsx', 'tailwind-merge', 'sonner', 'lucide-react', 'zod'],
+          utils: ['class-variance-authority', 'clsx', 'tailwind-merge', 'zod'],
+          ui: ['sonner', 'lucide-react'],
         },
       },
     },
@@ -28,7 +29,11 @@ export default defineConfig({
     assetsDir: 'assets',
     modulePreload: {
       polyfill: false
-    }
+    },
+    // Optimizaciones para Azure Static Web Apps
+    sourcemap: false,
+    reportCompressedSize: false,
+    cssCodeSplit: true
   },
   optimizeDeps: {
     include: ['react', 'react-dom', '@supabase/supabase-js'],
