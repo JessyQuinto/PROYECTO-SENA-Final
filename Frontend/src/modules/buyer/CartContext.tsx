@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { useAuth } from '../../auth/AuthContext';
+import { useAuth } from '@/auth/AuthContext';
 
 export interface CartItem {
   productoId: string;
@@ -52,9 +52,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return [...prev, item];
     });
   };
+  
   const update = (productoId: string, cantidad: number) => {
     setItems(prev => prev.map(i => i.productoId === productoId ? { ...i, cantidad: Math.max(1, Math.min(cantidad, i.stock ?? Infinity)) } : i));
   };
+  
   const remove = (productoId: string) => setItems(prev => prev.filter(i => i.productoId !== productoId));
   const clear = () => setItems([]);
 

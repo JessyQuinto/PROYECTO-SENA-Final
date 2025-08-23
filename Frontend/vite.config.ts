@@ -1,45 +1,38 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { fileURLToPath, URL } from 'node:url';
+import path from 'path';
 
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-    },
+      '@': path.resolve(__dirname, './src'),
+      '@/components': path.resolve(__dirname, './src/components'),
+      '@/hooks': path.resolve(__dirname, './src/hooks'),
+      '@/lib': path.resolve(__dirname, './src/lib'),
+      '@/types': path.resolve(__dirname, './src/types'),
+      '@/utils': path.resolve(__dirname, './src/utils'),
+      '@/auth': path.resolve(__dirname, './src/auth'),
+      '@/modules': path.resolve(__dirname, './src/modules'),
+      '@/pages': path.resolve(__dirname, './src/pages')
+    }
+  },
+  server: {
+    port: 3000,
+    open: true
   },
   build: {
-    chunkSizeWarningLimit: 1200,
+    outDir: 'dist',
+    sourcemap: true,
     rollupOptions: {
       output: {
-        format: 'es',
         manualChunks: {
-          react: ['react', 'react-dom', 'react-router-dom'],
+          vendor: ['react', 'react-dom'],
           supabase: ['@supabase/supabase-js'],
-          pdf: ['jspdf', 'html2canvas'],
-          radix: ['@radix-ui/react-slot', '@radix-ui/react-dialog', '@radix-ui/react-label', '@radix-ui/react-checkbox'],
-          utils: ['class-variance-authority', 'clsx', 'tailwind-merge', 'zod'],
-          ui: ['sonner', 'lucide-react'],
-        },
-      },
-    },
-    target: 'es2020',
-    minify: 'esbuild',
-    assetsDir: 'assets',
-    modulePreload: {
-      polyfill: false
-    },
-    // Optimizaciones para Azure Static Web Apps
-    sourcemap: false,
-    reportCompressedSize: false,
-    cssCodeSplit: true
-  },
-  optimizeDeps: {
-    include: ['react', 'react-dom', '@supabase/supabase-js'],
-  },
-  esbuild: {
-    target: 'es2020',
-  },
-  base: './',
+          ui: ['@radix-ui/react-dialog', '@radix-ui/react-checkbox', '@radix-ui/react-label', '@radix-ui/react-slot']
+        }
+      }
+    }
+  }
 });

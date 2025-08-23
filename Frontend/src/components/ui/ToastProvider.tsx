@@ -1,16 +1,14 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo } from 'react';
-import { useAuth } from '../../auth/AuthContext';
+import { useAuth } from '@/auth/AuthContext';
 import { toast } from 'sonner';
-
-type ToastType = 'success' | 'error' | 'info' | 'warning';
-type AppRole = 'admin' | 'vendedor' | 'comprador' | undefined;
+import type { ToastType, AppRole, ToastAction } from '@/hooks/useToast';
 
 export interface ToastOptions {
   type?: ToastType;
   title?: string;
   message: string;
   role?: AppRole;
-  action?: 'register' | 'login' | 'purchase' | 'sale' | 'update' | 'delete' | 'approve' | 'reject' | 'ship' | 'cancel' | 'generic';
+  action?: ToastAction;
   durationMs?: number;
 }
 
@@ -52,11 +50,6 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const success = useCallback((message: string, opts?: Omit<ToastOptions, 'message' | 'type'>) => notify({ ...opts, type: 'success', message }), [notify]);
   const error = useCallback((message: string, opts?: Omit<ToastOptions, 'message' | 'type'>) => notify({ ...opts, type: 'error', message }), [notify]);
-
-  useEffect(() => {
-    (window as any).toast = { notify, success, error };
-    return () => { delete (window as any).toast; };
-  }, [notify, success, error]);
 
   const value = useMemo(() => ({ notify, success, error }), [notify, success, error]);
 

@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
-import type { UserRole, VendedorEstado } from '../types/domain';
+import type { UserRole, VendedorEstado } from '@/types/domain';
+import { useToast } from '@/hooks/useToast';
 
 interface SessionUser {
   id: string;
@@ -31,6 +32,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const toast = useToast(); // Usar la versión simple que no depende de useAuth
   const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL as string | undefined;
 
   const isEmailConfirmed = (session: Session | null): boolean => {
@@ -46,7 +48,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .eq('id', uid)
       .maybeSingle();
     if (error) {
-      console.warn('[auth] No se pudo cargar perfil users:', error.message);
+      if (import.meta.env.DEV) {
+        console.warn('[auth] No se pudo cargar perfil users:', error.message);
+      }
       return;
     }
     if (data) {
@@ -86,7 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           await supabase.auth.signOut();
           setUser(null);
           try { window.history.replaceState({}, document.title, window.location.pathname); } catch {}
-          (window as any).toast?.success('Correo confirmado. Inicia sesión.', { action: 'login' });
+          toast.success('Correo confirmado. Inicia sesión.', { action: 'login' });
           setLoading(false);
           try { window.location.replace('/login'); } catch {}
           return; // Importante: no continuar con listeners
@@ -102,7 +106,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (!isEmailConfirmed(session)) {
           supabase.auth.signOut().finally(() => {
             setUser(null);
-            (window as any).toast?.error('Confirma tu correo para iniciar sesión', { action: 'login' });
+            toast.error('Confirma tu correo para iniciar sesión', { action: 'login' });
             setLoading(false);
           });
           return;
@@ -128,7 +132,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
     });
     return () => { listener.subscription.unsubscribe(); };
-  }, []);
+  }, [toast]);
 
   const signIn = async (email: string, password: string) => {
     if (!supabase) return { error: 'Supabase no configurado' };
@@ -143,6 +147,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     return { error: error?.message };
   };
+  
   const signUp = async (
     email: string,
     password: string,
@@ -192,7 +197,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 nombre_completo: extra?.nombre ?? null
               });
             if (insertError) {
-              console.warn('[auth] Error creando perfil de usuario (fallback):', insertError);
+              if (import.meta.env.DEV) {
+                console.warn('[auth] Error creando perfil de usuario (fallback):', insertError);
+              }
             }
           }
         } else {
@@ -207,16 +214,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               nombre_completo: extra?.nombre ?? null
             });
           if (insertError) {
-            console.warn('[auth] Error creando perfil de usuario (fallback):', insertError);
+            if (import.meta.env.DEV) {
+              console.warn('[auth] Error creando perfil de usuario (fallback):', insertError);
+            }
           }
         }
       } catch (e) {
-        console.warn('[auth] Error en post-signup:', e);
+        if (import.meta.env.DEV) {
+          console.warn('[auth] Error en post-signup:', e);
+        }
       }
     }
     
     return { error: undefined };
   };
+  
   const signOut = async () => { if (supabase) await supabase.auth.signOut(); };
 
   const refreshProfile = async () => {

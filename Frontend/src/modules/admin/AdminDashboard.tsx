@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
-import { useToast } from '../../components/ui/ToastProvider';
+import { useToastWithAuth } from '@/hooks/useToast';
 import AdminLayout from './AdminLayout';
 import Icon from '@/components/ui/Icon';
 
@@ -24,7 +24,7 @@ const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [pendingVendors, setPendingVendors] = useState<PendingVendor[]>([]);
   const [loading, setLoading] = useState(true);
-  const { success: toastSuccess, error: toastError } = useToast();
+  const { success: toastSuccess, error: toastError } = useToastWithAuth();
   const navigate = useNavigate();
 
   useEffect(() => {

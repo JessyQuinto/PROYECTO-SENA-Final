@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/shadcn/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/shadcn/card';
-import { supabase } from '../lib/supabaseClient';
-import { useAuth } from '../auth/AuthContext';
+import { useSupabase } from '@/hooks/useSupabase';
+import { useAuth } from '@/auth/AuthContext';
 
 interface FeaturedProduct {
   id: string;
@@ -17,16 +17,16 @@ interface FeaturedProduct {
 
 export const Home: React.FC = () => {
   const { user } = useAuth();
+  const { executeQuery, loading, error } = useSupabase({ showToast: false });
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadFeaturedProducts();
   }, []);
 
   const loadFeaturedProducts = async () => {
-    try {
-      const { data, error } = await supabase
+    const data = await executeQuery(
+      () => supabase
         .from('productos')
         .select(`
           id,
@@ -38,14 +38,12 @@ export const Home: React.FC = () => {
         .eq('estado', 'activo')
         .gt('stock', 0)
         .limit(6)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }),
+      'Cargar productos destacados'
+    );
 
-      if (error) throw error;
-      setFeaturedProducts(data || []);
-    } catch (error) {
-      console.error('Error loading featured products:', error);
-    } finally {
-      setLoading(false);
+    if (data) {
+      setFeaturedProducts(data);
     }
   };
 
@@ -98,26 +96,27 @@ export const Home: React.FC = () => {
               <CardContent className="p-6">
                 <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'color-mix(in oklab, var(--color-ocre-africano) 15%, white)' }}>
                   <svg className="w-8 h-8" style={{ color: 'var(--color-ocre-africano)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <CardTitle className="text-xl mb-2">Impacto en la comunidad</CardTitle>
+                <CardTitle className="text-xl mb-2">Tiempo de calidad</CardTitle>
                 <CardDescription className="opacity-80">
-                  Tu compra impulsa el ingreso de familias campesinas y artesanas del Chocó.
+                  No hay prisa en la artesanía. Cada pieza requiere su tiempo para alcanzar la perfección.
                 </CardDescription>
               </CardContent>
             </Card>
 
             <Card className="text-center">
               <CardContent className="p-6">
-                <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'color-mix(in oklab, var(--color-verde-oliva-tenue) 20%, white)' }}>
-                  <svg className="w-8 h-8" style={{ color: 'var(--color-verde-oliva-tenue)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'color-mix(in oklab, var(--color-verde-oliva) 15%, white)' }}>
+                  <svg className="w-8 h-8" style={{ color: 'var(--color-verde-oliva)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 </div>
-                <CardTitle className="text-xl mb-2">Calidad que se siente</CardTitle>
+                <CardTitle className="text-xl mb-2">Origen auténtico</CardTitle>
                 <CardDescription className="opacity-80">
-                  Certificamos a cada uno de nuestros artesanos, verificamos las óptimas condiciones del producto y nos aseguramos que las piezas sean entregadas a su destino eficaz y cuidadosamente!.
+                  Productos que nacen en el corazón del Chocó, con materiales y técnicas locales.
                 </CardDescription>
               </CardContent>
             </Card>
@@ -125,97 +124,96 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Featured Products */}
-      <section className="py-16" style={{ backgroundColor: 'color-mix(in oklab, var(--color-marfil) 95%, black)' }}>
+      {/* Featured Products Section */}
+      <section className="py-16">
         <div className="container">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="heading-lg mb-2">Recién salidas del taller</h2>
-              <p className="opacity-80">Descubre lo nuevo, fabricado con manos del Pacífico</p>
-            </div>
-            <Link to="/productos" className="hidden sm:block">
-              <Button size="lg">Ver Todos</Button>
-            </Link>
-            <Link to="/productos" className="sm:hidden p-2 rounded-lg hover:bg-(--color-marfil)" aria-label="Ver todos los productos">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/></svg>
-            </Link>
+          <div className="text-center mb-12">
+            <h2 className="heading-lg mb-4">Productos Destacados</h2>
+            <p className="text-lg opacity-80 max-w-2xl mx-auto text-balance">
+              Descubre nuestras piezas más populares, seleccionadas por su calidad y autenticidad.
+            </p>
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="loading-spinner w-8 h-8"></div>
+            <div className="flex justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : error ? (
+            <div className="text-center text-red-600">
+              Error al cargar productos: {error.message}
             </div>
           ) : (
-            <div className="grid-auto-cards items-stretch content-start">
-              {featuredProducts.slice(0, 6).map((product) => (
-                <Link key={product.id} to={`/productos/${product.id}`} className="group block h-full">
-                  <Card className="transition-all overflow-hidden group hover:shadow-xl border-gray-200 h-full flex flex-col">
-                    <div className="relative bg-gray-100 overflow-hidden aspect-[3/2]">
-                      {product.imagen_url ? (
-                        <img
-                          src={product.imagen_url}
-                          alt={product.nombre}
-                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 w-full h-full flex items-center justify-center text-gray-400">
-                          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                      )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredProducts.map((product) => (
+                <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <div className="aspect-square overflow-hidden">
+                    <img
+                      src={product.imagen_url || '/placeholder-product.jpg'}
+                      alt={product.nombre}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-lg mb-2 line-clamp-2">{product.nombre}</h3>
+                    <p className="text-sm text-gray-600 mb-2">
+                      Por: {product.users?.nombre_completo || 'Artesano Chocoano'}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xl font-bold text-primary">
+                        ${product.precio.toLocaleString()}
+                      </span>
+                      <Link to={`/productos/${product.id}`}>
+                        <Button size="sm">Ver Detalles</Button>
+                      </Link>
                     </div>
-                    <CardContent className="p-4 flex flex-col flex-1">
-                      <div className="min-h-[3.25rem]">
-                        <h3 className="text-base font-semibold transition-colors group-hover:text-(--color-terracotta-suave) line-clamp-2">{product.nombre}</h3>
-                      </div>
-                      <div className="flex items-center justify-between mt-auto">
-                        <span className="text-2xl font-bold text-(--color-terracotta-suave)">${product.precio.toLocaleString()}</span>
-                        <span className="text-sm opacity-75">Por {product.users?.nombre_completo || 'Artesano'}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           )}
+
+          <div className="text-center mt-8">
+            <Link to="/productos">
+              <Button size="lg" variant="outline">
+                Ver Todos los Productos
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="relative overflow-hidden py-16 text-white" style={{ backgroundColor: 'var(--color-terracotta-suave)' }}>
-        {/* Decorative background pattern */}
-        <div
-          aria-hidden
-          className="absolute inset-0 opacity-15"
-          style={{
-            backgroundImage: "url('/assert/conception-de-modele-africain-plat/6989328.jpg')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            filter: 'saturate(0.8) contrast(1.05)',
-            pointerEvents: 'none'
-          }}
-        />
-        <div className="container relative z-10 text-center">
-          <h2 className="heading-lg mb-4" style={{ color: 'white' }}>¿Eres artesano del Chocó?</h2>
-          <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
-            Súmate a Tesoros Chocó y muestra tu oficio al mundo. Te ayudamos a Impulsar tu emprendimiento, contar tu historia y llegar a más personas!.
+      <section className="py-16" style={{ backgroundColor: 'var(--color-terracotta-suave)' }}>
+        <div className="container text-center">
+          <h2 className="heading-lg mb-4 text-white">¿Eres Artesano del Chocó?</h2>
+          <p className="text-lg mb-8 text-white opacity-90 max-w-2xl mx-auto text-balance">
+            Únete a nuestra plataforma y comparte tu talento con el mundo. Conectamos artesanos con compradores que valoran lo auténtico.
           </p>
           {!user ? (
-            <Link to="/auth">
-              <Button size="lg">Únete como vendedor</Button>
-            </Link>
-          ) : user.role === 'vendedor' && user.vendedor_estado === 'aprobado' ? (
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link to="/register">
+                <Button size="lg" variant="secondary">
+                  Registrarse como Vendedor
+                </Button>
+              </Link>
+              <Link to="/login">
+                <Button size="lg" variant="outline" className="bg-white text-primary hover:bg-gray-100">
+                  Iniciar Sesión
+                </Button>
+              </Link>
+            </div>
+          ) : user.role === 'vendedor' ? (
             <Link to="/vendedor">
-              <Button size="lg">Ir a mi Panel</Button>
+              <Button size="lg" variant="secondary">
+                Ir al Panel de Vendedor
+              </Button>
             </Link>
           ) : (
-            <div className="inline-flex items-center px-6 py-3 rounded-lg bg-white/20 text-white">
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Ya eres parte de Tesoros Chocó
-            </div>
+            <Link to="/register">
+              <Button size="lg" variant="secondary">
+                Cambiar a Cuenta de Vendedor
+              </Button>
+            </Link>
           )}
         </div>
       </section>

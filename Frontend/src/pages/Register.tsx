@@ -1,77 +1,94 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../auth/AuthContext';
+import { useAuth } from '@/auth/AuthContext';
 import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 import { Input } from '@/components/ui/shadcn/input';
 import { Label } from '@/components/ui/shadcn/label';
 import { Button } from '@/components/ui/shadcn/button';
 import { Checkbox } from '@/components/ui/shadcn/checkbox';
-import { getDepartamentos, getCiudades } from '../lib/geo';
+import { getDepartamentos, getCiudades } from '@/lib/geo';
+import { useForm } from '@/hooks/useForm';
+import { useToastWithAuth } from '@/hooks/useToast';
+import { useSupabase } from '@/hooks/useSupabase';
 
 const signupSchema = z.object({
   email: z.string().email('Email inválido'),
   password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
-  confirmPassword: z.string().min(6, 'Confirma tu contraseña')
+  confirmPassword: z.string().min(6, 'Confirma tu contraseña'),
+  nombre: z.string().min(1, 'El nombre es obligatorio'),
+  telefono: z.string().min(1, 'El teléfono es obligatorio'),
+  ciudad: z.string().min(1, 'La ciudad es obligatoria'),
+  departamento: z.string().min(1, 'El departamento es obligatorio'),
+  confirmInfo: z.boolean().refine(val => val === true, 'Debes confirmar que la información es verdadera'),
+  acceptedTerms: z.boolean().refine(val => val === true, 'Debes aceptar los términos y condiciones')
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Las contraseñas no coinciden',
   path: ['confirmPassword']
 });
 
+interface FormData {
+  email: string;
+  password: string;
+  confirmPassword: string;
+  nombre: string;
+  telefono: string;
+  ciudad: string;
+  departamento: string;
+  confirmInfo: boolean;
+  acceptedTerms: boolean;
+}
+
 export const RegisterPage: React.FC = () => {
   const { signUp } = useAuth();
   const navigate = useNavigate();
+  const toast = useToastWithAuth(); // Usar la versión que incluye el rol del usuario
+  const { executeMutation } = useSupabase({ 
+    showToast: true, 
+    toastAction: 'register' 
+  });
+  
   // Unificar formulario (sin pasos)
   const [role, setRole] = useState<'comprador' | 'vendedor'>('comprador');
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [form, setForm] = useState({ email: '', nombre: '', password: '', confirmPassword: '' });
-  const [extra, setExtra] = useState({ telefono: '', ciudad: '', departamento: '', confirmInfo: false });
-  const departamentos = getDepartamentos();
-  const ciudades = getCiudades(extra.departamento as any);
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(120);
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
-    setSuccess(null);
+  const departamentos = getDepartamentos();
+  const [selectedDepartamento, setSelectedDepartamento] = useState<string>('');
+  const ciudades = getCiudades(selectedDepartamento as any);
 
-    const validation = signupSchema.safeParse(form);
-    const fieldErrors: Record<string, string> = {};
-    if (!validation.success) {
-      validation.error?.errors.forEach(err => {
-        if (err.path[0]) fieldErrors[err.path[0] as string] = err.message;
+  const form = useForm<FormData>({
+    initialValues: {
+      email: '',
+      password: '',
+      confirmPassword: '',
+      nombre: '',
+      telefono: '',
+      ciudad: '',
+      departamento: '',
+      confirmInfo: false,
+      acceptedTerms: false
+    },
+    validationSchema: signupSchema,
+    onSubmit: async (values) => {
+      const res = await signUp(values.email, values.password, role, {
+        nombre: values.nombre,
+        telefono: values.telefono,
+        ciudad: values.ciudad,
+        departamento: values.departamento,
+        acceptedTerms: values.acceptedTerms,
       });
+      
+      if (res.error) {
+        toast.error(res.error, { action: 'register' });
+        return;
+      }
+      
+      setSuccess('Registro exitoso. Revisa tu correo para confirmar.');
+      // Redirigir a pantalla de verificación con countdown
+      navigate('/verifica-tu-correo', { replace: true, state: { email: values.email } });
     }
-    if (!form.nombre) fieldErrors['nombre'] = 'El nombre es obligatorio';
-    if (!extra.telefono) fieldErrors['telefono'] = 'El teléfono es obligatorio';
-    if (!extra.ciudad) fieldErrors['ciudad'] = 'La ciudad es obligatoria';
-    if (!extra.departamento) fieldErrors['departamento'] = 'El departamento es obligatorio';
-    if (!extra.confirmInfo) fieldErrors['confirmInfo'] = 'Debes confirmar que la información es verdadera';
-    if (!acceptedTerms) fieldErrors['terms'] = 'Debes aceptar los términos y condiciones';
-    if (Object.keys(fieldErrors).length > 0) { setErrors(fieldErrors); return; }
-
-    setLoading(true);
-    const res = await signUp(form.email, form.password, role, {
-      nombre: form.nombre,
-      telefono: extra.telefono,
-      ciudad: extra.ciudad,
-      departamento: extra.departamento,
-      acceptedTerms,
-    });
-    if (res.error) {
-      setErrors({ general: res.error });
-      (window as any).toast?.error(res.error, { action: 'register' });
-      setLoading(false);
-      return;
-    }
-    setSuccess('Registro exitoso. Revisa tu correo para confirmar.');
-    setLoading(false);
-    // Redirigir a pantalla de verificación con countdown
-    navigate('/verifica-tu-correo', { replace: true, state: { email: form.email } });
-  };
+  });
 
   // Aviso post-registro sin pasos
   useEffect(() => {
@@ -80,6 +97,16 @@ export const RegisterPage: React.FC = () => {
     });
     return () => { sub?.data?.subscription?.unsubscribe?.(); };
   }, [navigate]);
+
+  const handleDepartamentoChange = (departamento: string) => {
+    setSelectedDepartamento(departamento);
+    form.setValue('departamento', departamento);
+    form.setValue('ciudad', ''); // Reset ciudad when departamento changes
+  };
+
+  const handleCiudadChange = (ciudad: string) => {
+    form.setValue('ciudad', ciudad);
+  };
 
   return (
     <div className="min-h-[calc(100vh-120px)] grid place-items-center relative overflow-hidden">
@@ -98,141 +125,247 @@ export const RegisterPage: React.FC = () => {
           <div className="hidden md:block md:col-span-1">
             <div className="card card-hover">
               <div className="card-body">
-                <h1 className="text-2xl font-semibold mb-2 font-display">Crea tu cuenta</h1>
-                <p className="opacity-80">Únete como comprador o vendedor y forma parte de esta comunidad.</p>
+                <h2 className="card-title text-2xl mb-4">Únete a Tesoros Chocó</h2>
+                <p className="opacity-80 mb-6">
+                  Conectamos artesanos del Chocó con personas que valoran lo fabricado a mano, con historia y origen.
+                </p>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <span className="text-sm">Acceso inmediato a productos únicos</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      </svg>
+                    </div>
+                    <span className="text-sm">Apoya a artesanos locales</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                      </svg>
+                    </div>
+                    <span className="text-sm">Productos con historia y autenticidad</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-          <div className="card card-hover md:col-span-2">
-            <div className="card-body">
-              <h2 className="text-xl font-semibold mb-4">Registro</h2>
-              {errors.general && <div className="mb-4 rounded-lg bg-red-50 text-red-700 px-3 py-2 text-sm">{errors.general}</div>}
-              {success && <div className="mb-4 rounded-lg bg-green-50 text-green-700 px-3 py-2 text-sm">{success}</div>}
 
-              <form className="space-y-6" onSubmit={onSubmit}>
-                  {/* Paso 1: Selección de Rol con cards */}
-                  <div>
-                    <label className="form-label mb-2">Elige tu tipo de cuenta</label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div
-                        className={`select-card p-5 ${role==='comprador' ? 'selected' : ''}`}
-                        onClick={() => setRole('comprador')}
-                        role="button"
-                        tabIndex={0}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="p-2 bg-gray-100 rounded-md">
-                            <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-semibold mb-1">Comprador</h3>
-                            <p className="text-sm text-gray-600">Navega el catálogo, añade al carrito y compra artesanías.</p>
-                          </div>
-                          {role==='comprador' && <span className="badge badge-success">Seleccionado</span>}
-                        </div>
+          <div className="md:col-span-2">
+            <div className="card card-hover">
+              <div className="card-body">
+                <div className="text-center mb-6">
+                  <h1 className="text-3xl font-bold mb-2">Crear Cuenta</h1>
+                  <p className="opacity-80">Únete a nuestra comunidad de artesanos y compradores</p>
+                </div>
+
+                {/* Role Selection */}
+                <div className="mb-6">
+                  <Label className="block mb-3">Tipo de cuenta</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setRole('comprador')}
+                      className={`p-4 rounded-lg border-2 transition-all ${
+                        role === 'comprador'
+                          ? 'border-primary bg-primary/5 text-primary'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="text-center">
+                        <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <div className="font-medium">Comprador</div>
+                        <div className="text-sm opacity-80">Comprar productos artesanales</div>
                       </div>
-                      <div
-                        className={`select-card p-5 ${role==='vendedor' ? 'selected' : ''}`}
-                        onClick={() => setRole('vendedor')}
-                        role="button"
-                        tabIndex={0}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="p-2 bg-gray-100 rounded-md">
-                            <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V7a2 2 0 00-2-2h-2l-2-2H8L6 5H4a2 2 0 00-2 2v6m18 0a2 2 0 01-2 2H4a2 2 0 01-2-2m18 0v5a2 2 0 01-2 2H4a2 2 0 01-2-2v-5" />
-                            </svg>
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-semibold mb-1">Vendedor</h3>
-                            <p className="text-sm text-gray-600">Publica productos, gestiona pedidos y ventas. Requiere aprobación.</p>
-                          </div>
-                          {role==='vendedor' && <span className="badge badge-success">Seleccionado</span>}
-                        </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRole('vendedor')}
+                      className={`p-4 rounded-lg border-2 transition-all ${
+                        role === 'vendedor'
+                          ? 'border-primary bg-primary/5 text-primary'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="text-center">
+                        <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                        <div className="font-medium">Vendedor</div>
+                        <div className="text-sm opacity-80">Vender productos artesanales</div>
                       </div>
-                    </div>
+                    </button>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="nombre">Nombre</Label>
-                    <Input id="nombre" value={form.nombre} onChange={e=>setForm({...form, nombre: e.target.value})} placeholder="Tu nombre completo" />
-                    {errors.nombre && <span className="error-text">{errors.nombre}</span>}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" value={form.email} onChange={e=>setForm({...form, email: e.target.value})} placeholder="tu@email.com" />
-                    {errors.email && <span className="error-text">{errors.email}</span>}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Contraseña</Label>
-                    <Input id="password" type="password" value={form.password} onChange={e=>setForm({...form, password: e.target.value})} placeholder="••••••••" />
-                    {errors.password && <span className="error-text">{errors.password}</span>}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm">Confirmar contraseña</Label>
-                    <Input id="confirm" type="password" value={form.confirmPassword} onChange={e=>setForm({...form, confirmPassword: e.target.value})} placeholder="••••••••" />
-                    {errors.confirmPassword && <span className="error-text">{errors.confirmPassword}</span>}
-                  </div>
+                </div>
+
+                <form onSubmit={form.handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="telefono">Teléfono</Label>
-                      <Input id="telefono" value={extra.telefono} onChange={e=>setExtra({...extra, telefono: e.target.value})} placeholder="300 000 0000" />
-                      {errors.telefono && <span className="error-text">{errors.telefono}</span>}
+                    <div>
+                      <Label htmlFor="nombre">Nombre completo</Label>
+                      <Input
+                        id="nombre"
+                        type="text"
+                        value={form.values.nombre}
+                        onChange={(e) => form.handleChange('nombre', e.target.value)}
+                        onBlur={() => form.handleBlur('nombre')}
+                        className={form.hasError('nombre') ? 'border-red-500' : ''}
+                      />
+                      {form.hasError('nombre') && (
+                        <p className="text-red-500 text-sm mt-1">{form.getFieldState('nombre').error}</p>
+                      )}
                     </div>
-                    <div className="space-y-2">
+                    <div>
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={form.values.email}
+                        onChange={(e) => form.handleChange('email', e.target.value)}
+                        onBlur={() => form.handleBlur('email')}
+                        className={form.hasError('email') ? 'border-red-500' : ''}
+                      />
+                      {form.hasError('email') && (
+                        <p className="text-red-500 text-sm mt-1">{form.getFieldState('email').error}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="telefono">Teléfono</Label>
+                      <Input
+                        id="telefono"
+                        type="tel"
+                        value={form.values.telefono}
+                        onChange={(e) => form.handleChange('telefono', e.target.value)}
+                        onBlur={() => form.handleBlur('telefono')}
+                        className={form.hasError('telefono') ? 'border-red-500' : ''}
+                      />
+                      {form.hasError('telefono') && (
+                        <p className="text-red-500 text-sm mt-1">{form.getFieldState('telefono').error}</p>
+                      )}
+                    </div>
+                    <div>
                       <Label htmlFor="departamento">Departamento</Label>
                       <select
                         id="departamento"
-                        className="form-select"
-                        value={extra.departamento}
-                        onChange={(e)=>{
-                          const dep = e.target.value;
-                          setExtra(prev=>({ ...prev, departamento: dep, ciudad: '' }));
-                        }}
+                        value={selectedDepartamento}
+                        onChange={(e) => handleDepartamentoChange(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       >
                         <option value="">Selecciona un departamento</option>
-                        {departamentos.map((dep)=> (
-                          <option key={dep} value={dep}>{dep}</option>
+                        {departamentos.map((dept) => (
+                          <option key={dept} value={dept}>{dept}</option>
                         ))}
                       </select>
-                      {errors.departamento && <span className="error-text">{errors.departamento}</span>}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="ciudad">Ciudad</Label>
-                      <select
-                        id="ciudad"
-                        className="form-select"
-                        value={extra.ciudad}
-                        onChange={(e)=> setExtra(prev=>({ ...prev, ciudad: e.target.value }))}
-                        disabled={!extra.departamento}
-                      >
-                        <option value="">Selecciona una ciudad</option>
-                        {ciudades.map((c)=> (
-                          <option key={c} value={c}>{c}</option>
-                        ))}
-                      </select>
-                      {errors.ciudad && <span className="error-text">{errors.ciudad}</span>}
                     </div>
                   </div>
-                  <label className="flex items-center gap-2 text-sm">
-                    <Checkbox checked={extra.confirmInfo} onCheckedChange={(v)=>setExtra({...extra, confirmInfo: Boolean(v)})} />
-                    Confirmo que la información es verdadera
-                  </label>
-                  {errors.confirmInfo && <span className="error-text">{errors.confirmInfo}</span>}
-                  <label className="flex items-center gap-2 text-sm">
-                    <Checkbox checked={acceptedTerms} onCheckedChange={(v)=>setAcceptedTerms(Boolean(v))} />
-                    Acepto los <a className="text-(--color-terracotta-suave) hover:underline" href="/terminos" target="_blank" rel="noreferrer">términos y condiciones</a>
-                  </label>
-                  {errors.terms && <span className="error-text">{errors.terms}</span>}
 
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    Crear cuenta
-                  </Button>
-                  <div className="text-sm text-center">
-                    ¿Ya tienes cuenta? <Link to="/login" className="text-(--color-terracotta-suave) hover:underline">Inicia sesión</Link>
+                  <div>
+                    <Label htmlFor="ciudad">Ciudad</Label>
+                    <select
+                      id="ciudad"
+                      value={form.values.ciudad}
+                      onChange={(e) => handleCiudadChange(e.target.value)}
+                      disabled={!selectedDepartamento}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50"
+                    >
+                      <option value="">Selecciona una ciudad</option>
+                      {ciudades.map((ciudad) => (
+                        <option key={ciudad} value={ciudad}>{ciudad}</option>
+                      ))}
+                    </select>
                   </div>
-              </form>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="password">Contraseña</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        value={form.values.password}
+                        onChange={(e) => form.handleChange('password', e.target.value)}
+                        onBlur={() => form.handleBlur('password')}
+                        className={form.hasError('password') ? 'border-red-500' : ''}
+                      />
+                      {form.hasError('password') && (
+                        <p className="text-red-500 text-sm mt-1">{form.getFieldState('password').error}</p>
+                      )}
+                    </div>
+                    <div>
+                      <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        value={form.values.confirmPassword}
+                        onChange={(e) => form.handleChange('confirmPassword', e.target.value)}
+                        onBlur={() => form.handleBlur('confirmPassword')}
+                        className={form.hasError('confirmPassword') ? 'border-red-500' : ''}
+                      />
+                      {form.hasError('confirmPassword') && (
+                        <p className="text-red-500 text-sm mt-1">{form.getFieldState('confirmPassword').error}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        id="confirmInfo"
+                        checked={form.values.confirmInfo}
+                        onCheckedChange={(checked) => form.setValue('confirmInfo', checked as boolean)}
+                      />
+                      <Label htmlFor="confirmInfo" className="text-sm leading-relaxed">
+                        Confirmo que toda la información proporcionada es verdadera y actualizada
+                      </Label>
+                    </div>
+                    {form.hasError('confirmInfo') && (
+                      <p className="text-red-500 text-sm">{form.getFieldState('confirmInfo').error}</p>
+                    )}
+
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        id="acceptedTerms"
+                        checked={form.values.acceptedTerms}
+                        onCheckedChange={(checked) => form.setValue('acceptedTerms', checked as boolean)}
+                      />
+                      <Label htmlFor="acceptedTerms" className="text-sm leading-relaxed">
+                        Acepto los <Link to="/terminos" className="text-primary hover:underline">términos y condiciones</Link> y la <Link to="/privacidad" className="text-primary hover:underline">política de privacidad</Link>
+                      </Label>
+                    </div>
+                    {form.hasError('acceptedTerms') && (
+                      <p className="text-red-500 text-sm">{form.getFieldState('acceptedTerms').error}</p>
+                    )}
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={form.isSubmitting || !form.isValid}
+                  >
+                    {form.isSubmitting ? 'Creando cuenta...' : 'Crear cuenta'}
+                  </Button>
+                </form>
+
+                <div className="text-center mt-6">
+                  <p className="text-sm opacity-80">
+                    ¿Ya tienes una cuenta?{' '}
+                    <Link to="/login" className="text-primary hover:underline">
+                      Inicia sesión
+                    </Link>
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
