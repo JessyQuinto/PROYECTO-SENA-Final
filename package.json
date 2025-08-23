@@ -22,6 +22,6 @@
     "dompurify": "^3.2.6"
   },
   "scripts": {
-    "prepare": "if [ "$CI" != "true" ]; then husky; fi"
+    "prepare": "husky"
   }
 }
