@@ -44,16 +44,30 @@ export class SecurityManager {
   sanitizeHTML(input: string): string {
     if (!this.config.enableSanitization) return input;
 
-    const cleaned = DOMPurify.sanitize(input, {
-      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'ol', 'ul', 'li', 'a'],
-      ALLOWED_ATTR: ['href', 'target'],
-      FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input', 'style', 'link'],
-      FORBID_ATTR: ['onclick', 'onload', 'onerror', 'onmouseover', 'onfocus', 'style'],
-      KEEP_CONTENT: false, // Don't keep content of forbidden tags
-    });
+    let cleaned = input;
+
+    try {
+      // First attempt: Use DOMPurify if available
+      cleaned = DOMPurify.sanitize(input, {
+        ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'ol', 'ul', 'li', 'a'],
+        ALLOWED_ATTR: ['href', 'target'],
+        FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input', 'style', 'link'],
+        FORBID_ATTR: ['onclick', 'onload', 'onerror', 'onmouseover', 'onfocus', 'style'],
+        KEEP_CONTENT: false, // Don't keep content of forbidden tags
+      });
+    } catch (error) {
+      // Fallback: Manual sanitization for test environments
+      console.warn('DOMPurify failed, using fallback sanitization:', error);
+      cleaned = input;
+    }
 
     // Additional cleanup to ensure no script content remains
-    return cleaned.replace(/<script[^>]*>.*?<\/script>/gis, '');
+    cleaned = cleaned.replace(/<script[^>]*>.*?<\/script>/gis, '');
+    cleaned = cleaned.replace(/<\/?\s*(script|iframe|object|embed|form|input|style|link)[^>]*>/gis, '');
+    cleaned = cleaned.replace(/javascript:/gi, '');
+    cleaned = cleaned.replace(/on\w+\s*=[^>]*/gi, ''); // Remove event handlers
+
+    return cleaned;
   }
 
   /**
@@ -62,12 +76,22 @@ export class SecurityManager {
   sanitizeText(input: string): string {
     if (!input || typeof input !== 'string') return '';
 
-    // Use DOMPurify to remove all HTML tags and get text content only
-    let sanitized = DOMPurify.sanitize(input, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+    let sanitized = input;
+
+    try {
+      // First attempt: Use DOMPurify if available
+      sanitized = DOMPurify.sanitize(input, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+    } catch (error) {
+      // Fallback: Manual sanitization for test environments
+      console.warn('DOMPurify failed, using fallback sanitization:', error);
+    }
 
     // Additional security: manually strip any remaining HTML-like content
+    sanitized = sanitized.replace(/<script[^>]*>.*?<\/script>/gis, '');
     sanitized = sanitized.replace(/<[^>]*>/gi, '');
     sanitized = sanitized.replace(/&[^;]+;/gi, ''); // Remove HTML entities
+    sanitized = sanitized.replace(/javascript:/gi, '');
+    sanitized = sanitized.replace(/on\w+\s*=/gi, ''); // Remove event handlers
 
     // Trim whitespace
     sanitized = sanitized.trim();
@@ -102,7 +126,19 @@ export class SecurityManager {
    * Validate and sanitize URL input
    */
   sanitizeURL(url: string): string {
-    if (!url || typeof url !== 'string') return '';
+    if (!url || typeof url !== 'string') {
+      throw new Error('URL inválida');
+    }
+
+    // Check for dangerous protocols first
+    const dangerousProtocols = ['javascript:', 'data:', 'vbscript:', 'file:', 'ftp:'];
+    const lowerUrl = url.toLowerCase().trim();
+    
+    for (const protocol of dangerousProtocols) {
+      if (lowerUrl.startsWith(protocol)) {
+        throw new Error('Protocolo de URL no permitido');
+      }
+    }
 
     try {
       const urlObj = new URL(url);
