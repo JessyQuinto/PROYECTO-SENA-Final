@@ -1,9 +1,10 @@
 import React from 'react';
-import Navbar from './Navbar';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../../../auth/AuthContext';
-import MobileTabBar from './MobileTabBar';
-import CookieConsent from '../CookieConsent';
+import { Outlet } from 'react-router-dom';
+import { useAuth } from '@/auth/AuthContext';
+import Navbar from '@/components/ui/Layout/Navbar';
+import CookieConsent from '@/components/ui/CookieConsent';
+import Footer from '@/components/ui/Layout/Footer';
+import MobileTabBar from '@/components/ui/Layout/MobileTabBar';
 
 interface MainLayoutProps {
   children: React.ReactNode;

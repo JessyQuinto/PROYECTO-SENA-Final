@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../../../auth/AuthContext';
-import { useCart } from '../../../modules/buyer/CartContext';
+import { useAuth } from '@/auth/AuthContext';
+import { useCart } from '@/modules/buyer/CartContext';
 import { Button } from '@/components/ui/shadcn/button';
 import Icon from '@/components/ui/Icon';
 import ThemeToggle from '@/components/ui/ThemeToggle';

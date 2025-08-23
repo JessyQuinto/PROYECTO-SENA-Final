@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useAuth } from '../../auth/AuthContext';
-import { supabase } from '../../lib/supabaseClient';
+import { useAuth } from '@/auth/AuthContext';
+import { supabase } from '@/lib/supabaseClient';
 import { z } from 'zod';
 import VendorLayout from './VendorLayout';
 import Icon from '@/components/ui/Icon';

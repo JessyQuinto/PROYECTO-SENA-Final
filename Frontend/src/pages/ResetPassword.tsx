@@ -1,35 +1,50 @@
-import React, { useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import React from 'react';
+import { useForm } from '@/hooks/useForm';
+import { useToast } from '@/hooks/useToast';
+import { useSupabase } from '@/hooks/useSupabase';
 import { Link, useNavigate } from 'react-router-dom';
+import { Input } from '@/components/ui/shadcn/input';
+import { Label } from '@/components/ui/shadcn/label';
+import { Button } from '@/components/ui/shadcn/button';
+import { z } from 'zod';
+
+const resetPasswordSchema = z.object({
+  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+  confirm: z.string()
+}).refine((data) => data.password === data.confirm, {
+  message: "Las contraseñas no coinciden",
+  path: ["confirm"]
+});
+
+type ResetPasswordForm = z.infer<typeof resetPasswordSchema>;
 
 const ResetPasswordPage: React.FC = () => {
-  const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const toast = useToast();
+  const { executeMutation } = useSupabase({ 
+    showToast: true, 
+    toastAction: 'update' 
+  });
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMessage(null);
-    setError(null);
-    if (!password || password.length < 6) { setError('La contraseña debe tener al menos 6 caracteres'); return; }
-    if (password !== confirm) { setError('Las contraseñas no coinciden'); return; }
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) throw error;
-      setMessage('Contraseña actualizada. Redirigiendo a login…');
-      (window as any).toast?.success('Contraseña actualizada', { action: 'update' });
-      setTimeout(() => navigate('/login', { replace: true }), 1500);
-    } catch (err: any) {
-      setError(err?.message || 'No se pudo actualizar la contraseña');
-      (window as any).toast?.error(err?.message || 'No se pudo actualizar la contraseña', { action: 'update' });
-    } finally {
-      setLoading(false);
+  const form = useForm<ResetPasswordForm>({
+    initialValues: { password: '', confirm: '' },
+    validationSchema: resetPasswordSchema,
+    onSubmit: async (values) => {
+      const { error } = await executeMutation(
+        () => supabase.auth.updateUser({ password: values.password }),
+        'Contraseña actualizada exitosamente',
+        'No se pudo actualizar la contraseña'
+      );
+      
+      if (!error) {
+        toast.success('Contraseña actualizada', { 
+          message: 'Redirigiendo a login...',
+          action: 'update' 
+        });
+        setTimeout(() => navigate('/login', { replace: true }), 1500);
+      }
     }
-  };
+  });
 
   return (
     <div className="min-h-[calc(100vh-120px)] grid place-items-center">
@@ -46,22 +61,48 @@ const ResetPasswordPage: React.FC = () => {
           <div className="card card-hover">
             <div className="card-body">
               <h2 className="text-xl font-semibold mb-4">Nueva contraseña</h2>
-              {error && <div className="mb-4 rounded-lg bg-red-50 text-red-700 px-3 py-2 text-sm">{error}</div>}
-              {message && <div className="mb-4 rounded-lg bg-green-50 text-green-700 px-3 py-2 text-sm">{message}</div>}
-              <form className="space-y-4" onSubmit={onSubmit}>
-                <div className="form-group">
-                  <label className="form-label" htmlFor="password">Contraseña</label>
-                  <input id="password" type="password" className="input_field w-full" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" />
+              <form className="space-y-4" onSubmit={form.handleSubmit}>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Contraseña</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={form.values.password}
+                    onChange={form.handleChange}
+                    onBlur={form.handleBlur}
+                    placeholder="••••••••"
+                    className={form.errors.password ? 'border-red-500' : ''}
+                  />
+                  {form.errors.password && (
+                    <p className="text-sm text-red-600">{form.errors.password}</p>
+                  )}
                 </div>
-                <div className="form-group">
-                  <label className="form-label" htmlFor="confirm">Confirmar contraseña</label>
-                  <input id="confirm" type="password" className="input_field w-full" value={confirm} onChange={e=>setConfirm(e.target.value)} placeholder="••••••••" />
+                <div className="space-y-2">
+                  <Label htmlFor="confirm">Confirmar contraseña</Label>
+                  <Input
+                    id="confirm"
+                    type="password"
+                    value={form.values.confirm}
+                    onChange={form.handleChange}
+                    onBlur={form.handleBlur}
+                    placeholder="••••••••"
+                    className={form.errors.confirm ? 'border-red-500' : ''}
+                  />
+                  {form.errors.confirm && (
+                    <p className="text-sm text-red-600">{form.errors.confirm}</p>
+                  )}
                 </div>
-                <button type="submit" className="btn btn-primary w-full" disabled={loading}>
-                  {loading ? 'Actualizando…' : 'Actualizar contraseña'}
-                </button>
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={form.isSubmitting}
+                >
+                  {form.isSubmitting ? 'Actualizando…' : 'Actualizar contraseña'}
+                </Button>
                 <div className="text-sm text-center">
-                  <Link to="/login" className="text-(--color-terracotta-suave) hover:underline">Volver a iniciar sesión</Link>
+                  <Link to="/login" className="text-(--color-terracotta-suave) hover:underline">
+                    Volver a iniciar sesión
+                  </Link>
                 </div>
               </form>
             </div>

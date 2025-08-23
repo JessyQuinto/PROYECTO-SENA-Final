@@ -1,31 +1,43 @@
-import React, { useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import React from 'react';
+import { useForm } from '@/hooks/useForm';
+import { useToast } from '@/hooks/useToast';
+import { useSupabase } from '@/hooks/useSupabase';
 import { Link } from 'react-router-dom';
+import { Input } from '@/components/ui/shadcn/input';
+import { Label } from '@/components/ui/shadcn/label';
+import { Button } from '@/components/ui/shadcn/button';
+import { z } from 'zod';
+import { supabase } from '@/lib/supabaseClient';
+
+const forgotPasswordSchema = z.object({
+  email: z.string().email('Email inválido')
+});
+
+type ForgotPasswordForm = z.infer<typeof forgotPasswordSchema>;
 
 const ForgotPasswordPage: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
+  const { executeMutation } = useSupabase({ 
+    showToast: true, 
+    toastAction: 'update' 
+  });
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMessage(null);
-    setError(null);
-    setLoading(true);
-    try {
-      const redirectTo = `${window.location.origin}/reset-password`;
-      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
-      if (error) throw error;
-      setMessage('Hemos enviado un enlace de recuperación a tu correo.');
-      (window as any).toast?.success('Enlace de recuperación enviado', { action: 'update' });
-    } catch (err: any) {
-      setError(err?.message || 'No se pudo enviar el correo de recuperación');
-      (window as any).toast?.error(err?.message || 'No se pudo enviar el correo de recuperación', { action: 'update' });
-    } finally {
-      setLoading(false);
+  const form = useForm<ForgotPasswordForm>({
+    initialValues: { email: '' },
+    validationSchema: forgotPasswordSchema,
+    onSubmit: async (values) => {
+      const result = await executeMutation(
+        () => supabase.auth.resetPasswordForEmail(values.email),
+        'Email de restablecimiento enviado'
+      );
+      
+      if (result !== null) {
+        toast.success('Email enviado', { 
+          action: 'update' 
+        });
+      }
     }
-  };
+  });
 
   return (
     <div className="min-h-[calc(100vh-120px)] grid place-items-center">
@@ -34,26 +46,41 @@ const ForgotPasswordPage: React.FC = () => {
           <div className="hidden md:block">
             <div className="card card-hover">
               <div className="card-body">
-                <h1 className="text-2xl font-semibold mb-2 font-display">Recuperar contraseña</h1>
-                <p className="opacity-80">Ingresa tu email y te enviaremos un enlace para restablecer tu contraseña.</p>
+                <h1 className="text-2xl font-semibold mb-2 font-display">Restablecer contraseña</h1>
+                <p className="opacity-80">Te enviaremos un email para restablecer tu contraseña.</p>
               </div>
             </div>
           </div>
           <div className="card card-hover">
             <div className="card-body">
-              <h2 className="text-xl font-semibold mb-4">Recuperar contraseña</h2>
-              {error && <div className="mb-4 rounded-lg bg-red-50 text-red-700 px-3 py-2 text-sm">{error}</div>}
-              {message && <div className="mb-4 rounded-lg bg-green-50 text-green-700 px-3 py-2 text-sm">{message}</div>}
-              <form className="space-y-4" onSubmit={onSubmit}>
-                <div className="form-group">
-                  <label className="form-label" htmlFor="email">Email</label>
-                  <input id="email" className="input_field w-full" value={email} onChange={e=>setEmail(e.target.value)} placeholder="tu@email.com" />
+              <h2 className="text-xl font-semibold mb-4">¿Olvidaste tu contraseña?</h2>
+              <form className="space-y-4" onSubmit={form.handleSubmit}>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={form.values.email}
+                    onChange={(e) => form.setValue('email', e.target.value)}
+                    onBlur={() => form.validateField('email')}
+                    placeholder="tu@email.com"
+                    className={form.errors.email ? 'border-red-500' : ''}
+                  />
+                  {form.errors.email && (
+                    <p className="text-sm text-red-600">{form.errors.email}</p>
+                  )}
                 </div>
-                <button type="submit" className="btn btn-primary w-full" disabled={loading || !email}>
-                  {loading ? 'Enviando…' : 'Enviar enlace'}
-                </button>
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={form.isSubmitting}
+                >
+                  {form.isSubmitting ? 'Enviando…' : 'Enviar email de restablecimiento'}
+                </Button>
                 <div className="text-sm text-center">
-                  <Link to="/login" className="text-(--color-terracotta-suave) hover:underline">Volver a iniciar sesión</Link>
+                  <Link to="/login" className="text-(--color-terracotta-suave) hover:underline">
+                    Volver a iniciar sesión
+                  </Link>
                 </div>
               </form>
             </div>

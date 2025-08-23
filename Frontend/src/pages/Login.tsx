@@ -1,88 +1,111 @@
-import React, { useState } from 'react';
-import { useAuth } from '../auth/AuthContext';
-import { z } from 'zod';
+import React from 'react';
+import { useAuth } from '@/auth/AuthContext';
+import { useForm } from '@/hooks/useForm';
+import { useToast } from '@/hooks/useToast';
+import { useSupabase } from '@/hooks/useSupabase';
 import { useNavigate, Link } from 'react-router-dom';
 import { Input } from '@/components/ui/shadcn/input';
 import { Label } from '@/components/ui/shadcn/label';
 import { Button } from '@/components/ui/shadcn/button';
+import { z } from 'zod';
 
-const loginSchema = z.object({ email: z.string().email(), password: z.string().min(6) });
+const loginSchema = z.object({ 
+  email: z.string().email('Email inválido'), 
+  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres') 
+});
 
-export const LoginPage: React.FC = () => {
-  const { signIn, refreshProfile, user } = useAuth();
+type LoginForm = z.infer<typeof loginSchema>;
+
+const LoginPage: React.FC = () => {
+  const { signIn } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const toast = useToast();
+  const { executeMutation } = useSupabase({ 
+    showToast: true, 
+    toastAction: 'login' 
+  });
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    const parsed = loginSchema.safeParse({ email, password });
-    if (!parsed.success) { setError('Datos inválidos'); return; }
-    setLoading(true);
-    const res = await signIn(email, password);
-    if (res.error) {
-      setError(res.error);
-      (window as any).toast?.error(res.error, { action: 'login' });
-      setLoading(false);
-      return;
+  const form = useForm<LoginForm>({
+    initialValues: { email: '', password: '' },
+    validationSchema: loginSchema,
+    onSubmit: async (values) => {
+      const { error } = await executeMutation(
+        () => signIn(values.email, values.password),
+        'Inicio de sesión exitoso',
+        'Error en el inicio de sesión'
+      );
+      
+      if (!error) {
+        navigate('/dashboard');
+      }
     }
-    await refreshProfile();
-    // Leer usuario actualizado tras refresh
-    const session = await (window as any).supabase?.auth.getUser?.();
-    const currentRole = (session?.data?.user?.user_metadata as any)?.role as string | undefined;
-    const target = currentRole === 'vendedor' ? '/vendedor' : currentRole === 'admin' ? '/admin' : '/';
-    (window as any).toast?.success('Bienvenido', { action: 'login' });
-    navigate(target, { replace: true });
-    setLoading(false);
-  };
+  });
 
   return (
-    <div className="min-h-[calc(100vh-120px)] grid place-items-center relative overflow-hidden">
-      {/* Decorative auth background */}
-      <div
-        aria-hidden
-        className="absolute inset-0 opacity-15"
-        style={{
-          backgroundImage: "linear-gradient(to right, rgba(0,0,0,0.05), rgba(0,0,0,0.00)), url('/assert/afrique-doodle-set/7311.jpg')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }}
-      />
-      <div className="container-sm relative z-10">
+    <div className="min-h-[calc(100vh-120px)] grid place-items-center">
+      <div className="container-sm">
         <div className="grid md:grid-cols-2 gap-8 items-center">
           <div className="hidden md:block">
             <div className="card card-hover">
               <div className="card-body">
-                <h1 className="text-2xl font-semibold mb-2 font-display">Bienvenido de nuevo</h1>
-                <p className="opacity-80">Inicia sesión para continuar explorando artesanías auténticas.</p>
+                <h1 className="text-2xl font-semibold mb-2 font-display">Bienvenido de vuelta</h1>
+                <p className="opacity-80">Inicia sesión en tu cuenta para continuar.</p>
               </div>
             </div>
           </div>
           <div className="card card-hover">
             <div className="card-body">
               <h2 className="text-xl font-semibold mb-4">Iniciar sesión</h2>
-              {error && <div className="mb-4 rounded-lg bg-red-50 text-red-700 px-3 py-2 text-sm">{error}</div>}
-              <form className="space-y-4" onSubmit={onSubmit}>
+              <form className="space-y-4" onSubmit={form.handleSubmit}>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" placeholder="tu@email.com" value={email} onChange={e=>setEmail(e.target.value)} />
+                  <Input
+                    id="email"
+                    type="email"
+                    value={form.values.email}
+                    onChange={form.handleChange}
+                    onBlur={form.handleBlur}
+                    placeholder="tu@email.com"
+                    className={form.errors.email ? 'border-red-500' : ''}
+                  />
+                  {form.errors.email && (
+                    <p className="text-sm text-red-600">{form.errors.email}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Contraseña</Label>
-                  <Input id="password" type="password" placeholder="••••••••" value={password} onChange={e=>setPassword(e.target.value)} />
+                  <Input
+                    id="password"
+                    type="password"
+                    value={form.values.password}
+                    onChange={form.handleChange}
+                    onBlur={form.handleBlur}
+                    placeholder="••••••••"
+                    className={form.errors.password ? 'border-red-500' : ''}
+                  />
+                  {form.errors.password && (
+                    <p className="text-sm text-red-600">{form.errors.password}</p>
+                  )}
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Procesando...' : 'Entrar'}
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={form.isSubmitting}
+                >
+                  {form.isSubmitting ? 'Iniciando sesión…' : 'Iniciar sesión'}
                 </Button>
-                <div className="text-sm text-center">
-                  ¿No tienes cuenta?{' '}
-                  <Link to="/register" className="text-(--color-terracotta-suave) hover:underline">Crear cuenta</Link>
-                </div>
-                <div className="text-sm text-center">
-                  <Link to="/forgot-password" className="text-(--color-terracotta-suave) hover:underline">¿Olvidaste tu contraseña?</Link>
+                <div className="text-sm text-center space-y-2">
+                  <div>
+                    <Link to="/forgot-password" className="text-(--color-terracotta-suave) hover:underline">
+                      ¿Olvidaste tu contraseña?
+                    </Link>
+                  </div>
+                  <div>
+                    ¿No tienes cuenta?{' '}
+                    <Link to="/register" className="text-(--color-terracotta-suave) hover:underline">
+                      Regístrate aquí
+                    </Link>
+                  </div>
                 </div>
               </form>
             </div>
