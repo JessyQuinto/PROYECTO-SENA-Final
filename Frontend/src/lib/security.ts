@@ -44,12 +44,16 @@ export class SecurityManager {
   sanitizeHTML(input: string): string {
     if (!this.config.enableSanitization) return input;
 
-    return DOMPurify.sanitize(input, {
+    const cleaned = DOMPurify.sanitize(input, {
       ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'ol', 'ul', 'li', 'a'],
       ALLOWED_ATTR: ['href', 'target'],
-      FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input'],
-      FORBID_ATTR: ['onclick', 'onload', 'onerror', 'onmouseover', 'onfocus'],
+      FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input', 'style', 'link'],
+      FORBID_ATTR: ['onclick', 'onload', 'onerror', 'onmouseover', 'onfocus', 'style'],
+      KEEP_CONTENT: false, // Don't keep content of forbidden tags
     });
+
+    // Additional cleanup to ensure no script content remains
+    return cleaned.replace(/<script[^>]*>.*?<\/script>/gis, '');
   }
 
   /**
@@ -58,8 +62,12 @@ export class SecurityManager {
   sanitizeText(input: string): string {
     if (!input || typeof input !== 'string') return '';
 
-    // Remove any HTML tags
-    let sanitized = input.replace(/<[^>]*>/g, '');
+    // Use DOMPurify to remove all HTML tags and get text content only
+    let sanitized = DOMPurify.sanitize(input, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+
+    // Additional security: manually strip any remaining HTML-like content
+    sanitized = sanitized.replace(/<[^>]*>/gi, '');
+    sanitized = sanitized.replace(/&[^;]+;/gi, ''); // Remove HTML entities
 
     // Trim whitespace
     sanitized = sanitized.trim();

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import PerformanceDashboard from './PerformanceDashboard';
 
 // Mock the performance monitoring hook
@@ -64,7 +65,8 @@ describe('PerformanceDashboard', () => {
   });
 
   it('shows dashboard when toggle button is clicked', async () => {
-    const { user } = render(<PerformanceDashboard />);
+    const user = userEvent.setup();
+    render(<PerformanceDashboard />);
 
     const toggleButton = screen.getByText('Show Performance');
     await user.click(toggleButton);
@@ -74,7 +76,8 @@ describe('PerformanceDashboard', () => {
   });
 
   it('displays performance metrics correctly', async () => {
-    const { user } = render(<PerformanceDashboard />);
+    const user = userEvent.setup();
+    render(<PerformanceDashboard />);
 
     const toggleButton = screen.getByText('Show Performance');
     await user.click(toggleButton);
