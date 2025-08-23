@@ -5,7 +5,12 @@
 export type UserRole = 'admin' | 'vendedor' | 'comprador';
 export type VendedorEstado = 'pendiente' | 'aprobado' | 'rechazado';
 export type ProductoEstado = 'activo' | 'inactivo' | 'bloqueado';
-export type PedidoEstado = 'pendiente' | 'procesando' | 'enviado' | 'entregado' | 'cancelado';
+export type PedidoEstado =
+  | 'pendiente'
+  | 'procesando'
+  | 'enviado'
+  | 'entregado'
+  | 'cancelado';
 
 // UI Models (camelCase)
 export interface Usuario {

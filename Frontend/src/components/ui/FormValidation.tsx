@@ -17,14 +17,14 @@ export const FormValidation: React.FC<FormValidationProps> = ({
   value,
   rules,
   onValidationChange,
-  className = ''
+  className = '',
 }) => {
   const [errors, setErrors] = useState<string[]>([]);
   const [isValid, setIsValid] = useState(false);
 
   useEffect(() => {
     const newErrors: string[] = [];
-    
+
     rules.forEach(rule => {
       if (!rule.test(value)) {
         newErrors.push(rule.message);
@@ -34,7 +34,7 @@ export const FormValidation: React.FC<FormValidationProps> = ({
     setErrors(newErrors);
     const newIsValid = newErrors.length === 0;
     setIsValid(newIsValid);
-    
+
     if (onValidationChange) {
       onValidationChange(newIsValid);
     }
@@ -45,14 +45,25 @@ export const FormValidation: React.FC<FormValidationProps> = ({
   return (
     <div className={`space-y-1 ${className}`}>
       {errors.map((error, index) => (
-        <div key={index} className="flex items-center gap-2 text-sm text-red-600">
-          <Icon category="Estados y Feedback" name="BxErrorCircle" className="w-4 h-4" />
+        <div
+          key={index}
+          className='flex items-center gap-2 text-sm text-red-600'
+        >
+          <Icon
+            category='Estados y Feedback'
+            name='BxErrorCircle'
+            className='w-4 h-4'
+          />
           <span>{error}</span>
         </div>
       ))}
       {isValid && (
-        <div className="flex items-center gap-2 text-sm text-green-600">
-          <Icon category="Estados y Feedback" name="IconParkSolidSuccess" className="w-4 h-4" />
+        <div className='flex items-center gap-2 text-sm text-green-600'>
+          <Icon
+            category='Estados y Feedback'
+            name='IconParkSolidSuccess'
+            className='w-4 h-4'
+          />
           <span>Campo válido</span>
         </div>
       )}
@@ -64,48 +75,48 @@ export const FormValidation: React.FC<FormValidationProps> = ({
 export const validationRules = {
   required: (message = 'Este campo es obligatorio'): ValidationRule => ({
     test: (value: string) => value.trim().length > 0,
-    message
+    message,
   }),
-  
+
   email: (message = 'Ingresa un email válido'): ValidationRule => ({
     test: (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
-    message
+    message,
   }),
-  
+
   phone: (message = 'Ingresa un teléfono válido'): ValidationRule => ({
     test: (value: string) => /^[\+]?[0-9\s\-\(\)]{7,}$/.test(value),
-    message
+    message,
   }),
-  
+
   minLength: (min: number, message?: string): ValidationRule => ({
     test: (value: string) => value.length >= min,
-    message: message || `Mínimo ${min} caracteres`
+    message: message || `Mínimo ${min} caracteres`,
   }),
-  
+
   maxLength: (max: number, message?: string): ValidationRule => ({
     test: (value: string) => value.length <= max,
-    message: message || `Máximo ${max} caracteres`
+    message: message || `Máximo ${max} caracteres`,
   }),
-  
+
   cardNumber: (message = 'Número de tarjeta inválido'): ValidationRule => ({
     test: (value: string) => /^\d{13,19}$/.test(value.replace(/\s/g, '')),
-    message
+    message,
   }),
-  
+
   cardExpiry: (message = 'Formato MM/AA'): ValidationRule => ({
     test: (value: string) => /^(0[1-9]|1[0-2])\/([0-9]{2})$/.test(value),
-    message
+    message,
   }),
-  
+
   cardCVC: (message = 'CVC debe tener 3-4 dígitos'): ValidationRule => ({
     test: (value: string) => /^\d{3,4}$/.test(value),
-    message
+    message,
   }),
-  
+
   postalCode: (message = 'Código postal inválido'): ValidationRule => ({
     test: (value: string) => /^\d{4,6}$/.test(value),
-    message
-  })
+    message,
+  }),
 };
 
 // Hook personalizado para validación de formularios
@@ -121,7 +132,7 @@ export const useFormValidation = (initialValues: Record<string, string>) => {
   const validateField = (field: string, rules: ValidationRule[]) => {
     const value = values[field];
     const fieldErrors: string[] = [];
-    
+
     rules.forEach(rule => {
       if (!rule.test(value)) {
         fieldErrors.push(rule.message);
@@ -180,6 +191,6 @@ export const useFormValidation = (initialValues: Record<string, string>) => {
     validateForm,
     getFieldError,
     hasFieldError,
-    clearErrors
+    clearErrors,
   };
 };

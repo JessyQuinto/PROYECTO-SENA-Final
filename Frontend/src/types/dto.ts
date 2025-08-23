@@ -1,11 +1,17 @@
 // Simple DTO mappers between DB rows (snake_case) and UI models (camelCase)
 import type {
-  ProductoRow, Producto,
-  UsuarioRow, Usuario,
-  OrderItemRow, OrderItem,
-  OrderRow, Order,
-  CategoriaRow, Categoria,
-  EvaluacionRow, Evaluacion
+  ProductoRow,
+  Producto,
+  UsuarioRow,
+  Usuario,
+  OrderItemRow,
+  OrderItem,
+  OrderRow,
+  Order,
+  CategoriaRow,
+  Categoria,
+  EvaluacionRow,
+  Evaluacion,
 } from './domain';
 
 export const mapProducto = (r: ProductoRow): Producto => ({
@@ -25,7 +31,7 @@ export const mapProducto = (r: ProductoRow): Producto => ({
 export const mapUsuario = (r: UsuarioRow): Usuario => ({
   id: r.id,
   email: r.email ?? undefined,
-  role: (r.role ?? 'comprador'),
+  role: r.role ?? 'comprador',
   vendedorEstado: r.vendedor_estado,
   bloqueado: !!r.bloqueado,
   nombreCompleto: r.nombre_completo ?? undefined,

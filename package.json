@@ -6,5 +6,14 @@
   "workspaces": [
     "Backend",
     "Frontend"
-  ]
+  ],
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.8.0",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@vitest/ui": "^3.2.4",
+    "happy-dom": "^18.0.1",
+    "jsdom": "^26.1.0",
+    "vitest": "^3.2.4"
+  }
 }

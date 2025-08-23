@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useAuth } from '@/auth/AuthContext';
 
 export interface CartItem {
@@ -23,44 +29,76 @@ const CartContext = createContext<CartContextValue | undefined>(undefined);
 
 const STORAGE_KEY_BASE = 'tc_cart_v1';
 
-export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [items, setItems] = useState<CartItem[]>([]);
   const { user } = useAuth();
   const storageKey = user?.id ? `${STORAGE_KEY_BASE}_${user.id}` : null;
 
   useEffect(() => {
     // cargar carrito por usuario; si no hay usuario, mantener vacío
-    if (!storageKey) { setItems([]); return; }
+    if (!storageKey) {
+      setItems([]);
+      return;
+    }
     try {
       const raw = localStorage.getItem(storageKey);
       if (raw) setItems(JSON.parse(raw));
       else setItems([]);
-    } catch { setItems([]); }
+    } catch {
+      setItems([]);
+    }
   }, [storageKey]);
 
   useEffect(() => {
     if (!storageKey) return; // no persistir sin usuario
-    try { localStorage.setItem(storageKey, JSON.stringify(items)); } catch {}
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(items));
+    } catch {}
   }, [items, storageKey]);
 
   const add = (item: CartItem) => {
     setItems(prev => {
       const existing = prev.find(i => i.productoId === item.productoId);
       if (existing) {
-        return prev.map(i => i.productoId === item.productoId ? { ...i, cantidad: Math.min((i.cantidad + item.cantidad), (i.stock ?? Infinity)) } : i);
+        return prev.map(i =>
+          i.productoId === item.productoId
+            ? {
+                ...i,
+                cantidad: Math.min(
+                  i.cantidad + item.cantidad,
+                  i.stock ?? Infinity
+                ),
+              }
+            : i
+        );
       }
       return [...prev, item];
     });
   };
-  
+
   const update = (productoId: string, cantidad: number) => {
-    setItems(prev => prev.map(i => i.productoId === productoId ? { ...i, cantidad: Math.max(1, Math.min(cantidad, i.stock ?? Infinity)) } : i));
+    setItems(prev =>
+      prev.map(i =>
+        i.productoId === productoId
+          ? {
+              ...i,
+              cantidad: Math.max(1, Math.min(cantidad, i.stock ?? Infinity)),
+            }
+          : i
+      )
+    );
   };
-  
-  const remove = (productoId: string) => setItems(prev => prev.filter(i => i.productoId !== productoId));
+
+  const remove = (productoId: string) =>
+    setItems(prev => prev.filter(i => i.productoId !== productoId));
   const clear = () => setItems([]);
 
-  const total = useMemo(() => items.reduce((sum, i) => sum + i.precio * i.cantidad, 0), [items]);
+  const total = useMemo(
+    () => items.reduce((sum, i) => sum + i.precio * i.cantidad, 0),
+    [items]
+  );
 
   return (
     <CartContext.Provider value={{ items, total, add, update, remove, clear }}>
@@ -74,5 +112,3 @@ export const useCart = () => {
   if (!ctx) throw new Error('useCart debe usarse dentro de CartProvider');
   return ctx;
 };
-
-

@@ -63,13 +63,13 @@ export default function CheckoutPage() {
   const [currentStep, setCurrentStep] = useState<PaymentStep>('resumen');
   const [loading, setLoading] = useState(false);
   const [agree, setAgree] = useState(false);
-  
+
   // Estados para datos de la base de datos
   const [addresses, setAddresses] = useState<UserAddress[]>([]);
   const [payments, setPayments] = useState<UserPaymentProfile[]>([]);
   const [selectedShipId, setSelectedShipId] = useState<string | ''>('');
   const [selectedPayId, setSelectedPayId] = useState<string | ''>('');
-  
+
   // Formularios
   const [shipping, setShipping] = useState<ShippingForm>({
     nombre: '',
@@ -78,26 +78,28 @@ export default function CheckoutPage() {
     ciudad: '',
     departamento: '',
     codigoPostal: '',
-    telefono: ''
+    telefono: '',
   });
-  
+
   const [billing, setBilling] = useState<BillingForm>({
     nombre: '',
     direccion: '',
     ciudad: '',
-    departamento: ''
+    departamento: '',
   });
-  
+
   const [card, setCard] = useState<CardForm>({
     numero: '',
     expiracion: '',
     cvv: '',
-    nombre: ''
+    nombre: '',
   });
-  
+
   // Estados
   const [useSameAddress, setUseSameAddress] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState<'tarjeta' | 'contraentrega'>('tarjeta');
+  const [paymentMethod, setPaymentMethod] = useState<
+    'tarjeta' | 'contraentrega'
+  >('tarjeta');
 
   // Cargar perfiles guardados desde la base de datos
   useEffect(() => {
@@ -120,18 +122,20 @@ export default function CheckoutPage() {
             .select('*')
             .eq('user_id', uid)
             .order('es_predeterminada', { ascending: false })
-            .order('created_at', { ascending: false })
+            .order('created_at', { ascending: false }),
         ]);
 
         const loadedAddresses = (addrRes.data || []) as UserAddress[];
         const loadedPayments = (paysRes.data || []) as UserPaymentProfile[];
-        
+
         setAddresses(loadedAddresses);
         setPayments(loadedPayments);
 
         // Preseleccionar perfiles predeterminados
-        const defShip = loadedAddresses.find((a) => a.tipo === 'envio' && a.es_predeterminada) || 
-                        loadedAddresses.find((a) => a.tipo === 'envio');
+        const defShip =
+          loadedAddresses.find(
+            a => a.tipo === 'envio' && a.es_predeterminada
+          ) || loadedAddresses.find(a => a.tipo === 'envio');
         if (defShip) {
           setSelectedShipId(defShip.id);
           setShipping({
@@ -141,11 +145,12 @@ export default function CheckoutPage() {
             direccion2: defShip.direccion2 || '',
             ciudad: defShip.ciudad,
             departamento: defShip.departamento,
-            codigoPostal: defShip.codigo_postal || ''
+            codigoPostal: defShip.codigo_postal || '',
           });
         }
 
-        const defPay = loadedPayments.find((p) => p.es_predeterminada) || loadedPayments[0];
+        const defPay =
+          loadedPayments.find(p => p.es_predeterminada) || loadedPayments[0];
         if (defPay) {
           setSelectedPayId(defPay.id);
           setPaymentMethod(defPay.metodo);
@@ -180,7 +185,7 @@ export default function CheckoutPage() {
       ciudad: address.ciudad,
       departamento: address.departamento,
       codigoPostal: address.codigo_postal || '',
-      telefono: address.telefono || ''
+      telefono: address.telefono || '',
     });
   };
 
@@ -192,7 +197,12 @@ export default function CheckoutPage() {
   const canProceed = () => {
     if (currentStep === 'resumen') return true;
     if (currentStep === 'envio') {
-      return shipping.nombre && shipping.direccion && shipping.ciudad && shipping.departamento;
+      return (
+        shipping.nombre &&
+        shipping.direccion &&
+        shipping.ciudad &&
+        shipping.departamento
+      );
     }
     if (currentStep === 'pago') {
       if (paymentMethod === 'tarjeta') {
@@ -217,7 +227,7 @@ export default function CheckoutPage() {
 
   const processOrder = async () => {
     setLoading(true);
-    
+
     // Simular procesamiento
     setTimeout(() => {
       setLoading(false);
@@ -229,29 +239,42 @@ export default function CheckoutPage() {
 
   // Renderizado de pasos
   const renderResumen = () => (
-    <div className="card card-hover">
-      <div className="card-body">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">📋 Resumen de tu compra</h2>
-        
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold mb-4">🛍️ Productos ({items.length})</h3>
+    <div className='card card-hover'>
+      <div className='card-body'>
+        <h2 className='text-2xl font-bold text-gray-900 mb-6'>
+          📋 Resumen de tu compra
+        </h2>
+
+        <div className='space-y-4'>
+          <h3 className='text-lg font-semibold mb-4'>
+            🛍️ Productos ({items.length})
+          </h3>
           {items.map((item, index) => (
-            <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center space-x-3">
-                <img src={item.imagenUrl || ''} alt={item.nombre} className="w-12 h-12 rounded object-cover" />
+            <div
+              key={index}
+              className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'
+            >
+              <div className='flex items-center space-x-3'>
+                <img
+                  src={item.imagenUrl || ''}
+                  alt={item.nombre}
+                  className='w-12 h-12 rounded object-cover'
+                />
                 <div>
-                  <p className="font-medium">{item.nombre}</p>
-                  <p className="text-sm text-gray-600">Cantidad: {item.cantidad}</p>
+                  <p className='font-medium'>{item.nombre}</p>
+                  <p className='text-sm text-gray-600'>
+                    Cantidad: {item.cantidad}
+                  </p>
                 </div>
               </div>
-              <p className="font-semibold">${item.precio * item.cantidad}</p>
+              <p className='font-semibold'>${item.precio * item.cantidad}</p>
             </div>
           ))}
-          
-          <div className="border-t pt-4">
-            <div className="flex justify-between text-lg font-bold">
+
+          <div className='border-t pt-4'>
+            <div className='flex justify-between text-lg font-bold'>
               <span>Total:</span>
-              <span className="text-green-600">${total}</span>
+              <span className='text-green-600'>${total}</span>
             </div>
           </div>
         </div>
@@ -260,54 +283,76 @@ export default function CheckoutPage() {
   );
 
   const renderEnvio = () => (
-    <div className="space-y-6">
+    <div className='space-y-6'>
       {/* Direcciones guardadas */}
       {addresses.filter(a => a.tipo === 'envio').length > 0 ? (
-        <div className="card card-hover">
-          <div className="card-body">
-            <h3 className="text-lg font-medium mb-4">🏠 Usar dirección guardada</h3>
-            <div className="space-y-3">
-              {addresses.filter(a => a.tipo === 'envio').map((address) => (
-                <div
-                  key={address.id}
-                  className={`p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-                    selectedShipId === address.id
-                      ? 'border-green-500 bg-green-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                  onClick={() => handleAddressSelect(address)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">{address.nombre}</p>
-                      <p className="text-sm text-gray-600">{address.direccion}</p>
-                      <p className="text-sm text-gray-600">{address.ciudad}, {address.departamento}</p>
-                      {address.telefono && (
-                        <p className="text-sm text-gray-600">Tel: {address.telefono}</p>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      {address.es_predeterminada && (
-                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Predeterminada</span>
-                      )}
-                      {selectedShipId === address.id && (
-                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2">Seleccionada</span>
-                      )}
+        <div className='card card-hover'>
+          <div className='card-body'>
+            <h3 className='text-lg font-medium mb-4'>
+              🏠 Usar dirección guardada
+            </h3>
+            <div className='space-y-3'>
+              {addresses
+                .filter(a => a.tipo === 'envio')
+                .map(address => (
+                  <div
+                    key={address.id}
+                    className={`p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                      selectedShipId === address.id
+                        ? 'border-green-500 bg-green-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    onClick={() => handleAddressSelect(address)}
+                  >
+                    <div className='flex items-center justify-between'>
+                      <div>
+                        <p className='font-medium'>{address.nombre}</p>
+                        <p className='text-sm text-gray-600'>
+                          {address.direccion}
+                        </p>
+                        <p className='text-sm text-gray-600'>
+                          {address.ciudad}, {address.departamento}
+                        </p>
+                        {address.telefono && (
+                          <p className='text-sm text-gray-600'>
+                            Tel: {address.telefono}
+                          </p>
+                        )}
+                      </div>
+                      <div className='text-right'>
+                        {address.es_predeterminada && (
+                          <span className='text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full'>
+                            Predeterminada
+                          </span>
+                        )}
+                        {selectedShipId === address.id && (
+                          <span className='text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2'>
+                            Seleccionada
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           </div>
         </div>
       ) : (
-        <div className="card card-hover">
-          <div className="card-body">
-            <div className="text-center py-4">
-              <Icon category="Usuario" name="RivetIconsSettings" className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-gray-600 mb-2">No tienes direcciones de envío guardadas</p>
-              <p className="text-sm text-gray-500">
-                Puedes guardar direcciones en tu <strong>Perfil → Perfiles guardados</strong> para un checkout más rápido
+        <div className='card card-hover'>
+          <div className='card-body'>
+            <div className='text-center py-4'>
+              <Icon
+                category='Usuario'
+                name='RivetIconsSettings'
+                className='w-8 h-8 text-gray-400 mx-auto mb-2'
+              />
+              <p className='text-gray-600 mb-2'>
+                No tienes direcciones de envío guardadas
+              </p>
+              <p className='text-sm text-gray-500'>
+                Puedes guardar direcciones en tu{' '}
+                <strong>Perfil → Perfiles guardados</strong> para un checkout
+                más rápido
               </p>
             </div>
           </div>
@@ -315,64 +360,74 @@ export default function CheckoutPage() {
       )}
 
       {/* Formulario de envío */}
-      <div className="card card-hover">
-        <div className="card-body">
-          <h3 className="text-lg font-semibold mb-4">📍 Nueva dirección de envío</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="form-label">Nombre completo *</label>
+      <div className='card card-hover'>
+        <div className='card-body'>
+          <h3 className='text-lg font-semibold mb-4'>
+            📍 Nueva dirección de envío
+          </h3>
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div className='space-y-2'>
+              <label className='form-label'>Nombre completo *</label>
               <Input
                 value={shipping.nombre}
-                onChange={(e) => handleShippingChange('nombre', e.target.value)}
-                placeholder="Tu nombre completo"
+                onChange={e => handleShippingChange('nombre', e.target.value)}
+                placeholder='Tu nombre completo'
               />
             </div>
-            <div className="space-y-2">
-              <label className="form-label">Teléfono</label>
+            <div className='space-y-2'>
+              <label className='form-label'>Teléfono</label>
               <Input
                 value={shipping.telefono}
-                onChange={(e) => handleShippingChange('telefono', e.target.value)}
-                placeholder="Tu teléfono"
+                onChange={e => handleShippingChange('telefono', e.target.value)}
+                placeholder='Tu teléfono'
               />
             </div>
-            <div className="md:col-span-2 space-y-2">
-              <label className="form-label">Dirección *</label>
+            <div className='md:col-span-2 space-y-2'>
+              <label className='form-label'>Dirección *</label>
               <Input
                 value={shipping.direccion}
-                onChange={(e) => handleShippingChange('direccion', e.target.value)}
-                placeholder="Dirección principal"
+                onChange={e =>
+                  handleShippingChange('direccion', e.target.value)
+                }
+                placeholder='Dirección principal'
               />
             </div>
-            <div className="md:col-span-2 space-y-2">
-              <label className="form-label">Dirección secundaria</label>
+            <div className='md:col-span-2 space-y-2'>
+              <label className='form-label'>Dirección secundaria</label>
               <Input
                 value={shipping.direccion2}
-                onChange={(e) => handleShippingChange('direccion2', e.target.value)}
-                placeholder="Apartamento, suite, etc. (opcional)"
+                onChange={e =>
+                  handleShippingChange('direccion2', e.target.value)
+                }
+                placeholder='Apartamento, suite, etc. (opcional)'
               />
             </div>
-            <div className="space-y-2">
-              <label className="form-label">Ciudad *</label>
+            <div className='space-y-2'>
+              <label className='form-label'>Ciudad *</label>
               <Input
                 value={shipping.ciudad}
-                onChange={(e) => handleShippingChange('ciudad', e.target.value)}
-                placeholder="Tu ciudad"
+                onChange={e => handleShippingChange('ciudad', e.target.value)}
+                placeholder='Tu ciudad'
               />
             </div>
-            <div className="space-y-2">
-              <label className="form-label">Departamento *</label>
+            <div className='space-y-2'>
+              <label className='form-label'>Departamento *</label>
               <Input
                 value={shipping.departamento}
-                onChange={(e) => handleShippingChange('departamento', e.target.value)}
-                placeholder="Tu departamento"
+                onChange={e =>
+                  handleShippingChange('departamento', e.target.value)
+                }
+                placeholder='Tu departamento'
               />
             </div>
-            <div className="space-y-2">
-              <label className="form-label">Código postal</label>
+            <div className='space-y-2'>
+              <label className='form-label'>Código postal</label>
               <Input
                 value={shipping.codigoPostal}
-                onChange={(e) => handleShippingChange('codigoPostal', e.target.value)}
-                placeholder="Código postal"
+                onChange={e =>
+                  handleShippingChange('codigoPostal', e.target.value)
+                }
+                placeholder='Código postal'
               />
             </div>
           </div>
@@ -380,51 +435,55 @@ export default function CheckoutPage() {
       </div>
 
       {/* Facturación */}
-      <div className="card card-hover">
-        <div className="card-body">
-          <div className="flex items-center space-x-2 mb-4">
+      <div className='card card-hover'>
+        <div className='card-body'>
+          <div className='flex items-center space-x-2 mb-4'>
             <Checkbox
-              id="same-address"
+              id='same-address'
               checked={useSameAddress}
-              onCheckedChange={(checked) => setUseSameAddress(checked as boolean)}
+              onCheckedChange={checked => setUseSameAddress(checked as boolean)}
             />
-            <label htmlFor="same-address" className="text-sm font-medium">
+            <label htmlFor='same-address' className='text-sm font-medium'>
               Usar la misma dirección para facturación
             </label>
           </div>
-          
+
           {!useSameAddress && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="form-label">Nombre para facturación</label>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+              <div className='space-y-2'>
+                <label className='form-label'>Nombre para facturación</label>
                 <Input
                   value={billing.nombre}
-                  onChange={(e) => handleBillingChange('nombre', e.target.value)}
-                  placeholder="Nombre para facturación"
+                  onChange={e => handleBillingChange('nombre', e.target.value)}
+                  placeholder='Nombre para facturación'
                 />
               </div>
-              <div className="md:col-span-2 space-y-2">
-                <label className="form-label">Dirección de facturación</label>
+              <div className='md:col-span-2 space-y-2'>
+                <label className='form-label'>Dirección de facturación</label>
                 <Input
                   value={billing.direccion}
-                  onChange={(e) => handleBillingChange('direccion', e.target.value)}
-                  placeholder="Dirección de facturación"
+                  onChange={e =>
+                    handleBillingChange('direccion', e.target.value)
+                  }
+                  placeholder='Dirección de facturación'
                 />
               </div>
-              <div className="space-y-2">
-                <label className="form-label">Ciudad</label>
+              <div className='space-y-2'>
+                <label className='form-label'>Ciudad</label>
                 <Input
                   value={billing.ciudad}
-                  onChange={(e) => handleBillingChange('ciudad', e.target.value)}
-                  placeholder="Ciudad"
+                  onChange={e => handleBillingChange('ciudad', e.target.value)}
+                  placeholder='Ciudad'
                 />
               </div>
-              <div className="space-y-2">
-                <label className="form-label">Departamento</label>
+              <div className='space-y-2'>
+                <label className='form-label'>Departamento</label>
                 <Input
                   value={billing.departamento}
-                  onChange={(e) => handleBillingChange('departamento', e.target.value)}
-                  placeholder="Departamento"
+                  onChange={e =>
+                    handleBillingChange('departamento', e.target.value)
+                  }
+                  placeholder='Departamento'
                 />
               </div>
             </div>
@@ -435,14 +494,16 @@ export default function CheckoutPage() {
   );
 
   const renderPago = () => (
-    <div className="space-y-6">
+    <div className='space-y-6'>
       {/* Métodos de pago guardados */}
       {payments.length > 0 ? (
-        <div className="card card-hover">
-          <div className="card-body">
-            <h3 className="text-lg font-medium mb-4">💳 Usar método guardado</h3>
-            <div className="space-y-3">
-              {payments.map((payment) => (
+        <div className='card card-hover'>
+          <div className='card-body'>
+            <h3 className='text-lg font-medium mb-4'>
+              💳 Usar método guardado
+            </h3>
+            <div className='space-y-3'>
+              {payments.map(payment => (
                 <div
                   key={payment.id}
                   className={`p-4 border-2 rounded-lg cursor-pointer transition-colors ${
@@ -452,29 +513,38 @@ export default function CheckoutPage() {
                   }`}
                   onClick={() => handlePaymentSelect(payment)}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <Icon 
-                        category="Carrito y checkout" 
-                        name={payment.metodo === 'tarjeta' ? 'StreamlinePlumpPaymentRecieve7Solid' : 'Fa6SolidTruck'} 
-                        className="w-6 h-6" 
+                  <div className='flex items-center justify-between'>
+                    <div className='flex items-center space-x-3'>
+                      <Icon
+                        category='Carrito y checkout'
+                        name={
+                          payment.metodo === 'tarjeta'
+                            ? 'StreamlinePlumpPaymentRecieve7Solid'
+                            : 'Fa6SolidTruck'
+                        }
+                        className='w-6 h-6'
                       />
                       <div>
-                        <p className="font-medium">{payment.etiqueta}</p>
-                        <p className="text-sm text-gray-600">
-                          {payment.metodo === 'tarjeta' && payment.last4 ? 
-                            `•••• ${payment.last4}` : 
-                            payment.metodo === 'contraentrega' ? 'Pago contra entrega' : 'Método guardado'
-                          }
+                        <p className='font-medium'>{payment.etiqueta}</p>
+                        <p className='text-sm text-gray-600'>
+                          {payment.metodo === 'tarjeta' && payment.last4
+                            ? `•••• ${payment.last4}`
+                            : payment.metodo === 'contraentrega'
+                              ? 'Pago contra entrega'
+                              : 'Método guardado'}
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className='text-right'>
                       {payment.es_predeterminada && (
-                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Predeterminado</span>
+                        <span className='text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full'>
+                          Predeterminado
+                        </span>
                       )}
                       {selectedPayId === payment.id && (
-                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2">Seleccionado</span>
+                        <span className='text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2'>
+                          Seleccionado
+                        </span>
                       )}
                     </div>
                   </div>
@@ -484,13 +554,21 @@ export default function CheckoutPage() {
           </div>
         </div>
       ) : (
-        <div className="card card-hover">
-          <div className="card-body">
-            <div className="text-center py-4">
-              <Icon category="Carrito y checkout" name="VaadinWallet" className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-gray-600 mb-2">No tienes métodos de pago guardados</p>
-              <p className="text-sm text-gray-500">
-                Puedes guardar métodos de pago en tu <strong>Perfil → Perfiles guardados</strong> para un checkout más rápido
+        <div className='card card-hover'>
+          <div className='card-body'>
+            <div className='text-center py-4'>
+              <Icon
+                category='Carrito y checkout'
+                name='VaadinWallet'
+                className='w-8 h-8 text-gray-400 mx-auto mb-2'
+              />
+              <p className='text-gray-600 mb-2'>
+                No tienes métodos de pago guardados
+              </p>
+              <p className='text-sm text-gray-500'>
+                Puedes guardar métodos de pago en tu{' '}
+                <strong>Perfil → Perfiles guardados</strong> para un checkout
+                más rápido
               </p>
             </div>
           </div>
@@ -498,22 +576,30 @@ export default function CheckoutPage() {
       )}
 
       {/* Selección de método */}
-      <div className="card card-hover">
-        <div className="card-body">
-          <h3 className="text-lg font-semibold mb-4">💳 Seleccionar método de pago</h3>
-          
-          <div className="space-y-4">
+      <div className='card card-hover'>
+        <div className='card-body'>
+          <h3 className='text-lg font-semibold mb-4'>
+            💳 Seleccionar método de pago
+          </h3>
+
+          <div className='space-y-4'>
             <div
               className={`select-card p-4 ${
                 paymentMethod === 'tarjeta' ? 'selected' : ''
               }`}
               onClick={() => setPaymentMethod('tarjeta')}
             >
-              <div className="flex items-center space-x-3">
-                <Icon category="Carrito y checkout" name="StreamlinePlumpPaymentRecieve7Solid" className="w-6 h-6" />
+              <div className='flex items-center space-x-3'>
+                <Icon
+                  category='Carrito y checkout'
+                  name='StreamlinePlumpPaymentRecieve7Solid'
+                  className='w-6 h-6'
+                />
                 <div>
-                  <p className="font-medium">Tarjeta de crédito/débito</p>
-                  <p className="text-sm text-gray-600">Pago seguro con tarjeta</p>
+                  <p className='font-medium'>Tarjeta de crédito/débito</p>
+                  <p className='text-sm text-gray-600'>
+                    Pago seguro con tarjeta
+                  </p>
                 </div>
               </div>
             </div>
@@ -524,11 +610,17 @@ export default function CheckoutPage() {
               }`}
               onClick={() => setPaymentMethod('contraentrega')}
             >
-              <div className="flex items-center space-x-3">
-                <Icon category="Carrito y checkout" name="Fa6SolidTruck" className="w-6 h-6" />
+              <div className='flex items-center space-x-3'>
+                <Icon
+                  category='Carrito y checkout'
+                  name='Fa6SolidTruck'
+                  className='w-6 h-6'
+                />
                 <div>
-                  <p className="font-medium">Contra entrega</p>
-                  <p className="text-sm text-gray-600">Paga cuando recibas tu pedido</p>
+                  <p className='font-medium'>Contra entrega</p>
+                  <p className='text-sm text-gray-600'>
+                    Paga cuando recibas tu pedido
+                  </p>
                 </div>
               </div>
             </div>
@@ -536,38 +628,40 @@ export default function CheckoutPage() {
 
           {/* Formulario de tarjeta */}
           {paymentMethod === 'tarjeta' && (
-            <div className="mt-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="form-label">Número de tarjeta</label>
+            <div className='mt-6 space-y-4'>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                <div className='space-y-2'>
+                  <label className='form-label'>Número de tarjeta</label>
                   <Input
                     value={card.numero}
-                    onChange={(e) => handleCardChange('numero', e.target.value)}
-                    placeholder="1234 5678 9012 3456"
+                    onChange={e => handleCardChange('numero', e.target.value)}
+                    placeholder='1234 5678 9012 3456'
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="form-label">Nombre en la tarjeta</label>
+                <div className='space-y-2'>
+                  <label className='form-label'>Nombre en la tarjeta</label>
                   <Input
                     value={card.nombre}
-                    onChange={(e) => handleCardChange('nombre', e.target.value)}
-                    placeholder="Como aparece en la tarjeta"
+                    onChange={e => handleCardChange('nombre', e.target.value)}
+                    placeholder='Como aparece en la tarjeta'
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="form-label">Fecha de expiración</label>
+                <div className='space-y-2'>
+                  <label className='form-label'>Fecha de expiración</label>
                   <Input
                     value={card.expiracion}
-                    onChange={(e) => handleCardChange('expiracion', e.target.value)}
-                    placeholder="MM/AA"
+                    onChange={e =>
+                      handleCardChange('expiracion', e.target.value)
+                    }
+                    placeholder='MM/AA'
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="form-label">CVV</label>
+                <div className='space-y-2'>
+                  <label className='form-label'>CVV</label>
                   <Input
                     value={card.cvv}
-                    onChange={(e) => handleCardChange('cvv', e.target.value)}
-                    placeholder="123"
+                    onChange={e => handleCardChange('cvv', e.target.value)}
+                    placeholder='123'
                   />
                 </div>
               </div>
@@ -579,41 +673,54 @@ export default function CheckoutPage() {
   );
 
   const renderConfirmacion = () => (
-    <div className="card card-hover">
-      <div className="card-body">
-        <div className="text-center">
-          <Icon category="Estados y Feedback" name="IconParkSolidSuccess" className="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">¡Casi listo! 🎉</h2>
-          <p className="text-gray-600 mb-6">
-            Revisa que toda la información sea correcta antes de confirmar tu pedido.
+    <div className='card card-hover'>
+      <div className='card-body'>
+        <div className='text-center'>
+          <Icon
+            category='Estados y Feedback'
+            name='IconParkSolidSuccess'
+            className='w-16 h-16 text-green-500 mx-auto mb-4'
+          />
+          <h2 className='text-2xl font-bold text-gray-900 mb-4'>
+            ¡Casi listo! 🎉
+          </h2>
+          <p className='text-gray-600 mb-6'>
+            Revisa que toda la información sea correcta antes de confirmar tu
+            pedido.
           </p>
         </div>
 
-        <div className="space-y-4">
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <h3 className="font-semibold mb-2">📦 Información de envío</h3>
+        <div className='space-y-4'>
+          <div className='p-4 bg-gray-50 rounded-lg'>
+            <h3 className='font-semibold mb-2'>📦 Información de envío</h3>
             <p>{shipping.nombre}</p>
-            <p className="text-sm text-gray-600">{shipping.direccion}</p>
-            <p className="text-sm text-gray-600">{shipping.ciudad}, {shipping.departamento}</p>
+            <p className='text-sm text-gray-600'>{shipping.direccion}</p>
+            <p className='text-sm text-gray-600'>
+              {shipping.ciudad}, {shipping.departamento}
+            </p>
           </div>
 
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <h3 className="font-semibold mb-2">💳 Método de pago</h3>
-            <p>{paymentMethod === 'tarjeta' ? 'Tarjeta de crédito/débito' : 'Contra entrega'}</p>
+          <div className='p-4 bg-gray-50 rounded-lg'>
+            <h3 className='font-semibold mb-2'>💳 Método de pago</h3>
+            <p>
+              {paymentMethod === 'tarjeta'
+                ? 'Tarjeta de crédito/débito'
+                : 'Contra entrega'}
+            </p>
           </div>
 
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <h3 className="font-semibold mb-2">💰 Total a pagar</h3>
-            <p className="text-2xl font-bold text-green-600">${total}</p>
+          <div className='p-4 bg-gray-50 rounded-lg'>
+            <h3 className='font-semibold mb-2'>💰 Total a pagar</h3>
+            <p className='text-2xl font-bold text-green-600'>${total}</p>
           </div>
 
-          <div className="flex items-center space-x-2 mt-6">
+          <div className='flex items-center space-x-2 mt-6'>
             <Checkbox
-              id="agree"
+              id='agree'
               checked={agree}
-              onCheckedChange={(checked) => setAgree(checked as boolean)}
+              onCheckedChange={checked => setAgree(checked as boolean)}
             />
-            <label htmlFor="agree" className="text-sm">
+            <label htmlFor='agree' className='text-sm'>
               Acepto los términos y condiciones de la compra
             </label>
           </div>
@@ -638,60 +745,91 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-120px)] relative overflow-hidden">
+    <div className='min-h-[calc(100vh-120px)] relative overflow-hidden'>
       {/* Decorative auth background */}
       <div
         aria-hidden
-        className="absolute inset-0 opacity-12"
+        className='absolute inset-0 opacity-12'
         style={{
-          backgroundImage: "linear-gradient(to right, rgba(0,0,0,0.04), rgba(0,0,0,0.00)), url('/assert/motif-de-fond-sans-couture-tribal-dessin-geometrique-noir-et-blanc-vecteur/v1045-03.jpg')",
+          backgroundImage:
+            "linear-gradient(to right, rgba(0,0,0,0.04), rgba(0,0,0,0.00)), url('/assert/motif-de-fond-sans-couture-tribal-dessin-geometrique-noir-et-blanc-vecteur/v1045-03.jpg')",
           backgroundSize: 'cover',
-          backgroundPosition: 'center'
+          backgroundPosition: 'center',
         }}
       />
-      
-      <div className="container max-w-6xl mx-auto px-4 py-8 relative z-10">
+
+      <div className='container max-w-6xl mx-auto px-4 py-8 relative z-10'>
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Finalizar compra</h1>
-          <p className="text-gray-600">Completa tu pedido en pocos pasos</p>
+        <div className='text-center mb-8'>
+          <h1 className='text-3xl font-bold text-gray-900 mb-2'>
+            Finalizar compra
+          </h1>
+          <p className='text-gray-600'>Completa tu pedido en pocos pasos</p>
         </div>
 
         {/* Progress bar */}
-        <div className="card card-hover mb-8">
-          <div className="card-body">
-            <div className="flex items-center justify-between">
-              {(['resumen', 'envio', 'pago', 'confirmacion'] as PaymentStep[]).map((step, index) => (
-                <div key={step} className="flex items-center">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium ${
-                    currentStep === step
-                      ? 'bg-green-600 text-white'
-                      : index < ['resumen', 'envio', 'pago', 'confirmacion'].indexOf(currentStep)
-                      ? 'bg-green-100 text-green-600'
-                      : 'bg-gray-100 text-gray-400'
-                  }`}>
-                    {index < ['resumen', 'envio', 'pago', 'confirmacion'].indexOf(currentStep) ? (
-                       <Icon category="Estados y Feedback" name="IconParkSolidSuccess" className="w-4 h-4" />
-                     ) : (
-                       index + 1
-                     )}
+        <div className='card card-hover mb-8'>
+          <div className='card-body'>
+            <div className='flex items-center justify-between'>
+              {(
+                ['resumen', 'envio', 'pago', 'confirmacion'] as PaymentStep[]
+              ).map((step, index) => (
+                <div key={step} className='flex items-center'>
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium ${
+                      currentStep === step
+                        ? 'bg-green-600 text-white'
+                        : index <
+                            [
+                              'resumen',
+                              'envio',
+                              'pago',
+                              'confirmacion',
+                            ].indexOf(currentStep)
+                          ? 'bg-green-100 text-green-600'
+                          : 'bg-gray-100 text-gray-400'
+                    }`}
+                  >
+                    {index <
+                    ['resumen', 'envio', 'pago', 'confirmacion'].indexOf(
+                      currentStep
+                    ) ? (
+                      <Icon
+                        category='Estados y Feedback'
+                        name='IconParkSolidSuccess'
+                        className='w-4 h-4'
+                      />
+                    ) : (
+                      index + 1
+                    )}
                   </div>
-                  <span className={`ml-2 text-sm font-medium ${
-                    currentStep === step || index < ['resumen', 'envio', 'pago', 'confirmacion'].indexOf(currentStep)
-                      ? 'text-green-600'
-                      : 'text-gray-500'
-                  }`}>
+                  <span
+                    className={`ml-2 text-sm font-medium ${
+                      currentStep === step ||
+                      index <
+                        ['resumen', 'envio', 'pago', 'confirmacion'].indexOf(
+                          currentStep
+                        )
+                        ? 'text-green-600'
+                        : 'text-gray-500'
+                    }`}
+                  >
                     {step === 'resumen' && 'Resumen'}
                     {step === 'envio' && 'Envío'}
                     {step === 'pago' && 'Pago'}
                     {step === 'confirmacion' && 'Confirmar'}
                   </span>
                   {index < 3 && (
-                    <div className={`w-16 h-0.5 mx-4 ${
-                      index < ['resumen', 'envio', 'pago', 'confirmacion'].indexOf(currentStep)
-                        ? 'bg-green-600'
-                        : 'bg-gray-200'
-                    }`} />
+                    <div
+                      className={`w-16 h-0.5 mx-4 ${
+                        index <
+                        ['resumen', 'envio', 'pago', 'confirmacion'].indexOf(
+                          currentStep
+                        )
+                          ? 'bg-green-600'
+                          : 'bg-gray-200'
+                      }`}
+                    />
                   )}
                 </div>
               ))}
@@ -700,50 +838,57 @@ export default function CheckoutPage() {
         </div>
 
         {/* Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            {renderStepContent()}
-          </div>
-          
+        <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
+          <div className='lg:col-span-2'>{renderStepContent()}</div>
+
           {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="card card-hover sticky top-8">
-              <div className="card-body">
-                <h3 className="text-lg font-semibold mb-4">🛒 Resumen de compra</h3>
-                
-                <div className="space-y-3 mb-4">
+          <div className='lg:col-span-1'>
+            <div className='card card-hover sticky top-8'>
+              <div className='card-body'>
+                <h3 className='text-lg font-semibold mb-4'>
+                  🛒 Resumen de compra
+                </h3>
+
+                <div className='space-y-3 mb-4'>
                   {items.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">{item.nombre} x{item.cantidad}</span>
-                      <span className="font-medium">${item.precio * item.cantidad}</span>
+                    <div
+                      key={index}
+                      className='flex items-center justify-between text-sm'
+                    >
+                      <span className='text-gray-600'>
+                        {item.nombre} x{item.cantidad}
+                      </span>
+                      <span className='font-medium'>
+                        ${item.precio * item.cantidad}
+                      </span>
                     </div>
                   ))}
                 </div>
-                
-                <div className="border-t pt-4 mb-6">
-                  <div className="flex justify-between text-lg font-bold">
+
+                <div className='border-t pt-4 mb-6'>
+                  <div className='flex justify-between text-lg font-bold'>
                     <span>Total:</span>
-                    <span className="text-green-600">${total}</span>
+                    <span className='text-green-600'>${total}</span>
                   </div>
                 </div>
-                
+
                 {/* Navigation buttons */}
-                <div className="space-y-3">
+                <div className='space-y-3'>
                   {currentStep !== 'resumen' && (
                     <Button
                       onClick={prevStep}
-                      variant="outline"
-                      className="w-full"
+                      variant='outline'
+                      className='w-full'
                     >
                       Atrás
                     </Button>
                   )}
-                  
+
                   {currentStep !== 'confirmacion' ? (
                     <Button
                       onClick={nextStep}
                       disabled={!canProceed()}
-                      className="w-full"
+                      className='w-full'
                     >
                       Continuar
                     </Button>
@@ -751,7 +896,7 @@ export default function CheckoutPage() {
                     <Button
                       onClick={processOrder}
                       disabled={!agree || loading}
-                      className="w-full"
+                      className='w-full'
                     >
                       {loading ? 'Procesando...' : 'Confirmar pedido'}
                     </Button>
@@ -765,5 +910,3 @@ export default function CheckoutPage() {
     </div>
   );
 }
-
-

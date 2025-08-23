@@ -15,12 +15,12 @@ export default defineConfig({
       '@/utils': path.resolve(__dirname, './src/utils'),
       '@/auth': path.resolve(__dirname, './src/auth'),
       '@/modules': path.resolve(__dirname, './src/modules'),
-      '@/pages': path.resolve(__dirname, './src/pages')
-    }
+      '@/pages': path.resolve(__dirname, './src/pages'),
+    },
   },
   server: {
     port: 3000,
-    open: true
+    open: true,
   },
   build: {
     outDir: 'dist',
@@ -30,9 +30,14 @@ export default defineConfig({
         manualChunks: {
           vendor: ['react', 'react-dom'],
           supabase: ['@supabase/supabase-js'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-checkbox', '@radix-ui/react-label', '@radix-ui/react-slot']
-        }
-      }
-    }
-  }
+          ui: [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-checkbox',
+            '@radix-ui/react-label',
+            '@radix-ui/react-slot',
+          ],
+        },
+      },
+    },
+  },
 });

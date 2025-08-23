@@ -139,7 +139,7 @@
   transform: translateY(-3px) scale(1.03);
 }
 
-.selection-card input[type="radio"] {
+.selection-card input[type='radio'] {
   @apply sr-only;
 }
 
@@ -199,11 +199,11 @@
   .payment-progress {
     @apply mb-6;
   }
-  
+
   .form-section {
     @apply space-y-4;
   }
-  
+
   .btn-primary-large {
     @apply py-3 px-6 text-base;
   }
@@ -219,16 +219,20 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { 
+  from {
     opacity: 0;
     transform: translateY(20px);
   }
-  to { 
+  to {
     opacity: 1;
     transform: translateY(0);
   }
@@ -286,8 +290,17 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle at 20% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
-              radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+  background:
+    radial-gradient(
+      circle at 20% 80%,
+      rgba(16, 185, 129, 0.1) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 20%,
+      rgba(59, 130, 246, 0.1) 0%,
+      transparent 50%
+    );
   z-index: -1;
   pointer-events: none;
 }
@@ -324,23 +337,23 @@
   .container {
     @apply px-4;
   }
-  
+
   .grid {
     @apply grid-cols-1 gap-4;
   }
-  
+
   .form-card {
     @apply p-6;
   }
-  
+
   .btn-primary-large {
     @apply py-4 px-6 text-base;
   }
-  
+
   .payment-step-circle {
     @apply w-10 h-10 text-xs;
   }
-  
+
   .payment-step-label {
     @apply text-xs;
   }

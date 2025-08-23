@@ -8,6 +8,10 @@ import { Landing } from './Landing';
 import { CartProvider } from './buyer/CartContext';
 import { ToastProvider } from '@/components/ui/ToastProvider';
 import { Toaster } from '@/components/ui/shadcn/toaster';
+import PerformanceDashboard from '@/components/ui/PerformanceDashboard';
+import DatabaseDashboard from '@/components/ui/DatabaseDashboard';
+import { PageErrorBoundary } from '@/components/ui/ErrorBoundary';
+import { CacheProvider, CacheStatusIndicator } from '@/components/cache/CacheProvider';
 
 // Lazy load pages for better performance
 const AuthPage = lazy(() => import('@/pages/Auth'));
@@ -43,128 +47,199 @@ const BuyerProfilesManager = lazy(() => import('./buyer/ProfilesManager'));
 
 // Loading component
 const LoadingSpinner = () => (
-  <div className="container py-10 flex items-center justify-center">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-    <span className="ml-2">Cargando…</span>
+  <div className='container py-10 flex items-center justify-center'>
+    <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
+    <span className='ml-2'>Cargando…</span>
   </div>
 );
 
 export const App: React.FC = () => (
-  <AuthProvider>
-    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true } as unknown as FutureConfig}>
-      <CartProvider>
-        <ToastProvider>
-          <MainLayout>
-            <Suspense fallback={<LoadingSpinner />}>
-              <Routes>
+  <PageErrorBoundary>
+    <CacheProvider>
+      <AuthProvider>
+      <BrowserRouter
+        future={
+          {
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          } as unknown as FutureConfig
+        }
+      >
+        <CartProvider>
+          <ToastProvider>
+            <MainLayout>
+              <Suspense fallback={<LoadingSpinner />}>
+                <Routes>
                 {/* Public routes */}
-                <Route path="/" element={<Home />} />
-                <Route path="/productos" element={<ProductCatalog />} />
-                <Route path="/productos/:id" element={<ProductDetail />} />
-                <Route path="/demo" element={<Landing />} />
-                <Route path="/auth" element={<AuthPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/verifica-tu-correo" element={<VerifyEmailPage />} />
-                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                <Route path="/reset-password" element={<ResetPasswordPage />} />
-                
+                <Route path='/' element={<Home />} />
+                <Route path='/productos' element={<ProductCatalog />} />
+                <Route path='/productos/:id' element={<ProductDetail />} />
+                <Route path='/demo' element={<Landing />} />
+                <Route path='/auth' element={<AuthPage />} />
+                <Route path='/login' element={<LoginPage />} />
+                <Route path='/register' element={<RegisterPage />} />
+                <Route
+                  path='/verifica-tu-correo'
+                  element={<VerifyEmailPage />}
+                />
+                <Route
+                  path='/forgot-password'
+                  element={<ForgotPasswordPage />}
+                />
+                <Route path='/reset-password' element={<ResetPasswordPage />} />
+
                 {/* Protected buyer routes */}
-                <Route path="/carrito" element={
-                  <ProtectedRoute roles={["comprador"]}>
-                    <CartPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="/pagar" element={
-                  <ProtectedRoute roles={["comprador"]}>
-                    <CheckoutPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="/checkout" element={
-                  <ProtectedRoute roles={["comprador"]}>
-                    <CheckoutPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="/recibo/:id" element={
-                  <ProtectedRoute roles={["comprador","admin"]}>
-                    <OrderReceiptPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="/pedido/:id" element={
-                  <ProtectedRoute roles={["comprador","admin"]}>
-                    <OrderDetailPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="/mis-pedidos" element={
-                  <ProtectedRoute roles={["comprador"]}>
-                    <MyOrdersPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="/mis-calificaciones" element={
-                  <ProtectedRoute roles={["comprador"]}>
-                    <ReviewsPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="/perfil" element={
-                  <ProtectedRoute roles={["comprador"]}>
-                    <BuyerProfile />
-                  </ProtectedRoute>
-                } />
-                <Route path="/perfil/perfiles" element={
-                  <ProtectedRoute roles={["comprador"]}>
-                    <BuyerProfilesManager />
-                  </ProtectedRoute>
-                } />
-                
+                <Route
+                  path='/carrito'
+                  element={
+                    <ProtectedRoute roles={['comprador']}>
+                      <CartPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path='/pagar'
+                  element={
+                    <ProtectedRoute roles={['comprador']}>
+                      <CheckoutPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path='/checkout'
+                  element={
+                    <ProtectedRoute roles={['comprador']}>
+                      <CheckoutPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path='/recibo/:id'
+                  element={
+                    <ProtectedRoute roles={['comprador', 'admin']}>
+                      <OrderReceiptPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path='/pedido/:id'
+                  element={
+                    <ProtectedRoute roles={['comprador', 'admin']}>
+                      <OrderDetailPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path='/mis-pedidos'
+                  element={
+                    <ProtectedRoute roles={['comprador']}>
+                      <MyOrdersPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path='/mis-calificaciones'
+                  element={
+                    <ProtectedRoute roles={['comprador']}>
+                      <ReviewsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path='/perfil'
+                  element={
+                    <ProtectedRoute roles={['comprador']}>
+                      <BuyerProfile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path='/perfil/perfiles'
+                  element={
+                    <ProtectedRoute roles={['comprador']}>
+                      <BuyerProfilesManager />
+                    </ProtectedRoute>
+                  }
+                />
+
                 {/* Protected admin routes */}
-                <Route path="/admin" element={
-                  <ProtectedRoute roles={["admin"]}>
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/categorias" element={
-                  <ProtectedRoute roles={["admin"]}>
-                    <CategoriesAdmin />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/usuarios" element={
-                  <ProtectedRoute roles={["admin"]}>
-                    <UsersAdmin />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/moderacion" element={
-                  <ProtectedRoute roles={["admin"]}>
-                    <ModerationAdmin />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/metricas" element={
-                  <ProtectedRoute roles={["admin"]}>
-                    <MetricsAdmin />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/auditoria" element={
-                  <ProtectedRoute roles={["admin"]}>
-                    <AuditLogAdmin />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/configuracion" element={
-                  <ProtectedRoute roles={["admin"]}>
-                    <AdminSettings />
-                  </ProtectedRoute>
-                } />
-                
+                <Route
+                  path='/admin'
+                  element={
+                    <ProtectedRoute roles={['admin']}>
+                      <AdminDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path='/admin/categorias'
+                  element={
+                    <ProtectedRoute roles={['admin']}>
+                      <CategoriesAdmin />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path='/admin/usuarios'
+                  element={
+                    <ProtectedRoute roles={['admin']}>
+                      <UsersAdmin />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path='/admin/moderacion'
+                  element={
+                    <ProtectedRoute roles={['admin']}>
+                      <ModerationAdmin />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path='/admin/metricas'
+                  element={
+                    <ProtectedRoute roles={['admin']}>
+                      <MetricsAdmin />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path='/admin/auditoria'
+                  element={
+                    <ProtectedRoute roles={['admin']}>
+                      <AuditLogAdmin />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path='/admin/configuracion'
+                  element={
+                    <ProtectedRoute roles={['admin']}>
+                      <AdminSettings />
+                    </ProtectedRoute>
+                  }
+                />
+
                 {/* Protected vendor routes */}
-                <Route path="/vendedor" element={
-                  <ProtectedRoute roles={["vendedor"]}>
-                    <VendorDashboard />
-                  </ProtectedRoute>
-                } />
+                <Route
+                  path='/vendedor'
+                  element={
+                    <ProtectedRoute roles={['vendedor']}>
+                      <VendorDashboard />
+                    </ProtectedRoute>
+                  }
+                />
               </Routes>
             </Suspense>
           </MainLayout>
-          <Toaster position="top-right" richColors closeButton />
+          <Toaster position='top-right' richColors closeButton />
+          <PerformanceDashboard />
+          <DatabaseDashboard />
+          <CacheStatusIndicator />
         </ToastProvider>
       </CartProvider>
     </BrowserRouter>
   </AuthProvider>
+  </CacheProvider>
+  </PageErrorBoundary>
 );

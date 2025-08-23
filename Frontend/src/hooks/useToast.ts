@@ -3,7 +3,18 @@ import { toast } from 'sonner';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 export type AppRole = 'admin' | 'vendedor' | 'comprador' | undefined;
-export type ToastAction = 'register' | 'login' | 'purchase' | 'sale' | 'update' | 'delete' | 'approve' | 'reject' | 'ship' | 'cancel' | 'generic';
+export type ToastAction =
+  | 'register'
+  | 'login'
+  | 'purchase'
+  | 'sale'
+  | 'update'
+  | 'delete'
+  | 'approve'
+  | 'reject'
+  | 'ship'
+  | 'cancel'
+  | 'generic';
 
 export interface ToastOptions {
   type?: ToastType;
@@ -25,19 +36,23 @@ const ACTION_TEXT_MAP: Record<ToastAction, string> = {
   reject: 'Rechazo',
   ship: 'Envío',
   cancel: 'Cancelación',
-  generic: 'Notificación'
+  generic: 'Notificación',
 };
 
 const ROLE_TEXT_MAP: Record<NonNullable<AppRole>, string> = {
   admin: 'Administrador',
   vendedor: 'Vendedor',
-  comprador: 'Comprador'
+  comprador: 'Comprador',
 };
 
-function getDefaultTitle(role: AppRole, action?: ToastAction, type?: ToastType): string {
+function getDefaultTitle(
+  role: AppRole,
+  action?: ToastAction,
+  type?: ToastType
+): string {
   const actionText = action ? ACTION_TEXT_MAP[action] : 'Notificación';
   const roleText = role ? ROLE_TEXT_MAP[role] : 'Usuario';
-  
+
   if (type === 'error') return `${actionText} (${roleText}) - Error`;
   if (type === 'success') return `${actionText} (${roleText}) - Éxito`;
   return `${actionText} (${roleText})`;
@@ -64,28 +79,40 @@ export const useToast = () => {
     }
   }, []);
 
-  const success = useCallback((message: string, opts?: Omit<ToastOptions, 'message' | 'type'>) => {
-    notify({ ...opts, type: 'success', message });
-  }, [notify]);
+  const success = useCallback(
+    (message: string, opts?: Omit<ToastOptions, 'message' | 'type'>) => {
+      notify({ ...opts, type: 'success', message });
+    },
+    [notify]
+  );
 
-  const error = useCallback((message: string, opts?: Omit<ToastOptions, 'message' | 'type'>) => {
-    notify({ ...opts, type: 'error', message });
-  }, [notify]);
+  const error = useCallback(
+    (message: string, opts?: Omit<ToastOptions, 'message' | 'type'>) => {
+      notify({ ...opts, type: 'error', message });
+    },
+    [notify]
+  );
 
-  const info = useCallback((message: string, opts?: Omit<ToastOptions, 'message' | 'type'>) => {
-    notify({ ...opts, type: 'info', message });
-  }, [notify]);
+  const info = useCallback(
+    (message: string, opts?: Omit<ToastOptions, 'message' | 'type'>) => {
+      notify({ ...opts, type: 'info', message });
+    },
+    [notify]
+  );
 
-  const warning = useCallback((message: string, opts?: Omit<ToastOptions, 'message' | 'type'>) => {
-    notify({ ...opts, type: 'warning', message });
-  }, [notify]);
+  const warning = useCallback(
+    (message: string, opts?: Omit<ToastOptions, 'message' | 'type'>) => {
+      notify({ ...opts, type: 'warning', message });
+    },
+    [notify]
+  );
 
   return {
     notify,
     success,
     error,
     info,
-    warning
+    warning,
   };
 };
 
@@ -93,49 +120,64 @@ export const useToast = () => {
 import { useAuth } from '@/auth/AuthContext';
 export const useToastWithAuth = () => {
   const { user } = useAuth();
-  
-  const notify = useCallback((opts: ToastOptions) => {
-    const role: AppRole = opts.role ?? (user?.role as AppRole);
-    const type: ToastType = opts.type ?? 'info';
-    const title = opts.title ?? getDefaultTitle(role, opts.action, type);
-    const duration = opts.durationMs ?? (type === 'error' ? 6000 : 4000);
 
-    switch (type) {
-      case 'error':
-        toast.error(title, { description: opts.message, duration });
-        break;
-      case 'success':
-        toast.success(title, { description: opts.message, duration });
-        break;
-      case 'warning':
-        toast(title, { description: opts.message, duration });
-        break;
-      default:
-        toast(title, { description: opts.message, duration });
-    }
-  }, [user?.role]);
+  const notify = useCallback(
+    (opts: ToastOptions) => {
+      const role: AppRole = opts.role ?? (user?.role as AppRole);
+      const type: ToastType = opts.type ?? 'info';
+      const title = opts.title ?? getDefaultTitle(role, opts.action, type);
+      const duration = opts.durationMs ?? (type === 'error' ? 6000 : 4000);
 
-  const success = useCallback((message: string, opts?: Omit<ToastOptions, 'message' | 'type'>) => {
-    notify({ ...opts, type: 'success', message });
-  }, [notify]);
+      switch (type) {
+        case 'error':
+          toast.error(title, { description: opts.message, duration });
+          break;
+        case 'success':
+          toast.success(title, { description: opts.message, duration });
+          break;
+        case 'warning':
+          toast(title, { description: opts.message, duration });
+          break;
+        default:
+          toast(title, { description: opts.message, duration });
+      }
+    },
+    [user?.role]
+  );
 
-  const error = useCallback((message: string, opts?: Omit<ToastOptions, 'message' | 'type'>) => {
-    notify({ ...opts, type: 'error', message });
-  }, [notify]);
+  const success = useCallback(
+    (message: string, opts?: Omit<ToastOptions, 'message' | 'type'>) => {
+      notify({ ...opts, type: 'success', message });
+    },
+    [notify]
+  );
 
-  const info = useCallback((message: string, opts?: Omit<ToastOptions, 'message' | 'type'>) => {
-    notify({ ...opts, type: 'info', message });
-  }, [notify]);
+  const error = useCallback(
+    (message: string, opts?: Omit<ToastOptions, 'message' | 'type'>) => {
+      notify({ ...opts, type: 'error', message });
+    },
+    [notify]
+  );
 
-  const warning = useCallback((message: string, opts?: Omit<ToastOptions, 'message' | 'type'>) => {
-    notify({ ...opts, type: 'warning', message });
-  }, [notify]);
+  const info = useCallback(
+    (message: string, opts?: Omit<ToastOptions, 'message' | 'type'>) => {
+      notify({ ...opts, type: 'info', message });
+    },
+    [notify]
+  );
+
+  const warning = useCallback(
+    (message: string, opts?: Omit<ToastOptions, 'message' | 'type'>) => {
+      notify({ ...opts, type: 'warning', message });
+    },
+    [notify]
+  );
 
   return {
     notify,
     success,
     error,
     info,
-    warning
+    warning,
   };
 };

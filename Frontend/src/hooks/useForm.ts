@@ -7,9 +7,9 @@ export interface FormField<T> {
   touched: boolean;
 }
 
-export interface FormState<T> {
+export type FormState<T> = {
   [K in keyof T]: FormField<T[K]>;
-}
+};
 
 export interface UseFormOptions<T> {
   initialValues: T;

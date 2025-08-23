@@ -5,83 +5,144 @@ import { useCart } from '@/modules/buyer/CartContext';
 import Icon from '@/components/ui/Icon';
 
 const MobileTabBar: React.FC = () => {
-	const location = useLocation();
-	const { user } = useAuth();
-	const { items } = useCart();
-	const cartCount = items.reduce((sum, i) => sum + (i.cantidad || 0), 0);
+  const location = useLocation();
+  const { user } = useAuth();
+  const { items } = useCart();
+  const cartCount = items.reduce((sum, i) => sum + (i.cantidad || 0), 0);
 
-	const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => location.pathname === path;
 
-	const isBuyer = user?.role === 'comprador';
-	const vendorState = (user as any)?.vendedor_estado as 'aprobado' | 'pendiente' | 'rechazado' | undefined;
-	const isVendorApproved = user?.role === 'vendedor' && vendorState === 'aprobado';
-	const isAdmin = user?.role === 'admin';
+  const isBuyer = user?.role === 'comprador';
+  const vendorState = (user as any)?.vendedor_estado as
+    | 'aprobado'
+    | 'pendiente'
+    | 'rechazado'
+    | undefined;
+  const isVendorApproved =
+    user?.role === 'vendedor' && vendorState === 'aprobado';
+  const isAdmin = user?.role === 'admin';
 
-	// Construcción dinámica de tabs según estado/auth/rol
-	const tabs: Array<{ path: string; label: string; icon: { category: string; name: string }; showBadge?: boolean; onClick?: () => void }> = [];
+  // Construcción dinámica de tabs según estado/auth/rol
+  const tabs: Array<{
+    path: string;
+    label: string;
+    icon: { category: string; name: string };
+    showBadge?: boolean;
+    onClick?: () => void;
+  }> = [];
 
+  // Siempre presentes: solo 2 fijos + 1 de cuenta/perfil según estado
+  tabs.push({
+    path: '/',
+    label: 'Inicio',
+    icon: { category: 'Navegación principal', name: 'MdiHome' },
+  });
+  tabs.push({
+    path: '/productos',
+    label: 'Productos',
+    icon: { category: 'Navegación principal', name: 'MdiGrid' },
+  });
 
-	// Siempre presentes: solo 2 fijos + 1 de cuenta/perfil según estado
-	tabs.push({ path: '/', label: 'Inicio', icon: { category: 'Navegación principal', name: 'MdiHome' } });
-	tabs.push({ path: '/productos', label: 'Productos', icon: { category: 'Navegación principal', name: 'MdiGrid' } });
+  // Tercera pestaña: solo si hay usuario; si no hay sesión, dejamos 2 tabs (Inicio, Productos)
+  if (user) {
+    if (isBuyer) {
+      // Comprador: Perfil
+      tabs.push({
+        path: '/perfil',
+        label: 'Perfil',
+        icon: { category: 'Usuario', name: 'IconamoonProfileFill' },
+      });
+    } else if (user.role === 'vendedor') {
+      // Vendedor: Mostrar acción relevante
+      if (isVendorApproved) {
+        // Aprobado -> Vender (dashboard)
+        tabs.push({
+          path: '/vendedor',
+          label: 'Vender',
+          icon: { category: 'Vendedor', name: 'MaterialSymbolsDashboard' },
+        });
+      } else if (vendorState === 'pendiente') {
+        // Pendiente -> Estado
+        tabs.push({
+          path: '/vendedor',
+          label: 'Estado',
+          icon: {
+            category: 'Estados y Feedback',
+            name: 'IconoirWarningSquare',
+          },
+        });
+      } else {
+        // Rechazado/sin estado -> Postularme
+        tabs.push({
+          path: '/auth',
+          label: 'Postularme',
+          icon: { category: 'Usuario', name: 'RivetIconsSettings' },
+        });
+      }
+    } else if (isAdmin) {
+      // Admin: Admin
+      tabs.push({
+        path: '/admin',
+        label: 'Admin',
+        icon: { category: 'Administrador', name: 'RivetIconsSettings' },
+      });
+    } else {
+      // Fallback autenticado sin rol reconocido: Perfil
+      tabs.push({
+        path: '/perfil',
+        label: 'Perfil',
+        icon: { category: 'Usuario', name: 'IconamoonProfileFill' },
+      });
+    }
+  }
 
-	// Tercera pestaña: solo si hay usuario; si no hay sesión, dejamos 2 tabs (Inicio, Productos)
-	if (user) {
-		if (isBuyer) {
-			// Comprador: Perfil
-			tabs.push({ path: '/perfil', label: 'Perfil', icon: { category: 'Usuario', name: 'IconamoonProfileFill' } });
-		} else if (user.role === 'vendedor') {
-			// Vendedor: Mostrar acción relevante
-			if (isVendorApproved) {
-				// Aprobado -> Vender (dashboard)
-				tabs.push({ path: '/vendedor', label: 'Vender', icon: { category: 'Vendedor', name: 'MaterialSymbolsDashboard' } });
-			} else if (vendorState === 'pendiente') {
-				// Pendiente -> Estado
-				tabs.push({ path: '/vendedor', label: 'Estado', icon: { category: 'Estados y Feedback', name: 'IconoirWarningSquare' } });
-			} else {
-				// Rechazado/sin estado -> Postularme
-				tabs.push({ path: '/auth', label: 'Postularme', icon: { category: 'Usuario', name: 'RivetIconsSettings' } });
-			}
-		} else if (isAdmin) {
-			// Admin: Admin
-			tabs.push({ path: '/admin', label: 'Admin', icon: { category: 'Administrador', name: 'RivetIconsSettings' } });
-		} else {
-			// Fallback autenticado sin rol reconocido: Perfil
-			tabs.push({ path: '/perfil', label: 'Perfil', icon: { category: 'Usuario', name: 'IconamoonProfileFill' } });
-		}
-	}
+  // Normalización: evitar duplicados exactos (por path+label) y recortar a 3
+  const seen = new Set<string>();
+  const normalized = tabs
+    .filter(t => {
+      const key = `${t.path}|${t.label}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 3);
 
-	// Normalización: evitar duplicados exactos (por path+label) y recortar a 3
-	const seen = new Set<string>();
-	const normalized = tabs.filter(t => {
-		const key = `${t.path}|${t.label}`;
-		if (seen.has(key)) return false;
-		seen.add(key);
-		return true;
-	}).slice(0, 3);
-
-	return (
-		<nav className="mobile-tabbar md:hidden" role="navigation" aria-label="Navegación inferior">
-			<ul className="mobile-tabbar-list">
-				{normalized.map((t) => (
-					<li key={`${t.path}|${t.label}`}>
-							<Link to={t.path} className={`mobile-tabbar-item ${isActive(t.path) ? 'active' : ''}`}>
-							<div className="relative">
-								<Icon category={t.icon.category} name={t.icon.name} className="w-6 h-6" />
-								{t.showBadge && cartCount > 0 && (
-									<span className="badge-count" aria-label={`${cartCount} artículos en el carrito`}>{cartCount}</span>
-								)}
-							</div>
-							<span className="label">{t.label}</span>
-						</Link>
-					</li>
-				))}
-			</ul>
-			<div className="safe-bottom" />
-		</nav>
-	);
+  return (
+    <nav
+      className='mobile-tabbar md:hidden'
+      role='navigation'
+      aria-label='Navegación inferior'
+    >
+      <ul className='mobile-tabbar-list'>
+        {normalized.map(t => (
+          <li key={`${t.path}|${t.label}`}>
+            <Link
+              to={t.path}
+              className={`mobile-tabbar-item ${isActive(t.path) ? 'active' : ''}`}
+            >
+              <div className='relative'>
+                <Icon
+                  category={t.icon.category}
+                  name={t.icon.name}
+                  className='w-6 h-6'
+                />
+                {t.showBadge && cartCount > 0 && (
+                  <span
+                    className='badge-count'
+                    aria-label={`${cartCount} artículos en el carrito`}
+                  >
+                    {cartCount}
+                  </span>
+                )}
+              </div>
+              <span className='label'>{t.label}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <div className='safe-bottom' />
+    </nav>
+  );
 };
 
 export default MobileTabBar;
-
-

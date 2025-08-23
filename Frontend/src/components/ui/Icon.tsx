@@ -9,15 +9,22 @@ interface IconProps {
   height?: number | string;
 }
 
-export const Icon: React.FC<IconProps> = ({ category, name, className, alt, width, height }) => {
+export const Icon: React.FC<IconProps> = ({
+  category,
+  name,
+  className,
+  alt,
+  width,
+  height,
+}) => {
   // Aliases para mapear nombres lógicos a archivos reales en /public
   const ICON_ALIASES: Record<string, Record<string, string>> = {
-    'Administrador': {
+    Administrador: {
       // Navegación/Secciones
-      'Users': 'TablerUsers',
-      'Gavel': 'FluentGavel32Filled',
-      'BarChart3': 'SimpleIconsGoogleanalytics',
-      'History': 'LucideFileClock',
+      Users: 'TablerUsers',
+      Gavel: 'FluentGavel32Filled',
+      BarChart3: 'SimpleIconsGoogleanalytics',
+      History: 'LucideFileClock',
     },
   };
 
@@ -35,7 +42,7 @@ export const Icon: React.FC<IconProps> = ({ category, name, className, alt, widt
       className={className}
       width={width}
       height={height}
-      onError={(e) => {
+      onError={e => {
         const target = e.currentTarget as HTMLImageElement;
         if (target.src.endsWith('.svg')) {
           target.src = '/favicon.svg';
@@ -46,5 +53,3 @@ export const Icon: React.FC<IconProps> = ({ category, name, className, alt, widt
 };
 
 export default Icon;
-
-

@@ -8,18 +8,30 @@
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <meta name="color-scheme" content="light dark" />
     <!-- Dynamic theme-color for light/dark -->
-    <meta name="theme-color" content="#F5F7F7" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#2E3440" media="(prefers-color-scheme: dark)">
+    <meta
+      name="theme-color"
+      content="#F5F7F7"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#2E3440"
+      media="(prefers-color-scheme: dark)"
+    />
     <script>
       // Apply saved theme early to avoid FOUC
-      (function(){
+      (function () {
         try {
           const saved = localStorage.getItem('theme');
           const root = document.documentElement;
-          root.classList.remove('nord-dark','nord-light');
+          root.classList.remove('nord-dark', 'nord-light');
           if (saved === 'nord-dark') root.classList.add('nord-dark');
           else if (saved === 'nord-light') root.classList.add('nord-light');
-          else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) root.classList.add('nord-dark');
+          else if (
+            window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches
+          )
+            root.classList.add('nord-dark');
         } catch {}
       })();
     </script>

@@ -9,17 +9,19 @@ import { Input } from '@/components/ui/shadcn/input';
 import { Label } from '@/components/ui/shadcn/label';
 import { Button } from '@/components/ui/shadcn/button';
 
-const loginSchema = z.object({ 
-  email: z.string().email('Email inválido'), 
-  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres') 
+const loginSchema = z.object({
+  email: z.string().email('Email inválido'),
+  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
 });
 
-const signupSchema = loginSchema.extend({
-  confirmPassword: z.string()
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Las contraseñas no coinciden",
-  path: ["confirmPassword"]
-});
+const signupSchema = loginSchema
+  .extend({
+    confirmPassword: z.string(),
+  })
+  .refine(data => data.password === data.confirmPassword, {
+    message: 'Las contraseñas no coinciden',
+    path: ['confirmPassword'],
+  });
 
 type LoginForm = z.infer<typeof loginSchema>;
 type SignupForm = z.infer<typeof signupSchema>;
@@ -28,7 +30,9 @@ interface AuthFormsProps {
   defaultMode?: 'login' | 'signup';
 }
 
-export const AuthForms: React.FC<AuthFormsProps> = ({ defaultMode = 'login' }) => {
+export const AuthForms: React.FC<AuthFormsProps> = ({
+  defaultMode = 'login',
+}) => {
   const [mode, setMode] = useState<'login' | 'signup'>(defaultMode);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
@@ -37,51 +41,51 @@ export const AuthForms: React.FC<AuthFormsProps> = ({ defaultMode = 'login' }) =
   const loginForm = useForm<LoginForm>({
     initialValues: { email: '', password: '' },
     validationSchema: loginSchema,
-    onSubmit: async (values) => {
+    onSubmit: async values => {
       try {
         const result = await signIn(values.email, values.password);
         if (result.error) {
-          toast.error('Error en el inicio de sesión', { 
-            action: 'login' 
+          toast.error('Error en el inicio de sesión', {
+            action: 'login',
           });
         } else {
-          toast.success('Inicio de sesión exitoso', { 
-            action: 'login' 
+          toast.success('Inicio de sesión exitoso', {
+            action: 'login',
           });
           navigate('/dashboard');
         }
       } catch (error: any) {
-        toast.error('Error inesperado', { 
-          action: 'login' 
+        toast.error('Error inesperado', {
+          action: 'login',
         });
       }
-    }
+    },
   });
 
   const signupForm = useForm<SignupForm>({
     initialValues: { email: '', password: '', confirmPassword: '' },
     validationSchema: signupSchema,
-    onSubmit: async (values) => {
+    onSubmit: async values => {
       try {
         const result = await signUp(values.email, values.password);
         if (result.error) {
-          toast.error('Error en el registro', { 
-            action: 'register' 
+          toast.error('Error en el registro', {
+            action: 'register',
           });
         } else {
-          toast.success('Registro exitoso', { 
-            action: 'register' 
+          toast.success('Registro exitoso', {
+            action: 'register',
           });
-          navigate('/verify-email', { 
-            state: { email: values.email } 
+          navigate('/verify-email', {
+            state: { email: values.email },
           });
         }
       } catch (error: any) {
-        toast.error('Error inesperado', { 
-          action: 'register' 
+        toast.error('Error inesperado', {
+          action: 'register',
         });
       }
-    }
+    },
   });
 
   const toggleMode = () => {
@@ -89,111 +93,128 @@ export const AuthForms: React.FC<AuthFormsProps> = ({ defaultMode = 'login' }) =
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
-      <div className="card card-hover">
-        <div className="card-body">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-semibold mb-2">
+    <div className='w-full max-w-md mx-auto'>
+      <div className='card card-hover'>
+        <div className='card-body'>
+          <div className='text-center mb-6'>
+            <h2 className='text-2xl font-semibold mb-2'>
               {mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
             </h2>
-            <p className="text-sm opacity-70">
-              {mode === 'login' 
-                ? 'Accede a tu cuenta para continuar' 
-                : 'Únete a nuestra comunidad de artesanos'
-              }
+            <p className='text-sm opacity-70'>
+              {mode === 'login'
+                ? 'Accede a tu cuenta para continuar'
+                : 'Únete a nuestra comunidad de artesanos'}
             </p>
           </div>
 
           {mode === 'login' ? (
-            <form onSubmit={loginForm.handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="login-email">Email</Label>
+            <form onSubmit={loginForm.handleSubmit} className='space-y-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='login-email'>Email</Label>
                 <Input
-                  id="login-email"
-                  type="email"
+                  id='login-email'
+                  type='email'
                   value={loginForm.values.email}
-                  onChange={(e) => loginForm.setValue('email', e.target.value)}
+                  onChange={e => loginForm.setValue('email', e.target.value)}
                   onBlur={() => loginForm.validateField('email')}
-                  placeholder="tu@email.com"
+                  placeholder='tu@email.com'
                   className={loginForm.errors.email ? 'border-red-500' : ''}
                 />
                 {loginForm.errors.email && (
-                  <p className="text-sm text-red-600">{loginForm.errors.email}</p>
+                  <p className='text-sm text-red-600'>
+                    {loginForm.errors.email}
+                  </p>
                 )}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="login-password">Contraseña</Label>
+              <div className='space-y-2'>
+                <Label htmlFor='login-password'>Contraseña</Label>
                 <Input
-                  id="login-password"
-                  type="password"
+                  id='login-password'
+                  type='password'
                   value={loginForm.values.password}
-                  onChange={(e) => loginForm.setValue('password', e.target.value)}
+                  onChange={e => loginForm.setValue('password', e.target.value)}
                   onBlur={() => loginForm.validateField('password')}
-                  placeholder="••••••••"
+                  placeholder='••••••••'
                   className={loginForm.errors.password ? 'border-red-500' : ''}
                 />
                 {loginForm.errors.password && (
-                  <p className="text-sm text-red-600">{loginForm.errors.password}</p>
+                  <p className='text-sm text-red-600'>
+                    {loginForm.errors.password}
+                  </p>
                 )}
               </div>
-              <Button 
-                type="submit" 
-                className="w-full" 
+              <Button
+                type='submit'
+                className='w-full'
                 disabled={loginForm.isSubmitting}
               >
-                {loginForm.isSubmitting ? 'Iniciando sesión…' : 'Iniciar sesión'}
+                {loginForm.isSubmitting
+                  ? 'Iniciando sesión…'
+                  : 'Iniciar sesión'}
               </Button>
             </form>
           ) : (
-            <form onSubmit={signupForm.handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="signup-email">Email</Label>
+            <form onSubmit={signupForm.handleSubmit} className='space-y-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='signup-email'>Email</Label>
                 <Input
-                  id="signup-email"
-                  type="email"
+                  id='signup-email'
+                  type='email'
                   value={signupForm.values.email}
-                  onChange={(e) => signupForm.setValue('email', e.target.value)}
+                  onChange={e => signupForm.setValue('email', e.target.value)}
                   onBlur={() => signupForm.validateField('email')}
-                  placeholder="tu@email.com"
+                  placeholder='tu@email.com'
                   className={signupForm.errors.email ? 'border-red-500' : ''}
                 />
                 {signupForm.errors.email && (
-                  <p className="text-sm text-red-600">{signupForm.errors.email}</p>
+                  <p className='text-sm text-red-600'>
+                    {signupForm.errors.email}
+                  </p>
                 )}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="signup-password">Contraseña</Label>
+              <div className='space-y-2'>
+                <Label htmlFor='signup-password'>Contraseña</Label>
                 <Input
-                  id="signup-password"
-                  type="password"
+                  id='signup-password'
+                  type='password'
                   value={signupForm.values.password}
-                  onChange={(e) => signupForm.setValue('password', e.target.value)}
+                  onChange={e =>
+                    signupForm.setValue('password', e.target.value)
+                  }
                   onBlur={() => signupForm.validateField('password')}
-                  placeholder="••••••••"
+                  placeholder='••••••••'
                   className={signupForm.errors.password ? 'border-red-500' : ''}
                 />
                 {signupForm.errors.password && (
-                  <p className="text-sm text-red-600">{signupForm.errors.password}</p>
+                  <p className='text-sm text-red-600'>
+                    {signupForm.errors.password}
+                  </p>
                 )}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="signup-confirm">Confirmar contraseña</Label>
+              <div className='space-y-2'>
+                <Label htmlFor='signup-confirm'>Confirmar contraseña</Label>
                 <Input
-                  id="signup-confirm"
-                  type="password"
+                  id='signup-confirm'
+                  type='password'
                   value={signupForm.values.confirmPassword}
-                  onChange={(e) => signupForm.setValue('confirmPassword', e.target.value)}
+                  onChange={e =>
+                    signupForm.setValue('confirmPassword', e.target.value)
+                  }
                   onBlur={() => signupForm.validateField('confirmPassword')}
-                  placeholder="••••••••"
-                  className={signupForm.errors.confirmPassword ? 'border-red-500' : ''}
+                  placeholder='••••••••'
+                  className={
+                    signupForm.errors.confirmPassword ? 'border-red-500' : ''
+                  }
                 />
                 {signupForm.errors.confirmPassword && (
-                  <p className="text-sm text-red-600">{signupForm.errors.confirmPassword}</p>
+                  <p className='text-sm text-red-600'>
+                    {signupForm.errors.confirmPassword}
+                  </p>
                 )}
               </div>
-              <Button 
-                type="submit" 
-                className="w-full" 
+              <Button
+                type='submit'
+                className='w-full'
                 disabled={signupForm.isSubmitting}
               >
                 {signupForm.isSubmitting ? 'Creando cuenta…' : 'Crear cuenta'}
@@ -201,24 +222,23 @@ export const AuthForms: React.FC<AuthFormsProps> = ({ defaultMode = 'login' }) =
             </form>
           )}
 
-          <div className="text-center mt-6">
+          <div className='text-center mt-6'>
             <button
-              type="button"
+              type='button'
               onClick={toggleMode}
-              className="text-sm text-(--color-terracotta-suave) hover:underline"
+              className='text-sm text-(--color-terracotta-suave) hover:underline'
             >
-              {mode === 'login' 
-                ? '¿No tienes cuenta? Regístrate aquí' 
-                : '¿Ya tienes cuenta? Inicia sesión aquí'
-              }
+              {mode === 'login'
+                ? '¿No tienes cuenta? Regístrate aquí'
+                : '¿Ya tienes cuenta? Inicia sesión aquí'}
             </button>
           </div>
 
           {mode === 'login' && (
-            <div className="text-center mt-4">
-              <a 
-                href="/forgot-password" 
-                className="text-sm text-(--color-terracotta-suave) hover:underline"
+            <div className='text-center mt-4'>
+              <a
+                href='/forgot-password'
+                className='text-sm text-(--color-terracotta-suave) hover:underline'
               >
                 ¿Olvidaste tu contraseña?
               </a>

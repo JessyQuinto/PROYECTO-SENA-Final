@@ -25,39 +25,82 @@
   --color-ring: var(--color-terracotta-suave);
 
   /* Paleta base clara (actual) */
-  --color-terracotta-suave: #00A67E; /* Primary */
-  --color-ocre-africano: #0F766E;   /* Primary dark */
-  --color-verde-oliva-tenue: #0EA5A5; /* Accent */
-  --color-arena-calida: #FFFFFF;    /* Surfaces */
-  --color-marfil: #F5F7F7;          /* App background */
-  --color-marron-cacao: #101828;    /* Text */
-  --color-carbon-suave: #1F2937;    /* Headings/dark */
+  --color-terracotta-suave: #00a67e; /* Primary */
+  --color-ocre-africano: #0f766e; /* Primary dark */
+  --color-verde-oliva-tenue: #0ea5a5; /* Accent */
+  --color-arena-calida: #ffffff; /* Surfaces */
+  --color-marfil: #f5f7f7; /* App background */
+  --color-marron-cacao: #101828; /* Text */
+  --color-carbon-suave: #1f2937; /* Headings/dark */
 
   /* Mapas de compatibilidad (clases bg-*, text-*) */
-  --color-primary-100: color-mix(in oklab, var(--color-terracotta-suave) 12%, white);
+  --color-primary-100: color-mix(
+    in oklab,
+    var(--color-terracotta-suave) 12%,
+    white
+  );
   --color-primary-600: var(--color-terracotta-suave);
-  --color-primary-500: color-mix(in oklab, var(--color-terracotta-suave) 85%, white);
-  --color-primary-700: color-mix(in oklab, var(--color-terracotta-suave) 85%, black);
-  --color-primary-800: color-mix(in oklab, var(--color-terracotta-suave) 70%, black);
-  --color-secondary-100: color-mix(in oklab, var(--color-ocre-africano) 10%, white);
-  --color-secondary-500: color-mix(in oklab, var(--color-ocre-africano) 85%, white);
+  --color-primary-500: color-mix(
+    in oklab,
+    var(--color-terracotta-suave) 85%,
+    white
+  );
+  --color-primary-700: color-mix(
+    in oklab,
+    var(--color-terracotta-suave) 85%,
+    black
+  );
+  --color-primary-800: color-mix(
+    in oklab,
+    var(--color-terracotta-suave) 70%,
+    black
+  );
+  --color-secondary-100: color-mix(
+    in oklab,
+    var(--color-ocre-africano) 10%,
+    white
+  );
+  --color-secondary-500: color-mix(
+    in oklab,
+    var(--color-ocre-africano) 85%,
+    white
+  );
   --color-secondary-600: var(--color-ocre-africano);
-  --color-secondary-700: color-mix(in oklab, var(--color-ocre-africano) 85%, black);
-  --color-accent-100: color-mix(in oklab, var(--color-verde-oliva-tenue) 12%, white);
+  --color-secondary-700: color-mix(
+    in oklab,
+    var(--color-ocre-africano) 85%,
+    black
+  );
+  --color-accent-100: color-mix(
+    in oklab,
+    var(--color-verde-oliva-tenue) 12%,
+    white
+  );
   --color-accent-500: var(--color-verde-oliva-tenue);
-  --color-accent-600: color-mix(in oklab, var(--color-verde-oliva-tenue) 85%, black);
-  --color-accent-700: color-mix(in oklab, var(--color-verde-oliva-tenue) 70%, black);
+  --color-accent-600: color-mix(
+    in oklab,
+    var(--color-verde-oliva-tenue) 85%,
+    black
+  );
+  --color-accent-700: color-mix(
+    in oklab,
+    var(--color-verde-oliva-tenue) 70%,
+    black
+  );
 
   /* Tipografías */
-  --font-sans: "Manrope", "Noto Sans", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  --font-display: "Manrope", "Noto Serif", Georgia, serif;
+  --font-sans:
+    'Manrope', 'Noto Sans', system-ui, -apple-system, Segoe UI, Roboto,
+    sans-serif;
+  --font-display: 'Manrope', 'Noto Serif', Georgia, serif;
 
   /* Radii y sombras para look moderno (inspiración estilo cards/botones pill) */
   /* Bordes cuadrados por defecto */
   --radius-pill: 0px;
   --radius-lg: 0px;
-  --shadow-soft: 0 1px 2px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.06);
-  --shadow-strong: 0 2px 6px rgba(0,0,0,.08), 0 16px 40px rgba(0,0,0,.12);
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.06);
+  --shadow-strong:
+    0 2px 6px rgba(0, 0, 0, 0.08), 0 16px 40px rgba(0, 0, 0, 0.12);
 }
 
 @layer base {
@@ -66,7 +109,7 @@
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
   }
-  
+
   body {
     @apply font-sans antialiased;
     background-color: var(--color-marfil);
@@ -82,22 +125,22 @@
 /* Apply by adding class .nord-dark on <html> */
 :root.nord-dark {
   /* Nord colors */
-  --nord0: #2E3440; /* polar night */
-  --nord1: #3B4252;
-  --nord2: #434C5E;
-  --nord3: #4C566A;
-  --nord4: #D8DEE9; /* snow storm */
-  --nord5: #E5E9F0;
-  --nord6: #ECEFF4;
-  --nord7: #8FBCBB; /* frost */
-  --nord8: #88C0D0;
-  --nord9: #81A1C1;
-  --nord10: #5E81AC;
-  --nord11: #BF616A; /* aurora */
-  --nord12: #D08770;
-  --nord13: #EBCB8B;
-  --nord14: #A3BE8C;
-  --nord15: #B48EAD;
+  --nord0: #2e3440; /* polar night */
+  --nord1: #3b4252;
+  --nord2: #434c5e;
+  --nord3: #4c566a;
+  --nord4: #d8dee9; /* snow storm */
+  --nord5: #e5e9f0;
+  --nord6: #eceff4;
+  --nord7: #8fbcbb; /* frost */
+  --nord8: #88c0d0;
+  --nord9: #81a1c1;
+  --nord10: #5e81ac;
+  --nord11: #bf616a; /* aurora */
+  --nord12: #d08770;
+  --nord13: #ebcb8b;
+  --nord14: #a3be8c;
+  --nord15: #b48ead;
 
   /* Map to app tokens */
   --color-background: var(--nord0);
@@ -130,18 +173,54 @@
   --color-carbon-suave: var(--nord4);
 
   /* Compat classes */
-  --color-primary-100: color-mix(in oklab, var(--color-terracotta-suave) 24%, black);
+  --color-primary-100: color-mix(
+    in oklab,
+    var(--color-terracotta-suave) 24%,
+    black
+  );
   --color-primary-500: var(--color-terracotta-suave);
-  --color-primary-600: color-mix(in oklab, var(--color-terracotta-suave) 90%, white);
-  --color-primary-700: color-mix(in oklab, var(--color-terracotta-suave) 70%, white);
-  --color-secondary-100: color-mix(in oklab, var(--color-ocre-africano) 24%, black);
+  --color-primary-600: color-mix(
+    in oklab,
+    var(--color-terracotta-suave) 90%,
+    white
+  );
+  --color-primary-700: color-mix(
+    in oklab,
+    var(--color-terracotta-suave) 70%,
+    white
+  );
+  --color-secondary-100: color-mix(
+    in oklab,
+    var(--color-ocre-africano) 24%,
+    black
+  );
   --color-secondary-500: var(--color-ocre-africano);
-  --color-secondary-600: color-mix(in oklab, var(--color-ocre-africano) 90%, white);
-  --color-secondary-700: color-mix(in oklab, var(--color-ocre-africano) 70%, white);
-  --color-accent-100: color-mix(in oklab, var(--color-verde-oliva-tenue) 24%, black);
+  --color-secondary-600: color-mix(
+    in oklab,
+    var(--color-ocre-africano) 90%,
+    white
+  );
+  --color-secondary-700: color-mix(
+    in oklab,
+    var(--color-ocre-africano) 70%,
+    white
+  );
+  --color-accent-100: color-mix(
+    in oklab,
+    var(--color-verde-oliva-tenue) 24%,
+    black
+  );
   --color-accent-500: var(--color-verde-oliva-tenue);
-  --color-accent-600: color-mix(in oklab, var(--color-verde-oliva-tenue) 90%, white);
-  --color-accent-700: color-mix(in oklab, var(--color-verde-oliva-tenue) 70%, white);
+  --color-accent-600: color-mix(
+    in oklab,
+    var(--color-verde-oliva-tenue) 90%,
+    white
+  );
+  --color-accent-700: color-mix(
+    in oklab,
+    var(--color-verde-oliva-tenue) 70%,
+    white
+  );
 }
 
 /* Prefer system dark as default when no explicit theme is stored */
@@ -155,22 +234,57 @@
 @layer components {
   /* Toasts */
   .toast-container {
-    position: fixed; inset-inline-end: 1rem; inset-block-start: 1rem; z-index: 9999;
-    display: flex; flex-direction: column; gap: .5rem;
+    position: fixed;
+    inset-inline-end: 1rem;
+    inset-block-start: 1rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
   }
   .toast {
     @apply border rounded-lg shadow-md bg-white;
-    min-width: 280px; max-width: 380px; overflow: hidden;
+    min-width: 280px;
+    max-width: 380px;
+    overflow: hidden;
     border-left-width: 4px;
   }
-  .toast-head { display: flex; align-items: center; justify-content: space-between; padding: .5rem .75rem; border-bottom: 1px solid #eee; }
-  .toast-title { font-weight: 700; font-size: .9rem; }
-  .toast-body { padding: .5rem .75rem; font-size: .85rem; color: #374151; }
-  .toast-close { background: transparent; border: 0; font-size: 1rem; line-height: 1; color: #6b7280; cursor: pointer; }
-  .toast-success { border-color: #10b981; }
-  .toast-error { border-color: #ef4444; }
-  .toast-warning { border-color: #f59e0b; }
-  .toast-info { border-color: #0ea5a5; }
+  .toast-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #eee;
+  }
+  .toast-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+  .toast-body {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    color: #374151;
+  }
+  .toast-close {
+    background: transparent;
+    border: 0;
+    font-size: 1rem;
+    line-height: 1;
+    color: #6b7280;
+    cursor: pointer;
+  }
+  .toast-success {
+    border-color: #10b981;
+  }
+  .toast-error {
+    border-color: #ef4444;
+  }
+  .toast-warning {
+    border-color: #f59e0b;
+  }
+  .toast-info {
+    border-color: #0ea5a5;
+  }
   /* Botones estilo moderno (pill + sombra) */
   .button_primary {
     @apply px-6 py-3 font-bold transition-colors text-white;
@@ -178,7 +292,14 @@
     background-color: var(--color-terracotta-suave);
     box-shadow: var(--shadow-soft);
   }
-  .button_primary:hover { background-color: color-mix(in oklab, var(--color-terracotta-suave) 92%, black); box-shadow: var(--shadow-strong); }
+  .button_primary:hover {
+    background-color: color-mix(
+      in oklab,
+      var(--color-terracotta-suave) 92%,
+      black
+    );
+    box-shadow: var(--shadow-strong);
+  }
 
   .button_secondary {
     @apply px-5 py-2.5 transition-colors text-white font-semibold;
@@ -186,7 +307,14 @@
     background-color: var(--color-ocre-africano);
     box-shadow: var(--shadow-soft);
   }
-  .button_secondary:hover { background-color: color-mix(in oklab, var(--color-ocre-africano) 92%, black); box-shadow: var(--shadow-strong); }
+  .button_secondary:hover {
+    background-color: color-mix(
+      in oklab,
+      var(--color-ocre-africano) 92%,
+      black
+    );
+    box-shadow: var(--shadow-strong);
+  }
 
   /* CTA grande estilo "Show me the money" */
   .btn-cta {
@@ -196,7 +324,10 @@
     box-shadow: var(--shadow-strong);
     letter-spacing: 0.2px;
   }
-  .btn-cta:hover { filter: brightness(.96); transform: translateY(-1px); }
+  .btn-cta:hover {
+    filter: brightness(0.96);
+    transform: translateY(-1px);
+  }
 
   .input_field {
     @apply px-4 py-3 border focus:outline-none focus:ring-2;
@@ -209,21 +340,27 @@
 
   /* Input grande para héroe/busqueda */
   .input-hero {
-  @apply w-full px-6 py-4 border focus:outline-none focus:ring-2 text-lg;
-  border-radius: var(--radius-pill);
-  background-color: var(--color-card);
-  color: var(--color-foreground);
-  border-color: var(--color-input);
-  --tw-ring-color: var(--color-ring);
-  box-shadow: var(--shadow-soft);
+    @apply w-full px-6 py-4 border focus:outline-none focus:ring-2 text-lg;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-card);
+    color: var(--color-foreground);
+    border-color: var(--color-input);
+    --tw-ring-color: var(--color-ring);
+    box-shadow: var(--shadow-soft);
   }
 
   /* Stronger border hint for hero inputs on dark for better contrast */
-  :root.nord-dark .input-hero { border-color: var(--nord4); }
+  :root.nord-dark .input-hero {
+    border-color: var(--nord4);
+  }
 
   /* Elevated search inputs (used in product catalog search) */
-  .search-input { box-shadow: var(--shadow-soft); }
-  :root.nord-dark .search-input { border-color: var(--nord4) !important; }
+  .search-input {
+    box-shadow: var(--shadow-soft);
+  }
+  :root.nord-dark .search-input {
+    border-color: var(--nord4) !important;
+  }
 
   /* Botones */
   .btn {
@@ -303,7 +440,7 @@
   /* Fondo decorativo coherente (patrón tribal suave) para todas las cards */
   .card-pattern::before,
   .card::before {
-    content: "";
+    content: '';
     position: absolute;
     inset: 0;
     background-image: url('/assert/motif-de-fond-sans-couture-tribal-dessin-geometrique-noir-et-blanc-vecteur/v1045-03.jpg');
@@ -347,13 +484,15 @@
 
   /* Selectable cards (rol registro) */
   .select-card {
-  @apply border-2 border-gray-200 transition-all cursor-pointer;
+    @apply border-2 border-gray-200 transition-all cursor-pointer;
     border-radius: var(--radius-lg);
-  /* Use design tokens so it adapts to light/dark themes */
-  background-color: var(--color-card);
-  border-color: var(--color-border);
+    /* Use design tokens so it adapts to light/dark themes */
+    background-color: var(--color-card);
+    border-color: var(--color-border);
   }
-  .select-card:hover { box-shadow: var(--shadow-soft); }
+  .select-card:hover {
+    box-shadow: var(--shadow-soft);
+  }
   .select-card.selected {
     border-color: var(--color-terracotta-suave);
     box-shadow: var(--shadow-strong);
@@ -375,33 +514,35 @@
   }
 
   .form-input {
-  @apply block w-full px-3 py-2 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm;
-  background-color: var(--color-card);
-  color: var(--color-foreground);
-  border: 1px solid var(--color-input);
-  --tw-ring-color: var(--color-ring);
+    @apply block w-full px-3 py-2 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm;
+    background-color: var(--color-card);
+    color: var(--color-foreground);
+    border: 1px solid var(--color-input);
+    --tw-ring-color: var(--color-ring);
   }
 
   .form-textarea {
-  @apply block w-full px-3 py-2 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm min-h-[120px] resize-y;
-  background-color: var(--color-card);
-  color: var(--color-foreground);
-  border: 1px solid var(--color-input);
-  --tw-ring-color: var(--color-ring);
+    @apply block w-full px-3 py-2 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm min-h-[120px] resize-y;
+    background-color: var(--color-card);
+    color: var(--color-foreground);
+    border: 1px solid var(--color-input);
+    --tw-ring-color: var(--color-ring);
   }
 
   .form-select {
-  @apply block w-full px-3 py-2 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm pr-10;
-  background-color: var(--color-card);
-  color: var(--color-foreground);
-  border: 1px solid var(--color-input);
-  --tw-ring-color: var(--color-ring);
+    @apply block w-full px-3 py-2 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm pr-10;
+    background-color: var(--color-card);
+    color: var(--color-foreground);
+    border: 1px solid var(--color-input);
+    --tw-ring-color: var(--color-ring);
   }
 
   .form-error {
     @apply text-sm text-red-600;
   }
-  .error-text { @apply text-sm text-red-600; }
+  .error-text {
+    @apply text-sm text-red-600;
+  }
 
   .form-help {
     @apply text-sm text-gray-500;
@@ -471,22 +612,24 @@
     inset-inline: 0;
     inset-block-end: 0;
     z-index: 40;
-  /* Fallback for older browsers */
-  background: rgba(255,255,255,0.92);
-  /* Theme-aware translucent surface (adapts to light/dark) */
-  background: color-mix(in oklab, var(--color-card) 92%, transparent);
+    /* Fallback for older browsers */
+    background: rgba(255, 255, 255, 0.92);
+    /* Theme-aware translucent surface (adapts to light/dark) */
+    background: color-mix(in oklab, var(--color-card) 92%, transparent);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-top: 1px solid var(--color-border);
-  color: var(--color-foreground);
-  box-shadow: 0 -1px 2px rgba(0,0,0,0.04);
+    color: var(--color-foreground);
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.04);
   }
   .mobile-tabbar-list {
     /* Use flex so items always distribute evenly regardless of count */
     display: flex;
     align-items: stretch;
   }
-  .mobile-tabbar-list > li { flex: 1 1 0; }
+  .mobile-tabbar-list > li {
+    flex: 1 1 0;
+  }
   .mobile-tabbar-item {
     display: flex;
     flex-direction: column;
@@ -494,21 +637,31 @@
     justify-content: center;
     gap: 0.25rem;
     padding: 0.6rem 0.25rem;
-  width: 100%;
+    width: 100%;
     color: var(--color-marron-cacao);
     text-decoration: none;
     font-size: 0.75rem;
-  /* Normalize buttons to look like links */
-  background: transparent;
-  border: 0;
-  appearance: none;
-  -webkit-appearance: none;
-  outline: none;
+    /* Normalize buttons to look like links */
+    background: transparent;
+    border: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
   }
-  .mobile-tabbar-item .label { font-size: 0.7rem; opacity: .8; }
-  .mobile-tabbar-item.active { color: var(--color-terracotta-suave); }
-  .mobile-tabbar-item.active .label { opacity: 1; font-weight: 700; }
-  .mobile-tabbar-item:active { background: color-mix(in oklab, var(--color-card) 88%, black); }
+  .mobile-tabbar-item .label {
+    font-size: 0.7rem;
+    opacity: 0.8;
+  }
+  .mobile-tabbar-item.active {
+    color: var(--color-terracotta-suave);
+  }
+  .mobile-tabbar-item.active .label {
+    opacity: 1;
+    font-weight: 700;
+  }
+  .mobile-tabbar-item:active {
+    background: color-mix(in oklab, var(--color-card) 88%, black);
+  }
   .badge-count {
     position: absolute;
     top: -6px;
@@ -523,7 +676,9 @@
     text-align: center;
     box-shadow: var(--shadow-soft);
   }
-  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 
   /* Dark mode: make bottom bar icons visible by inverting to light */
   :root.nord-dark .mobile-tabbar .mobile-tabbar-item img {
@@ -546,16 +701,16 @@
   }
 
   .bg-grid {
-    background-image: 
+    background-image:
       linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
       linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
     background-size: 20px 20px;
   }
 
   .glass {
-  @apply bg-white/80 backdrop-blur-md border border-white/20;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+    @apply bg-white/80 backdrop-blur-md border border-white/20;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
 
   .gradient-primary {
@@ -571,8 +726,12 @@
   }
 
   /* Theme-aware translucent surface backgrounds */
-  .bg-surface-90 { background-color: color-mix(in oklab, var(--color-card) 90%, transparent); }
-  .bg-surface-80 { background-color: color-mix(in oklab, var(--color-card) 80%, transparent); }
+  .bg-surface-90 {
+    background-color: color-mix(in oklab, var(--color-card) 90%, transparent);
+  }
+  .bg-surface-80 {
+    background-color: color-mix(in oklab, var(--color-card) 80%, transparent);
+  }
 
   /* Responsive helpers */
   .grid-auto-cards {
@@ -581,13 +740,25 @@
     gap: 1.5rem;
   }
 
-  .aspect-4-3 { aspect-ratio: 4 / 3; }
-  .aspect-16-9 { aspect-ratio: 16 / 9; }
-  .aspect-square { aspect-ratio: 1 / 1; }
+  .aspect-4-3 {
+    aspect-ratio: 4 / 3;
+  }
+  .aspect-16-9 {
+    aspect-ratio: 16 / 9;
+  }
+  .aspect-square {
+    aspect-ratio: 1 / 1;
+  }
 
   /* Safari vendor prefix for user-select utilities */
-  .select-none { -webkit-user-select: none; user-select: none; }
-  .select-text { -webkit-user-select: text; user-select: text; }
+  .select-none {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .select-text {
+    -webkit-user-select: text;
+    user-select: text;
+  }
 }
 
 /* Nordic dark overrides for common utility colors */
@@ -608,23 +779,69 @@
   border-color: var(--color-border);
 }
 
-:root.nord-dark .bg-gray-50 { background-color: var(--nord1) !important; }
-:root.nord-dark .bg-gray-100 { background-color: var(--nord2) !important; }
-:root.nord-dark .bg-gray-200 { background-color: var(--nord2) !important; }
-:root.nord-dark .bg-white { background-color: var(--color-card) !important; }
-:root.nord-dark .bg-white\/90 { background-color: color-mix(in oklab, var(--color-card) 90%, transparent) !important; }
-:root.nord-dark .bg-white\/80 { background-color: color-mix(in oklab, var(--color-card) 80%, transparent) !important; }
-:root.nord-dark .bg-white\/20 { background-color: color-mix(in oklab, var(--color-card) 20%, transparent) !important; }
-:root.nord-dark .bg-gray-50\/60 { background-color: color-mix(in oklab, var(--nord1) 60%, transparent) !important; }
-:root.nord-dark .border-gray-200 { border-color: var(--color-border) !important; }
-:root.nord-dark .border-gray-300 { border-color: var(--color-border) !important; }
+:root.nord-dark .bg-gray-50 {
+  background-color: var(--nord1) !important;
+}
+:root.nord-dark .bg-gray-100 {
+  background-color: var(--nord2) !important;
+}
+:root.nord-dark .bg-gray-200 {
+  background-color: var(--nord2) !important;
+}
+:root.nord-dark .bg-white {
+  background-color: var(--color-card) !important;
+}
+:root.nord-dark .bg-white\/90 {
+  background-color: color-mix(
+    in oklab,
+    var(--color-card) 90%,
+    transparent
+  ) !important;
+}
+:root.nord-dark .bg-white\/80 {
+  background-color: color-mix(
+    in oklab,
+    var(--color-card) 80%,
+    transparent
+  ) !important;
+}
+:root.nord-dark .bg-white\/20 {
+  background-color: color-mix(
+    in oklab,
+    var(--color-card) 20%,
+    transparent
+  ) !important;
+}
+:root.nord-dark .bg-gray-50\/60 {
+  background-color: color-mix(
+    in oklab,
+    var(--nord1) 60%,
+    transparent
+  ) !important;
+}
+:root.nord-dark .border-gray-200 {
+  border-color: var(--color-border) !important;
+}
+:root.nord-dark .border-gray-300 {
+  border-color: var(--color-border) !important;
+}
 :root.nord-dark .text-gray-800,
-:root.nord-dark .text-gray-700 { color: var(--nord6) !important; }
-:root.nord-dark .text-gray-600 { color: var(--nord5) !important; }
-:root.nord-dark .text-gray-500 { color: #C7CFDD !important; }
-:root.nord-dark .text-gray-400 { color: #A7B1C1 !important; }
+:root.nord-dark .text-gray-700 {
+  color: var(--nord6) !important;
+}
+:root.nord-dark .text-gray-600 {
+  color: var(--nord5) !important;
+}
+:root.nord-dark .text-gray-500 {
+  color: #c7cfdd !important;
+}
+:root.nord-dark .text-gray-400 {
+  color: #a7b1c1 !important;
+}
 /* Hard white/black utility guards for dark theme */
-:root.nord-dark .text-gray-900 { color: var(--nord6) !important; }
+:root.nord-dark .text-gray-900 {
+  color: var(--nord6) !important;
+}
 
 /* Outline buttons on dark theme */
 :root.nord-dark .btn-outline {
@@ -659,7 +876,10 @@
   background: transparent;
   border: 0;
   cursor: pointer;
-  transition: background-color .2s ease, box-shadow .2s ease, color .2s ease;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    color 0.2s ease;
 }
 .theme-toggle .seg:hover {
   background: color-mix(in oklab, var(--color-marfil) 85%, black);
@@ -667,44 +887,72 @@
 .theme-toggle .seg.active {
   background: var(--color-primary);
   color: var(--color-primary-foreground);
-  box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-primary) 70%, transparent);
+  box-shadow: 0 0 0 2px
+    color-mix(in oklab, var(--color-primary) 70%, transparent);
 }
 .theme-toggle:focus-within {
   outline: none;
   box-shadow: 0 0 0 2px var(--color-ring);
 }
-  /* Theme toggle icon animations */
+/* Theme toggle icon animations */
+.theme-toggle .sun-icon,
+.theme-toggle .moon-icon {
+  transition:
+    transform 0.35s ease,
+    opacity 0.35s ease;
+}
+/* When the light segment is active, give sun a gentle spin+pop */
+.theme-toggle .seg.active .sun-icon {
+  animation: sun-pop 0.45s ease both;
+}
+/* When the dark segment is active, give moon a gentle slide-in */
+.theme-toggle .seg.active .moon-icon {
+  animation: moon-slide 0.45s ease both;
+}
+@keyframes sun-pop {
+  0% {
+    transform: scale(0.6) rotate(-90deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.1) rotate(20deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+@keyframes moon-slide {
+  0% {
+    transform: translateY(6px) rotate(-10deg);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(-1px) rotate(3deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+}
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
   .theme-toggle .sun-icon,
   .theme-toggle .moon-icon {
-    transition: transform .35s ease, opacity .35s ease;
+    transition: none;
+    animation: none !important;
   }
-  /* When the light segment is active, give sun a gentle spin+pop */
-  .theme-toggle .seg.active .sun-icon {
-    animation: sun-pop .45s ease both;
-  }
-  /* When the dark segment is active, give moon a gentle slide-in */
-  .theme-toggle .seg.active .moon-icon {
-    animation: moon-slide .45s ease both;
-  }
-  @keyframes sun-pop {
-    0% { transform: scale(.6) rotate(-90deg); opacity: 0; }
-    60% { transform: scale(1.1) rotate(20deg); opacity: 1; }
-    100% { transform: scale(1) rotate(0deg); opacity: 1; }
-  }
-  @keyframes moon-slide {
-    0% { transform: translateY(6px) rotate(-10deg); opacity: 0; }
-    60% { transform: translateY(-1px) rotate(3deg); opacity: 1; }
-    100% { transform: translateY(0) rotate(0deg); opacity: 1; }
-  }
-  /* Respect reduced motion */
-  @media (prefers-reduced-motion: reduce) {
-    .theme-toggle .sun-icon, .theme-toggle .moon-icon {
-      transition: none;
-      animation: none !important;
-    }
-  }
+}
 /* Mobile-friendly tap targets */
 @media (max-width: 640px) {
-  .theme-toggle { gap: 4px; padding: 4px; }
-  .theme-toggle .seg { width: 36px; height: 36px; }
+  .theme-toggle {
+    gap: 4px;
+    padding: 4px;
+  }
+  .theme-toggle .seg {
+    width: 36px;
+    height: 36px;
+  }
 }
