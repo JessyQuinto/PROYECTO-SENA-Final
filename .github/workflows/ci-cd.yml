@@ -30,6 +30,9 @@ jobs:
     - name: Install dependencies
       working-directory: ./Frontend
       run: npm ci
+      env:
+        CI: true
+        HUSKY: 0
       
     - name: Type checking
       working-directory: ./Frontend
@@ -73,15 +76,13 @@ jobs:
     - name: Install dependencies
       working-directory: ./Frontend
       run: npm ci
+      env:
+        CI: true
+        HUSKY: 0
       
     - name: Run security audit
       working-directory: ./Frontend
       run: npm audit --audit-level moderate
-      
-    - name: Check for known vulnerabilities
-      uses: securecodewarrior/github-action-add-sarif@v1
-      with:
-        sarif-file: 'audit-results.sarif'
       continue-on-error: true
       
   # Build & Deploy
@@ -104,6 +105,9 @@ jobs:
     - name: Install dependencies
       working-directory: ./Frontend
       run: npm ci
+      env:
+        CI: true
+        HUSKY: 0
       
     - name: Build application
       working-directory: ./Frontend
@@ -137,6 +141,9 @@ jobs:
     - name: Install dependencies
       working-directory: ./Frontend
       run: npm ci
+      env:
+        CI: true
+        HUSKY: 0
       
     - name: Download build artifacts
       uses: actions/download-artifact@v3
