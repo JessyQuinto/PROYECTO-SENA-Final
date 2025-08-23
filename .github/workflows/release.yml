@@ -30,7 +30,7 @@ jobs:
         
     - name: Install dependencies
       working-directory: ./Frontend
-      run: npm ci
+      run: npm ci --ignore-scripts
       env:
         CI: true
         HUSKY: 0
@@ -121,7 +121,7 @@ jobs:
         
     - name: Install dependencies
       working-directory: ./Frontend
-      run: npm ci
+      run: npm ci --ignore-scripts
       env:
         CI: true
         HUSKY: 0
