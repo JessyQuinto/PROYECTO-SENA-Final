@@ -4,7 +4,6 @@ import { supabase } from '../../lib/supabaseClient';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/shadcn/card';
 import { Button } from '@/components/ui/shadcn/button';
-import { Input } from '@/components/ui/shadcn/input';
 import Icon from '@/components/ui/Icon';
 
 const CartPage: React.FC = () => {

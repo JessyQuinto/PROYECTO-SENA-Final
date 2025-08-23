@@ -1,14 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/shadcn/button';
 import {
   Card,
   CardContent,
-  CardHeader,
   CardTitle,
   CardDescription,
 } from '@/components/ui/shadcn/card';
-import { useSupabase } from '@/hooks/useSupabase';
 import { useAuth } from '@/auth/AuthContext';
 import { useCachedFeaturedProducts } from '@/hooks/useCache';
 

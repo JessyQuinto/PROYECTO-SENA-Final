@@ -3,17 +3,13 @@ import { useAuth } from '@/auth/AuthContext';
 import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
+import { Button } from '@/components/ui/shadcn/button';
+import { Input } from '@/components/ui/shadcn/input';
 import { Label } from '@/components/ui/shadcn/label';
 import { Checkbox } from '@/components/ui/shadcn/checkbox';
 import { getDepartamentos, getCiudades } from '@/lib/geo';
 import { useForm } from '@/hooks/useForm';
 import { useToastWithAuth } from '@/hooks/useToast';
-import { useSupabase } from '@/hooks/useSupabase';
-import {
-  SecureInput,
-  PasswordInput,
-  SecureButton,
-} from '@/components/security/SecureComponents';
 import { useRateLimit } from '@/hooks/useSecurity';
 
 const signupSchema = z
@@ -71,18 +67,12 @@ export const RegisterPage: React.FC = () => {
   const { signUp } = useAuth();
   const navigate = useNavigate();
   const toast = useToastWithAuth(); // Usar la versión que incluye el rol del usuario
-  const { executeMutation } = useSupabase({
-    showToast: true,
-    toastAction: 'register',
-  });
 
   // Rate limiting for registration attempts
   const rateLimit = useRateLimit('register', 3, 10 * 60 * 1000); // 3 attempts per 10 minutes
 
   // Unificar formulario (sin pasos)
   const [role, setRole] = useState<'comprador' | 'vendedor'>('comprador');
-  const [success, setSuccess] = useState<string | null>(null);
-  const [countdown, setCountdown] = useState(120);
 
   const departamentos = getDepartamentos();
   const [selectedDepartamento, setSelectedDepartamento] = useState<string>('');
@@ -125,8 +115,7 @@ export const RegisterPage: React.FC = () => {
 
       // Clear rate limit on successful registration
       rateLimit.clearLimit();
-      setSuccess('Registro exitoso. Revisa tu correo para confirmar.');
-      // Redirigir a pantalla de verificación con countdown
+      // Redirigir a pantalla de verificación
       navigate('/verifica-tu-correo', {
         replace: true,
         state: { email: values.email },
