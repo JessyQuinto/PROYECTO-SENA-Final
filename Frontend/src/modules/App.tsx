@@ -47,6 +47,7 @@ export const App: React.FC = () => (
           <Route path="/productos" element={<ProductCatalog />} />
           <Route path="/productos/:id" element={<ProductDetail />} />
           <Route path="/carrito" element={<ProtectedRoute roles={["comprador"]}><CartPage /></ProtectedRoute>} />
+          <Route path="/pagar" element={<ProtectedRoute roles={["comprador"]}><CheckoutPage /></ProtectedRoute>} />
           <Route path="/checkout" element={<ProtectedRoute roles={["comprador"]}><CheckoutPage /></ProtectedRoute>} />
           <Route path="/recibo/:id" element={<ProtectedRoute roles={["comprador","admin"]}><OrderReceiptPage /></ProtectedRoute>} />
           <Route path="/pedido/:id" element={<ProtectedRoute roles={["comprador","admin"]}><OrderDetailPage /></ProtectedRoute>} />

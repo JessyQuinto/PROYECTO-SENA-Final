@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/shadcn/card';
 import { Button } from '@/components/ui/shadcn/button';
 import { Input } from '@/components/ui/shadcn/input';
@@ -14,6 +14,20 @@ const ProfilesManager: React.FC = () => {
   const [addr, setAddr] = useState<AddressForm>({ tipo: 'envio', nombre: '', telefono: '', direccion: '', direccion2: '', ciudad: '', departamento: '', codigo_postal: '' });
   const [pay, setPay] = useState<PayForm>({ metodo: 'contraentrega', etiqueta: 'Contraentrega' });
   const [loading, setLoading] = useState(false);
+  
+  // Optimized form handlers to prevent input interruption
+  const handleAddressChange = useCallback((field: keyof AddressForm) => {
+    return (e: React.ChangeEvent<HTMLInputElement>) => {
+      setAddr(prev => ({ ...prev, [field]: e.target.value }));
+    };
+  }, []);
+  
+  const handlePaymentChange = useCallback((field: keyof PayForm) => {
+    return (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = field === 'exp_mm' || field === 'exp_yy' ? Number(e.target.value) : e.target.value;
+      setPay(prev => ({ ...prev, [field]: value }));
+    };
+  }, []);
   const [addrPage, setAddrPage] = useState(1);
   const [addrTotal, setAddrTotal] = useState(0);
   const [payPage, setPayPage] = useState(1);
@@ -153,25 +167,88 @@ const ProfilesManager: React.FC = () => {
               Direcciones
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <select className="input" value={addr.tipo} onChange={e=>setAddr({...addr, tipo: e.target.value as any})}>
+              <select 
+                id="address-tipo"
+                name="address-tipo"
+                className="input" 
+                value={addr.tipo} 
+                onChange={e=>setAddr({...addr, tipo: e.target.value as any})}
+              >
                 <option value="envio">Envío</option>
                 <option value="facturacion">Facturación</option>
               </select>
-              <Input placeholder="Nombre" value={addr.nombre} onChange={e=>setAddr({...addr, nombre: e.target.value})} />
-              <Input placeholder="Teléfono" value={addr.telefono} onChange={e=>setAddr({...addr, telefono: e.target.value})} />
-              <Input className="md:col-span-2" placeholder="Dirección" value={addr.direccion} onChange={e=>setAddr({...addr, direccion: e.target.value})} />
-              <Input className="md:col-span-2" placeholder="Apto, interior, referencia" value={addr.direccion2} onChange={e=>setAddr({...addr, direccion2: e.target.value})} />
-              <Input placeholder="Ciudad" value={addr.ciudad} onChange={e=>setAddr({...addr, ciudad: e.target.value})} />
-              <Input placeholder="Departamento" value={addr.departamento} onChange={e=>setAddr({...addr, departamento: e.target.value})} />
-              <Input placeholder="Código postal" value={addr.codigo_postal} onChange={e=>setAddr({...addr, codigo_postal: e.target.value as any})} />
+              <Input 
+                id="address-nombre"
+                name="address-nombre"
+                placeholder="Nombre" 
+                value={addr.nombre} 
+                onChange={handleAddressChange('nombre')} 
+                autoComplete="name"
+              />
+              <Input 
+                id="address-telefono"
+                name="address-telefono"
+                placeholder="Teléfono" 
+                value={addr.telefono} 
+                onChange={handleAddressChange('telefono')} 
+                autoComplete="tel"
+              />
+              <Input 
+                id="address-direccion"
+                name="address-direccion"
+                className="md:col-span-2" 
+                placeholder="Dirección" 
+                value={addr.direccion} 
+                onChange={handleAddressChange('direccion')} 
+                autoComplete="street-address"
+              />
+              <Input 
+                id="address-direccion2"
+                name="address-direccion2"
+                className="md:col-span-2" 
+                placeholder="Apto, interior, referencia" 
+                value={addr.direccion2} 
+                onChange={handleAddressChange('direccion2')} 
+                autoComplete="address-line2"
+              />
+              <Input 
+                id="address-ciudad"
+                name="address-ciudad"
+                placeholder="Ciudad" 
+                value={addr.ciudad} 
+                onChange={handleAddressChange('ciudad')} 
+                autoComplete="address-level2"
+              />
+              <Input 
+                id="address-departamento"
+                name="address-departamento"
+                placeholder="Departamento" 
+                value={addr.departamento} 
+                onChange={handleAddressChange('departamento')} 
+                autoComplete="address-level1"
+              />
+              <Input 
+                id="address-codigo-postal"
+                name="address-codigo-postal"
+                placeholder="Código postal" 
+                value={addr.codigo_postal} 
+                onChange={handleAddressChange('codigo_postal')} 
+                autoComplete="postal-code"
+              />
               <label className="inline-flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={!!addr.es_predeterminada} onChange={e=>{
-                  const next = e.target.checked;
-                  if (next && addr.es_predeterminada !== true) {
-                    if (!confirm('Marcar como predeterminada reemplazará la actual predeterminada. ¿Continuar?')) { return; }
-                  }
-                  setAddr({...addr, es_predeterminada: next});
-                }} />
+                <input 
+                  id="address-predeterminada"
+                  name="address-predeterminada"
+                  type="checkbox" 
+                  checked={!!addr.es_predeterminada} 
+                  onChange={e=>{
+                    const next = e.target.checked;
+                    if (next && addr.es_predeterminada !== true) {
+                      if (!confirm('Marcar como predeterminada reemplazará la actual predeterminada. ¿Continuar?')) { return; }
+                    }
+                    setAddr({...addr, es_predeterminada: next});
+                  }} 
+                />
                 Predeterminada
               </label>
               <div className="md:col-span-2 flex gap-2">
@@ -227,32 +304,77 @@ const ProfilesManager: React.FC = () => {
               Métodos de pago
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <select className="input" value={pay.metodo} onChange={e=>{
-                const metodo = e.target.value as any;
-                setPay(prev=> ({ ...prev, metodo, etiqueta: metodo==='tarjeta' ? (prev.last4 ? `Tarjeta •••• ${prev.last4}` : 'Tarjeta') : 'Contraentrega' }));
-              }}>
+              <select 
+                id="payment-metodo"
+                name="payment-metodo"
+                className="input" 
+                value={pay.metodo} 
+                onChange={e=>{
+                  const metodo = e.target.value as any;
+                  setPay(prev=> ({ ...prev, metodo, etiqueta: metodo==='tarjeta' ? (prev.last4 ? `Tarjeta •••• ${prev.last4}` : 'Tarjeta') : 'Contraentrega' }));
+                }}
+              >
                 <option value="tarjeta">Tarjeta</option>
                 <option value="contraentrega">Contraentrega</option>
               </select>
-              <Input placeholder="Etiqueta" value={pay.etiqueta || ''} onChange={e=>setPay({...pay, etiqueta: e.target.value})} />
+              <Input 
+                id="payment-etiqueta"
+                name="payment-etiqueta"
+                placeholder="Etiqueta" 
+                value={pay.etiqueta || ''} 
+                onChange={handlePaymentChange('etiqueta')} 
+              />
               {pay.metodo==='tarjeta' && (
                 <>
-                  <Input placeholder="Titular" value={pay.titular || ''} onChange={e=>setPay({...pay, titular: e.target.value})} />
+                  <Input 
+                    id="payment-titular"
+                    name="payment-titular"
+                    placeholder="Titular" 
+                    value={pay.titular || ''} 
+                    onChange={handlePaymentChange('titular')} 
+                    autoComplete="cc-name"
+                  />
                   <div className="grid grid-cols-3 gap-3">
-                    <Input placeholder="Last4" value={pay.last4 || ''} onChange={e=>setPay({...pay, last4: e.target.value})} />
-                    <Input placeholder="MM" value={pay.exp_mm || '' as any} onChange={e=>setPay({...pay, exp_mm: Number(e.target.value)})} />
-                    <Input placeholder="YY" value={pay.exp_yy || '' as any} onChange={e=>setPay({...pay, exp_yy: Number(e.target.value)})} />
+                    <Input 
+                      id="payment-last4"
+                      name="payment-last4"
+                      placeholder="Last4" 
+                      value={pay.last4 || ''} 
+                      onChange={handlePaymentChange('last4')} 
+                    />
+                    <Input 
+                      id="payment-exp-mm"
+                      name="payment-exp-mm"
+                      placeholder="MM" 
+                      value={pay.exp_mm || '' as any} 
+                      onChange={handlePaymentChange('exp_mm')} 
+                      autoComplete="cc-exp-month"
+                    />
+                    <Input 
+                      id="payment-exp-yy"
+                      name="payment-exp-yy"
+                      placeholder="YY" 
+                      value={pay.exp_yy || '' as any} 
+                      onChange={handlePaymentChange('exp_yy')} 
+                      autoComplete="cc-exp-year"
+                    />
                   </div>
                 </>
               )}
               <label className="inline-flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={!!pay.es_predeterminada} onChange={e=>{
-                  const next = e.target.checked;
-                  if (next && pay.es_predeterminada !== true) {
-                    if (!confirm('Marcar como predeterminado reemplazará el actual predeterminado. ¿Continuar?')) { return; }
-                  }
-                  setPay({...pay, es_predeterminada: next});
-                }} />
+                <input 
+                  id="payment-predeterminada"
+                  name="payment-predeterminada"
+                  type="checkbox" 
+                  checked={!!pay.es_predeterminada} 
+                  onChange={e=>{
+                    const next = e.target.checked;
+                    if (next && pay.es_predeterminada !== true) {
+                      if (!confirm('Marcar como predeterminado reemplazará el actual predeterminado. ¿Continuar?')) { return; }
+                    }
+                    setPay({...pay, es_predeterminada: next});
+                  }} 
+                />
                 Predeterminada
               </label>
               <div className="md:col-span-2 flex gap-2">

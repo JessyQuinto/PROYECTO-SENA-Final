@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans:wght@400;500;700;900&family=Noto+Serif:wght@400;500;700;900&display=swap');
+@import './styles/checkout.css';
 
 @theme {
   /* shadcn/ui tokens -> mapeo a nuestro tema (Tailwind v4 usa --color-*) */

@@ -1,0 +1,225 @@
+/* Estilos específicos para el flujo de pago */
+
+/* Indicador de progreso */
+.payment-progress {
+  @apply relative;
+}
+
+.payment-progress::before {
+  content: '';
+  @apply absolute top-4 left-0 w-full h-0.5 bg-gray-200;
+  z-index: 0;
+}
+
+.payment-step {
+  @apply relative z-10 bg-white px-4;
+}
+
+.payment-step.active {
+  @apply text-green-600;
+}
+
+.payment-step.completed {
+  @apply text-green-600;
+}
+
+/* Formularios mejorados */
+.form-section {
+  @apply space-y-6;
+}
+
+.form-section h3 {
+  @apply text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2;
+}
+
+.form-group {
+  @apply space-y-2;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-gray-700;
+}
+
+.form-input {
+  @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200;
+}
+
+.form-input:focus {
+  @apply shadow-lg;
+}
+
+.form-input.error {
+  @apply border-red-500 focus:ring-red-500;
+}
+
+.form-error {
+  @apply text-sm text-red-600 mt-1;
+}
+
+/* Botones mejorados */
+.btn-primary-large {
+  @apply bg-green-600 hover:bg-green-700 text-white font-semibold py-4 px-8 rounded-lg text-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-200;
+}
+
+.btn-secondary {
+  @apply bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-lg transition-all duration-200;
+}
+
+.btn-outline-danger {
+  @apply border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 transition-all duration-200;
+}
+
+/* Tarjetas de selección */
+.selection-card {
+  @apply relative p-4 border-2 rounded-lg cursor-pointer transition-all duration-200;
+}
+
+.selection-card:hover {
+  @apply border-gray-300 shadow-md;
+}
+
+.selection-card.selected {
+  @apply border-green-500 bg-green-50 shadow-lg;
+}
+
+.selection-card input[type="radio"] {
+  @apply sr-only;
+}
+
+/* Controles de cantidad */
+.quantity-controls {
+  @apply inline-flex items-center border-2 border-gray-200 rounded-lg overflow-hidden;
+}
+
+.quantity-btn {
+  @apply px-3 py-2 text-sm hover:bg-gray-50 flex items-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.quantity-input {
+  @apply w-16 text-center text-sm outline-none border-x border-gray-200 py-2;
+}
+
+/* Resumen de compra */
+.cart-summary {
+  @apply sticky top-8;
+}
+
+.summary-item {
+  @apply flex items-center justify-between py-2 border-b last:border-b-0;
+}
+
+.summary-total {
+  @apply text-2xl font-bold text-green-600;
+}
+
+/* Estados de carga */
+.loading-spinner {
+  @apply animate-spin;
+}
+
+.loading-overlay {
+  @apply absolute inset-0 bg-white/75 flex items-center justify-center z-50;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .payment-progress {
+    @apply mb-6;
+  }
+  
+  .form-section {
+    @apply space-y-4;
+  }
+  
+  .btn-primary-large {
+    @apply py-3 px-6 text-base;
+  }
+}
+
+/* Animaciones */
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mejoras de accesibilidad */
+.focus-visible:focus {
+  @apply outline-none ring-2 ring-green-500 ring-offset-2;
+}
+
+/* Estados de validación */
+.input-valid {
+  @apply border-green-500 bg-green-50;
+}
+
+.input-invalid {
+  @apply border-red-500 bg-red-50;
+}
+
+.validation-message {
+  @apply text-sm mt-1;
+}
+
+.validation-message.success {
+  @apply text-green-600;
+}
+
+.validation-message.error {
+  @apply text-red-600;
+}
+
+/* Tooltips */
+.tooltip {
+  @apply relative;
+}
+
+.tooltip:hover .tooltip-text {
+  @apply opacity-100 visible;
+}
+
+.tooltip-text {
+  @apply absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 text-sm text-white bg-gray-900 rounded-lg opacity-0 invisible transition-all duration-200 whitespace-nowrap z-50;
+}
+
+.tooltip-text::after {
+  content: '';
+  @apply absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900;
+}
+
+/* Mejoras para dispositivos móviles */
+@media (max-width: 640px) {
+  .container {
+    @apply px-4;
+  }
+  
+  .grid {
+    @apply grid-cols-1 gap-4;
+  }
+  
+  .card {
+    @apply p-4;
+  }
+  
+  .btn {
+    @apply w-full;
+  }
+}
