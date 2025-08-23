@@ -76,11 +76,13 @@ class PerformanceMonitor {
   // Monitor navigation timing
   private monitorNavigationTiming(): void {
     if ('performance' in window && 'getEntriesByType' in performance) {
-      const navigationEntries = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
-      
+      const navigationEntries = performance.getEntriesByType(
+        'navigation'
+      ) as PerformanceNavigationTiming[];
+
       if (navigationEntries.length > 0) {
         const navigation = navigationEntries[0];
-        
+
         // Calculate various timing metrics
         const metrics = {
           DNS: navigation.domainLookupEnd - navigation.domainLookupStart,
@@ -101,7 +103,7 @@ class PerformanceMonitor {
               url: window.location.href,
               userAgent: navigator.userAgent,
             };
-            
+
             this.metrics.push(performanceData);
             this.sendToAnalytics(performanceData);
           }
@@ -113,11 +115,15 @@ class PerformanceMonitor {
   // Monitor resource loading
   private monitorResourceTiming(): void {
     if ('performance' in window && 'getEntriesByType' in performance) {
-      const resourceEntries = performance.getEntriesByType('resource') as PerformanceResourceTiming[];
-      
+      const resourceEntries = performance.getEntriesByType(
+        'resource'
+      ) as PerformanceResourceTiming[];
+
       // Monitor slow resources (over 1 second)
-      const slowResources = resourceEntries.filter(entry => entry.duration > 1000);
-      
+      const slowResources = resourceEntries.filter(
+        entry => entry.duration > 1000
+      );
+
       slowResources.forEach(resource => {
         const performanceData: PerformanceData = {
           metric: 'SlowResource',
@@ -127,7 +133,7 @@ class PerformanceMonitor {
           url: window.location.href,
           userAgent: navigator.userAgent,
         };
-        
+
         this.metrics.push(performanceData);
         this.sendToAnalytics(performanceData);
       });
@@ -150,9 +156,10 @@ class PerformanceMonitor {
   // Log metric to console (development only)
   private logMetric(data: PerformanceData): void {
     if (import.meta.env.DEV) {
-      const threshold = PERFORMANCE_THRESHOLDS[data.metric as keyof PerformanceThresholds];
+      const threshold =
+        PERFORMANCE_THRESHOLDS[data.metric as keyof PerformanceThresholds];
       let status = 'good';
-      
+
       if (threshold) {
         if (data.value > threshold.poor) {
           status = 'poor';
@@ -176,10 +183,7 @@ class PerformanceMonitor {
 
     // Use sendBeacon for reliability
     if ('sendBeacon' in navigator) {
-      navigator.sendBeacon(
-        this.analyticsEndpoint,
-        JSON.stringify(data)
-      );
+      navigator.sendBeacon(this.analyticsEndpoint, JSON.stringify(data));
     } else {
       // Fallback to fetch
       fetch(this.analyticsEndpoint, {
@@ -200,7 +204,7 @@ class PerformanceMonitor {
     if (this.metrics.length === 0) return;
 
     const summary = this.generateSummary();
-    
+
     if (import.meta.env.DEV) {
       console.group('📊 Performance Summary');
       console.table(summary);
@@ -223,15 +227,18 @@ class PerformanceMonitor {
   // Generate performance summary
   private generateSummary(): Record<string, any> {
     const summary: Record<string, any> = {};
-    
+
     // Group metrics by name
-    const groupedMetrics = this.metrics.reduce((acc, metric) => {
-      if (!acc[metric.metric]) {
-        acc[metric.metric] = [];
-      }
-      acc[metric.metric].push(metric.value);
-      return acc;
-    }, {} as Record<string, number[]>);
+    const groupedMetrics = this.metrics.reduce(
+      (acc, metric) => {
+        if (!acc[metric.metric]) {
+          acc[metric.metric] = [];
+        }
+        acc[metric.metric].push(metric.value);
+        return acc;
+      },
+      {} as Record<string, number[]>
+    );
 
     // Calculate statistics for each metric
     Object.entries(groupedMetrics).forEach(([metric, values]) => {
@@ -265,8 +272,9 @@ class PerformanceMonitor {
     coreMetrics.forEach(metricName => {
       const metric = this.metrics.find(m => m.metric === metricName);
       if (metric) {
-        const threshold = PERFORMANCE_THRESHOLDS[metricName as keyof PerformanceThresholds] || 
-                         PERFORMANCE_THRESHOLDS.FID; // Fallback for INP
+        const threshold =
+          PERFORMANCE_THRESHOLDS[metricName as keyof PerformanceThresholds] ||
+          PERFORMANCE_THRESHOLDS.FID; // Fallback for INP
         if (metric.value <= threshold.good) {
           scores.push(100);
         } else if (metric.value <= threshold.poor) {
@@ -277,13 +285,15 @@ class PerformanceMonitor {
       }
     });
 
-    return scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+    return scores.length > 0
+      ? scores.reduce((a, b) => a + b, 0) / scores.length
+      : 0;
   }
 }
 
 // Create and export singleton instance
 export const performanceMonitor = new PerformanceMonitor(
-  true, // Enable in all environments
+  true // Enable in all environments
   // You can configure an analytics endpoint here
   // import.meta.env.VITE_ANALYTICS_ENDPOINT
 );

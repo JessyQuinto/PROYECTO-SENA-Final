@@ -18,7 +18,9 @@ export interface UseFormOptions<T> {
   onError?: (errors: Record<string, string>) => void;
 }
 
-export const useForm = <T extends Record<string, any>>(options: UseFormOptions<T>) => {
+export const useForm = <T extends Record<string, any>>(
+  options: UseFormOptions<T>
+) => {
   const { initialValues, validationSchema, onSubmit, onError } = options;
 
   // Inicializar estado del formulario
@@ -28,7 +30,7 @@ export const useForm = <T extends Record<string, any>>(options: UseFormOptions<T
       state[key as keyof T] = {
         value: initialValues[key],
         error: undefined,
-        touched: false
+        touched: false,
       };
     });
     return state as FormState<T>;
@@ -65,8 +67,8 @@ export const useForm = <T extends Record<string, any>>(options: UseFormOptions<T
       [field]: {
         ...prev[field],
         value,
-        error: undefined // Limpiar error al cambiar valor
-      }
+        error: undefined, // Limpiar error al cambiar valor
+      },
     }));
   }, []);
 
@@ -76,42 +78,47 @@ export const useForm = <T extends Record<string, any>>(options: UseFormOptions<T
       ...prev,
       [field]: {
         ...prev[field],
-        touched
-      }
+        touched,
+      },
     }));
   }, []);
 
   // Validar un campo específico
-  const validateField = useCallback((field: keyof T): boolean => {
-    if (!validationSchema) return true;
+  const validateField = useCallback(
+    (field: keyof T): boolean => {
+      if (!validationSchema) return true;
 
-    try {
-      validationSchema.parse(values);
-      setFormState(prev => ({
-        ...prev,
-        [field]: {
-          ...prev[field],
-          error: undefined
+      try {
+        validationSchema.parse(values);
+        setFormState(prev => ({
+          ...prev,
+          [field]: {
+            ...prev[field],
+            error: undefined,
+          },
+        }));
+        return true;
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          const fieldError = error.errors.find(e =>
+            e.path.includes(field as string)
+          );
+          if (fieldError) {
+            setFormState(prev => ({
+              ...prev,
+              [field]: {
+                ...prev[field],
+                error: fieldError.message,
+              },
+            }));
+            return false;
+          }
         }
-      }));
-      return true;
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const fieldError = error.errors.find(e => e.path.includes(field as string));
-        if (fieldError) {
-          setFormState(prev => ({
-            ...prev,
-            [field]: {
-              ...prev[field],
-              error: fieldError.message
-            }
-          }));
-          return false;
-        }
+        return true;
       }
-      return true;
-    }
-  }, [validationSchema, values]);
+    },
+    [validationSchema, values]
+  );
 
   // Validar todo el formulario
   const validateForm = useCallback((): boolean => {
@@ -125,7 +132,7 @@ export const useForm = <T extends Record<string, any>>(options: UseFormOptions<T
         Object.keys(newState).forEach(key => {
           newState[key as keyof T] = {
             ...newState[key as keyof T],
-            error: undefined
+            error: undefined,
           };
         });
         return newState;
@@ -146,7 +153,7 @@ export const useForm = <T extends Record<string, any>>(options: UseFormOptions<T
           Object.keys(newState).forEach(key => {
             newState[key as keyof T] = {
               ...newState[key as keyof T],
-              error: newErrors[key] || undefined
+              error: newErrors[key] || undefined,
             };
           });
           return newState;
@@ -161,41 +168,50 @@ export const useForm = <T extends Record<string, any>>(options: UseFormOptions<T
   }, [validationSchema, values, onError]);
 
   // Manejar cambio de campo
-  const handleChange = useCallback((field: keyof T, value: T[keyof T]) => {
-    setValue(field, value);
-    setTouched(field, true);
-    
-    // Validar campo después de un delay para mejor UX
-    setTimeout(() => {
-      validateField(field);
-    }, 300);
-  }, [setValue, setTouched, validateField]);
+  const handleChange = useCallback(
+    (field: keyof T, value: T[keyof T]) => {
+      setValue(field, value);
+      setTouched(field, true);
+
+      // Validar campo después de un delay para mejor UX
+      setTimeout(() => {
+        validateField(field);
+      }, 300);
+    },
+    [setValue, setTouched, validateField]
+  );
 
   // Manejar blur de campo
-  const handleBlur = useCallback((field: keyof T) => {
-    setTouched(field, true);
-    validateField(field);
-  }, [setTouched, validateField]);
+  const handleBlur = useCallback(
+    (field: keyof T) => {
+      setTouched(field, true);
+      validateField(field);
+    },
+    [setTouched, validateField]
+  );
 
   // Enviar formulario
-  const handleSubmit = useCallback(async (e?: React.FormEvent) => {
-    if (e) {
-      e.preventDefault();
-    }
+  const handleSubmit = useCallback(
+    async (e?: React.FormEvent) => {
+      if (e) {
+        e.preventDefault();
+      }
 
-    if (!validateForm()) {
-      return;
-    }
+      if (!validateForm()) {
+        return;
+      }
 
-    setIsSubmitting(true);
-    try {
-      await onSubmit(values);
-    } catch (error) {
-      console.error('Form submission error:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [validateForm, onSubmit, values]);
+      setIsSubmitting(true);
+      try {
+        await onSubmit(values);
+      } catch (error) {
+        console.error('Form submission error:', error);
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [validateForm, onSubmit, values]
+  );
 
   // Resetear formulario
   const reset = useCallback(() => {
@@ -205,7 +221,7 @@ export const useForm = <T extends Record<string, any>>(options: UseFormOptions<T
         newState[key as keyof T] = {
           value: initialValues[key as keyof T],
           error: undefined,
-          touched: false
+          touched: false,
         };
       });
       return newState;
@@ -215,19 +231,28 @@ export const useForm = <T extends Record<string, any>>(options: UseFormOptions<T
   }, [initialValues]);
 
   // Obtener estado de un campo específico
-  const getFieldState = useCallback((field: keyof T) => {
-    return formState[field];
-  }, [formState]);
+  const getFieldState = useCallback(
+    (field: keyof T) => {
+      return formState[field];
+    },
+    [formState]
+  );
 
   // Verificar si un campo tiene error
-  const hasError = useCallback((field: keyof T): boolean => {
-    return !!formState[field].error;
-  }, [formState]);
+  const hasError = useCallback(
+    (field: keyof T): boolean => {
+      return !!formState[field].error;
+    },
+    [formState]
+  );
 
   // Verificar si un campo ha sido tocado
-  const isTouched = useCallback((field: keyof T): boolean => {
-    return formState[field].touched;
-  }, [formState]);
+  const isTouched = useCallback(
+    (field: keyof T): boolean => {
+      return formState[field].touched;
+    },
+    [formState]
+  );
 
   return {
     // Estado
@@ -235,7 +260,7 @@ export const useForm = <T extends Record<string, any>>(options: UseFormOptions<T
     errors,
     isValid,
     isSubmitting,
-    
+
     // Acciones
     setValue,
     setTouched,
@@ -245,10 +270,10 @@ export const useForm = <T extends Record<string, any>>(options: UseFormOptions<T
     validateField,
     validateForm,
     reset,
-    
+
     // Utilidades
     getFieldState,
     hasError,
-    isTouched
+    isTouched,
   };
 };

@@ -18,7 +18,10 @@ interface ErrorBoundaryProps {
   level?: 'page' | 'section' | 'component'; // Error boundary level for context
 }
 
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = {
@@ -70,11 +73,21 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       // Use custom fallback component if provided
       if (this.props.fallback) {
         const FallbackComponent = this.props.fallback;
-        return <FallbackComponent error={this.state.error} onRetry={this.handleRetry} />;
+        return (
+          <FallbackComponent
+            error={this.state.error}
+            onRetry={this.handleRetry}
+          />
+        );
       }
 
       // Default fallback UI
-      return <DefaultErrorFallback error={this.state.error} onRetry={this.handleRetry} />;
+      return (
+        <DefaultErrorFallback
+          error={this.state.error}
+          onRetry={this.handleRetry}
+        />
+      );
     }
 
     return this.props.children;
@@ -87,59 +100,70 @@ interface DefaultErrorFallbackProps {
   onRetry: () => void;
 }
 
-const DefaultErrorFallback: React.FC<DefaultErrorFallbackProps> = ({ error, onRetry }) => {
+const DefaultErrorFallback: React.FC<DefaultErrorFallbackProps> = ({
+  error,
+  onRetry,
+}) => {
   const isMinor = error.severity === ErrorSeverity.LOW;
   const isCritical = error.severity === ErrorSeverity.CRITICAL;
 
   return (
-    <Card className="p-6 m-4 border-red-200 bg-red-50">
-      <div className="flex flex-col items-center text-center space-y-4">
-        <div className="text-4xl">
+    <Card className='p-6 m-4 border-red-200 bg-red-50'>
+      <div className='flex flex-col items-center text-center space-y-4'>
+        <div className='text-4xl'>
           {isCritical ? '💥' : isMinor ? '🔧' : '⚠️'}
         </div>
-        
+
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">
-            {isCritical 
-              ? 'Error crítico' 
-              : isMinor 
-                ? 'Pequeño problema' 
-                : 'Algo salió mal'
-            }
+          <h2 className='text-lg font-semibold text-gray-900 mb-2'>
+            {isCritical
+              ? 'Error crítico'
+              : isMinor
+                ? 'Pequeño problema'
+                : 'Algo salió mal'}
           </h2>
-          
-          <p className="text-gray-600 mb-4">
+
+          <p className='text-gray-600 mb-4'>
             {error.message || 'Ha ocurrido un error inesperado.'}
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Button onClick={onRetry} variant="default">
+        <div className='flex flex-col sm:flex-row gap-3'>
+          <Button onClick={onRetry} variant='default'>
             Intentar de nuevo
           </Button>
-          
-          <Button 
-            onClick={() => window.location.reload()} 
-            variant="outline"
-          >
+
+          <Button onClick={() => window.location.reload()} variant='outline'>
             Recargar página
           </Button>
         </div>
 
         {import.meta.env.DEV && (
-          <details className="w-full mt-4">
-            <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
+          <details className='w-full mt-4'>
+            <summary className='cursor-pointer text-sm text-gray-500 hover:text-gray-700'>
               Detalles del error (desarrollo)
             </summary>
-            <div className="mt-2 p-3 bg-gray-100 rounded text-xs text-left">
-              <div><strong>ID:</strong> {error.id}</div>
-              <div><strong>Tipo:</strong> {error.type}</div>
-              <div><strong>Severidad:</strong> {error.severity}</div>
-              {error.code && <div><strong>Código:</strong> {error.code}</div>}
+            <div className='mt-2 p-3 bg-gray-100 rounded text-xs text-left'>
+              <div>
+                <strong>ID:</strong> {error.id}
+              </div>
+              <div>
+                <strong>Tipo:</strong> {error.type}
+              </div>
+              <div>
+                <strong>Severidad:</strong> {error.severity}
+              </div>
+              {error.code && (
+                <div>
+                  <strong>Código:</strong> {error.code}
+                </div>
+              )}
               {error.stack && (
-                <div className="mt-2">
+                <div className='mt-2'>
                   <strong>Stack trace:</strong>
-                  <pre className="whitespace-pre-wrap text-xs">{error.stack}</pre>
+                  <pre className='whitespace-pre-wrap text-xs'>
+                    {error.stack}
+                  </pre>
                 </div>
               )}
             </div>
@@ -153,32 +177,26 @@ const DefaultErrorFallback: React.FC<DefaultErrorFallbackProps> = ({ error, onRe
 // Specialized error boundaries for different use cases
 
 // Page-level error boundary
-export const PageErrorBoundary: React.FC<{ children: ReactNode }> = ({ children }) => (
-  <ErrorBoundary level="page">
-    {children}
-  </ErrorBoundary>
-);
+export const PageErrorBoundary: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => <ErrorBoundary level='page'>{children}</ErrorBoundary>;
 
-// Section-level error boundary  
-export const SectionErrorBoundary: React.FC<{ children: ReactNode }> = ({ children }) => (
-  <ErrorBoundary level="section">
-    {children}
-  </ErrorBoundary>
-);
+// Section-level error boundary
+export const SectionErrorBoundary: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => <ErrorBoundary level='section'>{children}</ErrorBoundary>;
 
 // Component-level error boundary
-export const ComponentErrorBoundary: React.FC<{ children: ReactNode }> = ({ children }) => (
-  <ErrorBoundary level="component">
-    {children}
-  </ErrorBoundary>
-);
+export const ComponentErrorBoundary: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => <ErrorBoundary level='component'>{children}</ErrorBoundary>;
 
 // HOC for wrapping components with error boundary
 export function withErrorBoundary<P extends object>(
   Component: React.ComponentType<P>,
   errorBoundaryProps?: Omit<ErrorBoundaryProps, 'children'>
 ) {
-  const WrappedComponent: React.FC<P> = (props) => (
+  const WrappedComponent: React.FC<P> = props => (
     <ErrorBoundary {...errorBoundaryProps}>
       <Component {...props} />
     </ErrorBoundary>

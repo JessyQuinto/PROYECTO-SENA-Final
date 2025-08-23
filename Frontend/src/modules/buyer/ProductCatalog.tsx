@@ -6,7 +6,10 @@ import { Button } from '@/components/ui/shadcn/button';
 import { Card, CardContent } from '@/components/ui/shadcn/card';
 import { useCart } from './CartContext';
 import Icon from '@/components/ui/Icon';
-import { useCachedCategories, useCachedProductRatings } from '../../hooks/useCache';
+import {
+  useCachedCategories,
+  useCachedProductRatings,
+} from '../../hooks/useCache';
 
 interface Product {
   id: string;
@@ -49,7 +52,8 @@ const ProductCatalog: React.FC = () => {
   const [twoColsMobile, setTwoColsMobile] = useState(false);
 
   // Use cached data hooks
-  const { data: categories, loading: categoriesLoading } = useCachedCategories();
+  const { data: categories, loading: categoriesLoading } =
+    useCachedCategories();
   const productIds = useMemo(() => products.map(p => p.id), [products]);
   const { data: avgMap } = useCachedProductRatings(productIds);
 

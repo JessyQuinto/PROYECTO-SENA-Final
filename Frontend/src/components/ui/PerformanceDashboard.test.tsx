@@ -45,7 +45,7 @@ describe('PerformanceDashboard', () => {
 
   it('renders performance dashboard in development mode', () => {
     render(<PerformanceDashboard />);
-    
+
     expect(screen.getByText('Show Performance')).toBeInTheDocument();
   });
 
@@ -65,20 +65,20 @@ describe('PerformanceDashboard', () => {
 
   it('shows dashboard when toggle button is clicked', async () => {
     const { user } = render(<PerformanceDashboard />);
-    
+
     const toggleButton = screen.getByText('Show Performance');
     await user.click(toggleButton);
-    
+
     expect(screen.getByText('Performance Monitor')).toBeInTheDocument();
     expect(screen.getByText('Core Web Vitals Score')).toBeInTheDocument();
   });
 
   it('displays performance metrics correctly', async () => {
     const { user } = render(<PerformanceDashboard />);
-    
+
     const toggleButton = screen.getByText('Show Performance');
     await user.click(toggleButton);
-    
+
     expect(screen.getByText('Largest Contentful Paint')).toBeInTheDocument();
     expect(screen.getByText('First Input Delay')).toBeInTheDocument();
     expect(screen.getByText('85')).toBeInTheDocument(); // Core Web Vitals Score

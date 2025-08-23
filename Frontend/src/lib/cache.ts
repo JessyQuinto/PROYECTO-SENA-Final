@@ -107,7 +107,7 @@ class CacheManager {
    */
   deletePattern(pattern: string): void {
     const regex = new RegExp(pattern);
-    
+
     // Clear from memory
     for (const key of this.memoryCache.keys()) {
       if (regex.test(key)) {
@@ -150,7 +150,7 @@ class CacheManager {
   getStats() {
     const memorySize = this.memoryCache.size;
     const localStorageSize = this.getLocalStorageSize();
-    
+
     return {
       memoryItems: memorySize,
       localStorageItems: localStorageSize,
@@ -220,7 +220,7 @@ class CacheManager {
         if (key && key.startsWith(this.config.storagePrefix)) {
           const cacheKey = key.replace(this.config.storagePrefix, '');
           const item = this.getFromLocalStorage(cacheKey);
-          
+
           if (item && this.isValid(item)) {
             this.memoryCache.set(cacheKey, item);
           } else if (item) {
@@ -249,9 +249,10 @@ class CacheManager {
     if (this.memoryCache.size <= this.config.maxMemoryItems) return;
 
     // Remove oldest items
-    const entries = Array.from(this.memoryCache.entries())
-      .sort((a, b) => a[1].timestamp - b[1].timestamp);
-    
+    const entries = Array.from(this.memoryCache.entries()).sort(
+      (a, b) => a[1].timestamp - b[1].timestamp
+    );
+
     const itemsToRemove = this.memoryCache.size - this.config.maxMemoryItems;
     for (let i = 0; i < itemsToRemove; i++) {
       this.memoryCache.delete(entries[i][0]);
@@ -260,13 +261,16 @@ class CacheManager {
 
   private startCleanupInterval(): void {
     // Clean up expired items every 5 minutes
-    this.cleanupInterval = setInterval(() => {
-      for (const [key, item] of this.memoryCache.entries()) {
-        if (!this.isValid(item)) {
-          this.memoryCache.delete(key);
+    this.cleanupInterval = setInterval(
+      () => {
+        for (const [key, item] of this.memoryCache.entries()) {
+          if (!this.isValid(item)) {
+            this.memoryCache.delete(key);
+          }
         }
-      }
-    }, 5 * 60 * 1000);
+      },
+      5 * 60 * 1000
+    );
   }
 
   /**
@@ -293,9 +297,9 @@ export const CACHE_KEYS = {
 
 // Cache TTL constants (in milliseconds)
 export const CACHE_TTL = {
-  SHORT: 2 * 60 * 1000,      // 2 minutes
-  MEDIUM: 10 * 60 * 1000,    // 10 minutes
-  LONG: 60 * 60 * 1000,      // 1 hour
+  SHORT: 2 * 60 * 1000, // 2 minutes
+  MEDIUM: 10 * 60 * 1000, // 10 minutes
+  LONG: 60 * 60 * 1000, // 1 hour
   VERY_LONG: 24 * 60 * 60 * 1000, // 24 hours
 } as const;
 

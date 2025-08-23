@@ -44,7 +44,10 @@ const AdminSettings: React.FC = () => {
   };
 
   return (
-    <AdminLayout title='Configuración' subtitle='Ajustes de aplicación y rendimiento'>
+    <AdminLayout
+      title='Configuración'
+      subtitle='Ajustes de aplicación y rendimiento'
+    >
       {loading ? (
         <p>Cargando...</p>
       ) : (
@@ -100,7 +103,7 @@ const AdminSettings: React.FC = () => {
               </button>
             </div>
           </div>
-          
+
           {/* Cache Management */}
           <CacheManagementPanel />
         </div>

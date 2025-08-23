@@ -13,7 +13,10 @@ import {
 export class ErrorHandler {
   private config: ErrorHandlerConfig;
   private errorLog: ErrorLogEntry[] = [];
-  private retryQueue: Map<string, { error: any; attempt: number; timestamp: number }> = new Map();
+  private retryQueue: Map<
+    string,
+    { error: any; attempt: number; timestamp: number }
+  > = new Map();
 
   constructor(config: Partial<ErrorHandlerConfig> = {}) {
     this.config = { ...DEFAULT_ERROR_CONFIG, ...config };
@@ -23,7 +26,7 @@ export class ErrorHandler {
   // Set up global error handlers
   private setupGlobalErrorHandlers(): void {
     // Handle uncaught JavaScript errors
-    window.addEventListener('error', (event) => {
+    window.addEventListener('error', event => {
       this.handleError(event.error || new Error(event.message), {
         component: 'Global',
         action: 'Uncaught Error',
@@ -34,7 +37,7 @@ export class ErrorHandler {
     });
 
     // Handle unhandled promise rejections
-    window.addEventListener('unhandledrejection', (event) => {
+    window.addEventListener('unhandledrejection', event => {
       this.handleError(event.reason, {
         component: 'Global',
         action: 'Unhandled Promise Rejection',
@@ -53,22 +56,25 @@ export class ErrorHandler {
     }
   ): AppError {
     const errorInfo = this.processError(error, context);
-    
+
     // Log the error
     this.logError(errorInfo);
-    
+
     // Report to external service if configured
     if (this.config.enableReporting) {
       this.reportError(errorInfo);
     }
-    
+
     // Show user feedback if enabled
     if (this.config.enableUserFeedback) {
       this.showUserFeedback(errorInfo);
     }
-    
+
     // Handle retry logic
-    if (this.config.enableRetry && ErrorUtils.shouldRetry(error, 0, this.config.retryAttempts)) {
+    if (
+      this.config.enableRetry &&
+      ErrorUtils.shouldRetry(error, 0, this.config.retryAttempts)
+    ) {
       this.queueForRetry(errorInfo, error);
     }
 
@@ -78,7 +84,7 @@ export class ErrorHandler {
   // Process error into standard format
   private processError(error: any, context?: Record<string, any>): AppError {
     const baseInfo = ErrorUtils.extractErrorInfo(error);
-    
+
     return {
       ...baseInfo,
       userId: context?.userId,
@@ -156,7 +162,9 @@ export class ErrorHandler {
   // Show user-friendly feedback
   private showUserFeedback(error: AppError): void {
     const message = ErrorUtils.getUserFriendlyMessage(error);
-    const isDestructive = error.severity === ErrorSeverity.HIGH || error.severity === ErrorSeverity.CRITICAL;
+    const isDestructive =
+      error.severity === ErrorSeverity.HIGH ||
+      error.severity === ErrorSeverity.CRITICAL;
 
     if (isDestructive) {
       toast.error('Error', {
@@ -192,27 +200,41 @@ export class ErrorHandler {
     retryInfo.attempt++;
 
     // Check if should continue retrying
-    if (!ErrorUtils.shouldRetry(retryInfo.error, retryInfo.attempt, this.config.retryAttempts)) {
+    if (
+      !ErrorUtils.shouldRetry(
+        retryInfo.error,
+        retryInfo.attempt,
+        this.config.retryAttempts
+      )
+    ) {
       this.retryQueue.delete(errorId);
       return;
     }
 
     // Exponential backoff
     const delay = this.config.retryDelay * Math.pow(2, retryInfo.attempt - 1);
-    
+
     setTimeout(() => {
       this.processRetry(errorId);
     }, delay);
   }
 
   // Public methods for manual error handling
-  public logInfo(message: string, details?: Record<string, any>, context?: Record<string, any>): void {
+  public logInfo(
+    message: string,
+    details?: Record<string, any>,
+    context?: Record<string, any>
+  ): void {
     if (import.meta.env.DEV) {
       console.log(`ℹ️ Info: ${message}`, { details, context });
     }
   }
 
-  public logWarning(message: string, details?: Record<string, any>, context?: Record<string, any>): void {
+  public logWarning(
+    message: string,
+    details?: Record<string, any>,
+    context?: Record<string, any>
+  ): void {
     if (import.meta.env.DEV) {
       console.warn(`⚠️ Warning: ${message}`, { details, context });
     }
@@ -245,10 +267,11 @@ export class ErrorHandler {
     this.errorLog.forEach(error => {
       // Count by type
       stats.byType[error.type] = (stats.byType[error.type] || 0) + 1;
-      
+
       // Count by severity
-      stats.bySeverity[error.severity] = (stats.bySeverity[error.severity] || 0) + 1;
-      
+      stats.bySeverity[error.severity] =
+        (stats.bySeverity[error.severity] || 0) + 1;
+
       // Count recent errors
       if (error.timestamp.getTime() > oneHourAgo) {
         stats.recent++;
@@ -261,11 +284,16 @@ export class ErrorHandler {
   // Utility methods
   private getSeverityEmoji(severity: ErrorSeverity): string {
     switch (severity) {
-      case ErrorSeverity.LOW: return '🟡';
-      case ErrorSeverity.MEDIUM: return '🟠';
-      case ErrorSeverity.HIGH: return '🔴';
-      case ErrorSeverity.CRITICAL: return '💥';
-      default: return '❓';
+      case ErrorSeverity.LOW:
+        return '🟡';
+      case ErrorSeverity.MEDIUM:
+        return '🟠';
+      case ErrorSeverity.HIGH:
+        return '🔴';
+      case ErrorSeverity.CRITICAL:
+        return '💥';
+      default:
+        return '❓';
     }
   }
 
@@ -285,7 +313,9 @@ export class ErrorHandler {
   }
 
   // Create error boundary for React components
-  public createErrorBoundary(fallbackComponent?: React.ComponentType<{ error: AppError }>) {
+  public createErrorBoundary(
+    fallbackComponent?: React.ComponentType<{ error: AppError }>
+  ) {
     // This would be implemented as a React Error Boundary component
     // For now, returning a placeholder
     return null;
@@ -296,14 +326,20 @@ export class ErrorHandler {
 export const errorHandler = new ErrorHandler();
 
 // Export convenience functions
-export const handleError = (error: any, context?: Record<string, any>) => 
+export const handleError = (error: any, context?: Record<string, any>) =>
   errorHandler.handleError(error, context);
 
-export const logInfo = (message: string, details?: Record<string, any>, context?: Record<string, any>) =>
-  errorHandler.logInfo(message, details, context);
+export const logInfo = (
+  message: string,
+  details?: Record<string, any>,
+  context?: Record<string, any>
+) => errorHandler.logInfo(message, details, context);
 
-export const logWarning = (message: string, details?: Record<string, any>, context?: Record<string, any>) =>
-  errorHandler.logWarning(message, details, context);
+export const logWarning = (
+  message: string,
+  details?: Record<string, any>,
+  context?: Record<string, any>
+) => errorHandler.logWarning(message, details, context);
 
 export const createAsyncWrapper = <T extends (...args: any[]) => Promise<any>>(
   fn: T,

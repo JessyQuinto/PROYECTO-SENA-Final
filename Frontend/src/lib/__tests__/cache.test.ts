@@ -22,12 +22,14 @@ describe('Cache System', () => {
   beforeEach(() => {
     // Reset localStorage mock
     localStorageMock.store = {};
-    localStorageMock.getItem.mockImplementation((key: string) => 
-      localStorageMock.store[key] || null
+    localStorageMock.getItem.mockImplementation(
+      (key: string) => localStorageMock.store[key] || null
     );
-    localStorageMock.setItem.mockImplementation((key: string, value: string) => {
-      localStorageMock.store[key] = value;
-    });
+    localStorageMock.setItem.mockImplementation(
+      (key: string, value: string) => {
+        localStorageMock.store[key] = value;
+      }
+    );
     localStorageMock.removeItem.mockImplementation((key: string) => {
       delete localStorageMock.store[key];
     });
@@ -41,7 +43,7 @@ describe('Cache System', () => {
 
     // Clear the cache before each test
     cache.clear();
-    
+
     // Reset time to prevent TTL issues
     vi.useFakeTimers();
   });
@@ -54,7 +56,7 @@ describe('Cache System', () => {
     it('should store and retrieve data', () => {
       const testData = { id: 1, name: 'Test' };
       cache.set('test-key', testData);
-      
+
       const retrieved = cache.get('test-key');
       expect(retrieved).toEqual(testData);
     });
@@ -67,7 +69,7 @@ describe('Cache System', () => {
     it('should delete specific keys', () => {
       cache.set('test-key', 'test-value');
       expect(cache.get('test-key')).toBe('test-value');
-      
+
       cache.delete('test-key');
       expect(cache.get('test-key')).toBeNull();
     });
@@ -75,9 +77,9 @@ describe('Cache System', () => {
     it('should clear all cache', () => {
       cache.set('key1', 'value1');
       cache.set('key2', 'value2');
-      
+
       cache.clear();
-      
+
       expect(cache.get('key1')).toBeNull();
       expect(cache.get('key2')).toBeNull();
     });
@@ -87,23 +89,23 @@ describe('Cache System', () => {
     it('should respect TTL and expire items', () => {
       const testData = 'test-value';
       const shortTTL = 1000; // 1 second
-      
+
       cache.set('test-key', testData, shortTTL);
       expect(cache.get('test-key')).toBe(testData);
-      
+
       // Advance time past TTL
       vi.advanceTimersByTime(shortTTL + 1);
-      
+
       expect(cache.get('test-key')).toBeNull();
     });
 
     it('should use default TTL when not specified', () => {
       cache.set('test-key', 'test-value');
-      
+
       // Should still be valid within default TTL
       vi.advanceTimersByTime(CACHE_TTL.MEDIUM - 1000);
       expect(cache.get('test-key')).toBe('test-value');
-      
+
       // Should expire after default TTL
       vi.advanceTimersByTime(2000);
       expect(cache.get('test-key')).toBeNull();
@@ -116,9 +118,9 @@ describe('Cache System', () => {
       cache.set('products_2', 'product2');
       cache.set('categories_1', 'category1');
       cache.set('users_1', 'user1');
-      
+
       cache.deletePattern('^products_');
-      
+
       expect(cache.get('products_1')).toBeNull();
       expect(cache.get('products_2')).toBeNull();
       expect(cache.get('categories_1')).toBe('category1');
@@ -129,9 +131,9 @@ describe('Cache System', () => {
   describe('getOrSet Method', () => {
     it('should fetch and cache data when not in cache', async () => {
       const mockFetcher = vi.fn().mockResolvedValue('fetched-data');
-      
+
       const result = await cache.getOrSet('test-key', mockFetcher);
-      
+
       expect(result).toBe('fetched-data');
       expect(mockFetcher).toHaveBeenCalledOnce();
       expect(cache.get('test-key')).toBe('fetched-data');
@@ -139,10 +141,10 @@ describe('Cache System', () => {
 
     it('should return cached data without calling fetcher', async () => {
       const mockFetcher = vi.fn().mockResolvedValue('fetched-data');
-      
+
       cache.set('test-key', 'cached-data');
       const result = await cache.getOrSet('test-key', mockFetcher);
-      
+
       expect(result).toBe('cached-data');
       expect(mockFetcher).not.toHaveBeenCalled();
     });
@@ -150,17 +152,18 @@ describe('Cache System', () => {
 
   describe('Refresh Method', () => {
     it('should invalidate cache and fetch new data', async () => {
-      const mockFetcher = vi.fn()
+      const mockFetcher = vi
+        .fn()
         .mockResolvedValueOnce('old-data')
         .mockResolvedValueOnce('new-data');
-      
+
       // Initial fetch
       await cache.getOrSet('test-key', mockFetcher);
       expect(cache.get('test-key')).toBe('old-data');
-      
+
       // Refresh
       const result = await cache.refresh('test-key', mockFetcher);
-      
+
       expect(result).toBe('new-data');
       expect(cache.get('test-key')).toBe('new-data');
       expect(mockFetcher).toHaveBeenCalledTimes(2);
@@ -171,9 +174,9 @@ describe('Cache System', () => {
     it('should return cache statistics', () => {
       cache.set('key1', 'value1');
       cache.set('key2', 'value2');
-      
+
       const stats = cache.getStats();
-      
+
       expect(stats.memoryItems).toBe(2);
       expect(stats.config).toBeDefined();
     });
@@ -185,9 +188,9 @@ describe('Cache System', () => {
       cache.set(CACHE_KEYS.PRODUCT_RATINGS, 'ratings');
       cache.set(CACHE_KEYS.CATEGORIES, 'categories');
       cache.set('other_key', 'other');
-      
+
       cacheUtils.invalidateProductCache();
-      
+
       expect(cache.get(CACHE_KEYS.FEATURED_PRODUCTS)).toBeNull();
       expect(cache.get(CACHE_KEYS.PRODUCT_RATINGS)).toBeNull();
       expect(cache.get(CACHE_KEYS.CATEGORIES)).toBeNull();
@@ -198,9 +201,9 @@ describe('Cache System', () => {
       const userId = 'user123';
       cache.set(CACHE_KEYS.USER_PROFILE(userId), 'profile');
       cache.set(CACHE_KEYS.USER_PROFILE('other'), 'other-profile');
-      
+
       cacheUtils.invalidateUserCache(userId);
-      
+
       expect(cache.get(CACHE_KEYS.USER_PROFILE(userId))).toBeNull();
       expect(cache.get(CACHE_KEYS.USER_PROFILE('other'))).toBe('other-profile');
     });
@@ -213,11 +216,11 @@ describe('Cache System', () => {
         maxMemoryItems: 2,
         enableLocalStorage: false,
       });
-      
+
       testCache.set('key1', 'value1');
       testCache.set('key2', 'value2');
       testCache.set('key3', 'value3'); // Should evict oldest item
-      
+
       // key1 should be evicted, key2 and key3 should remain
       expect(testCache.get('key1')).toBeNull();
       expect(testCache.get('key2')).toBe('value2');
@@ -232,11 +235,12 @@ describe('Cache System', () => {
         data: 'old-data',
         timestamp: Date.now(),
         ttl: CACHE_TTL.LONG,
-        version: '0.9.0'
+        version: '0.9.0',
       };
-      
-      localStorageMock.store['tesoros_choco_test-key'] = JSON.stringify(oldCacheItem);
-      
+
+      localStorageMock.store['tesoros_choco_test-key'] =
+        JSON.stringify(oldCacheItem);
+
       // Should return null due to version mismatch
       expect(cache.get('test-key')).toBeNull();
     });
@@ -247,7 +251,7 @@ describe('Cache System', () => {
       localStorageMock.setItem.mockImplementation(() => {
         throw new Error('Quota exceeded');
       });
-      
+
       // Should not throw error
       expect(() => {
         cache.set('test-key', 'test-value');
@@ -256,7 +260,7 @@ describe('Cache System', () => {
 
     it('should handle JSON parse errors gracefully', () => {
       localStorageMock.store['tesoros_choco_test-key'] = 'invalid-json';
-      
+
       // Should return null instead of throwing
       expect(cache.get('test-key')).toBeNull();
     });
@@ -269,7 +273,7 @@ describe('Cache Keys Constants', () => {
     expect(CACHE_KEYS.PRODUCT_RATINGS).toBe('product_ratings');
     expect(CACHE_KEYS.FEATURED_PRODUCTS).toBe('featured_products');
     expect(CACHE_KEYS.APP_CONFIG).toBe('app_config');
-    
+
     expect(CACHE_KEYS.PRODUCT_STORY('123')).toBe('product_story:123');
     expect(CACHE_KEYS.USER_PROFILE('user123')).toBe('user_profile:user123');
   });

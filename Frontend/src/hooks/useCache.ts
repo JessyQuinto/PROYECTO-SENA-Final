@@ -32,35 +32,38 @@ export function useCachedData<T>(
     onError,
   } = options;
 
-  const [data, setData] = useState<T | null>(() => 
+  const [data, setData] = useState<T | null>(() =>
     enabled ? cache.get<T>(key) : null
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchData = useCallback(async (forceRefresh = false) => {
-    if (!enabled) return;
+  const fetchData = useCallback(
+    async (forceRefresh = false) => {
+      if (!enabled) return;
 
-    try {
-      setLoading(true);
-      setError(null);
+      try {
+        setLoading(true);
+        setError(null);
 
-      let result: T;
-      if (forceRefresh) {
-        result = await cache.refresh(key, fetcher, ttl);
-      } else {
-        result = await cache.getOrSet(key, fetcher, ttl);
+        let result: T;
+        if (forceRefresh) {
+          result = await cache.refresh(key, fetcher, ttl);
+        } else {
+          result = await cache.getOrSet(key, fetcher, ttl);
+        }
+
+        setData(result);
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error('Unknown error');
+        setError(error);
+        onError?.(error);
+      } finally {
+        setLoading(false);
       }
-
-      setData(result);
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('Unknown error');
-      setError(error);
-      onError?.(error);
-    } finally {
-      setLoading(false);
-    }
-  }, [key, fetcher, ttl, enabled, onError]);
+    },
+    [key, fetcher, ttl, enabled, onError]
+  );
 
   const refresh = useCallback(() => fetchData(true), [fetchData]);
 
@@ -107,18 +110,20 @@ export function useCachedCategories(options: UseCachedDataOptions = {}) {
  * Hook for cached featured products
  */
 export function useCachedFeaturedProducts(options: UseCachedDataOptions = {}) {
-  return useCachedData(
+  const result = useCachedData(
     CACHE_KEYS.FEATURED_PRODUCTS,
     async () => {
       const { data, error } = await supabase
         .from('productos')
-        .select(`
+        .select(
+          `
           id,
           nombre,
           precio,
           imagen_url,
           users!productos_vendedor_id_fkey(nombre_completo)
-        `)
+        `
+        )
         .eq('estado', 'activo')
         .gt('stock', 0)
         .limit(6)
@@ -129,14 +134,23 @@ export function useCachedFeaturedProducts(options: UseCachedDataOptions = {}) {
     },
     { ttl: CACHE_TTL.MEDIUM, ...options }
   );
+
+  // Ensure data is always an array, never null
+  return {
+    ...result,
+    data: result.data || [],
+  };
 }
 
 /**
  * Hook for cached product ratings
  */
-export function useCachedProductRatings(productIds: string[], options: UseCachedDataOptions = {}) {
+export function useCachedProductRatings(
+  productIds: string[],
+  options: UseCachedDataOptions = {}
+) {
   const cacheKey = `${CACHE_KEYS.PRODUCT_RATINGS}_${productIds.sort().join(',')}`;
-  
+
   return useCachedData(
     cacheKey,
     async () => {
@@ -163,9 +177,12 @@ export function useCachedProductRatings(productIds: string[], options: UseCached
 /**
  * Hook for cached app configuration
  */
-export function useCachedAppConfig(configKey: string, options: UseCachedDataOptions = {}) {
+export function useCachedAppConfig(
+  configKey: string,
+  options: UseCachedDataOptions = {}
+) {
   const cacheKey = `${CACHE_KEYS.APP_CONFIG}_${configKey}`;
-  
+
   return useCachedData(
     cacheKey,
     async () => {
@@ -185,7 +202,10 @@ export function useCachedAppConfig(configKey: string, options: UseCachedDataOpti
 /**
  * Hook for cached product story/details
  */
-export function useCachedProductStory(productId: string, options: UseCachedDataOptions = {}) {
+export function useCachedProductStory(
+  productId: string,
+  options: UseCachedDataOptions = {}
+) {
   return useCachedData(
     CACHE_KEYS.PRODUCT_STORY(productId),
     async () => {
@@ -218,10 +238,13 @@ export function useCacheManager() {
     refreshStats();
   }, [refreshStats]);
 
-  const invalidateUserCache = useCallback((userId?: string) => {
-    cacheUtils.invalidateUserCache(userId);
-    refreshStats();
-  }, [refreshStats]);
+  const invalidateUserCache = useCallback(
+    (userId?: string) => {
+      cacheUtils.invalidateUserCache(userId);
+      refreshStats();
+    },
+    [refreshStats]
+  );
 
   const invalidateConfigCache = useCallback(() => {
     cacheUtils.invalidateConfigCache();
@@ -276,13 +299,15 @@ export function useCacheWarming() {
         async () => {
           const { data } = await supabase
             .from('productos')
-            .select(`
+            .select(
+              `
               id,
               nombre,
               precio,
               imagen_url,
               users!productos_vendedor_id_fkey(nombre_completo)
-            `)
+            `
+            )
             .eq('estado', 'activo')
             .gt('stock', 0)
             .limit(6)
@@ -297,10 +322,7 @@ export function useCacheWarming() {
   }, []);
 
   const warmEssentialData = useCallback(async () => {
-    await Promise.allSettled([
-      warmCategories(),
-      warmFeaturedProducts(),
-    ]);
+    await Promise.allSettled([warmCategories(), warmFeaturedProducts()]);
   }, [warmCategories, warmFeaturedProducts]);
 
   return {

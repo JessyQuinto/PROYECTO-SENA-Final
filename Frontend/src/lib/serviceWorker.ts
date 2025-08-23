@@ -28,7 +28,7 @@ class ServiceWorkerManager {
   private async register(): Promise<void> {
     try {
       console.log('🔧 Registering service worker...');
-      
+
       this.registration = await navigator.serviceWorker.register('/sw.js', {
         scope: '/',
       });
@@ -37,10 +37,13 @@ class ServiceWorkerManager {
       this.registration.addEventListener('updatefound', () => {
         console.log('🔄 Service worker update found');
         const newWorker = this.registration?.installing;
-        
+
         if (newWorker) {
           newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            if (
+              newWorker.state === 'installed' &&
+              navigator.serviceWorker.controller
+            ) {
               console.log('🆕 New service worker installed, refresh to update');
               this.notifyUpdate();
             }
@@ -57,19 +60,21 @@ class ServiceWorkerManager {
   /**
    * Send message to service worker and get response
    */
-  private async sendMessage(message: ServiceWorkerMessage): Promise<ServiceWorkerResponse> {
+  private async sendMessage(
+    message: ServiceWorkerMessage
+  ): Promise<ServiceWorkerResponse> {
     if (!this.registration?.active) {
       throw new Error('Service worker not active');
     }
 
     return new Promise((resolve, reject) => {
       const messageChannel = new MessageChannel();
-      
-      messageChannel.port1.onmessage = (event) => {
+
+      messageChannel.port1.onmessage = event => {
         resolve(event.data);
       };
 
-      messageChannel.port1.onerror = (error) => {
+      messageChannel.port1.onerror = error => {
         reject(error);
       };
 
@@ -95,7 +100,10 @@ class ServiceWorkerManager {
         return true;
       }
 
-      const response = await this.sendMessage({ type: 'CLEAR_CACHE', cacheType: 'all' });
+      const response = await this.sendMessage({
+        type: 'CLEAR_CACHE',
+        cacheType: 'all',
+      });
       return response.success || false;
     } catch (error) {
       console.warn('Failed to clear caches:', error);
@@ -115,7 +123,10 @@ class ServiceWorkerManager {
         return true;
       }
 
-      const response = await this.sendMessage({ type: 'CLEAR_CACHE', cacheType });
+      const response = await this.sendMessage({
+        type: 'CLEAR_CACHE',
+        cacheType,
+      });
       return response.success || false;
     } catch (error) {
       console.warn(`Failed to clear ${cacheType} cache:`, error);
@@ -132,7 +143,7 @@ class ServiceWorkerManager {
         // Fallback to manual stats gathering
         const cacheNames = await caches.keys();
         const stats: Record<string, number> = {};
-        
+
         for (const cacheName of cacheNames) {
           if (cacheName.startsWith('tesoros-choco-')) {
             const cache = await caches.open(cacheName);
@@ -140,7 +151,7 @@ class ServiceWorkerManager {
             stats[cacheName] = keys.length;
           }
         }
-        
+
         return stats;
       }
 
@@ -221,13 +232,16 @@ export const useServiceWorker = (): UseServiceWorkerReturn => {
     return success;
   }, [refreshStats]);
 
-  const clearCache = useCallback(async (type: 'static' | 'api' | 'images') => {
-    const success = await serviceWorkerManager.clearCache(type);
-    if (success) {
-      await refreshStats();
-    }
-    return success;
-  }, [refreshStats]);
+  const clearCache = useCallback(
+    async (type: 'static' | 'api' | 'images') => {
+      const success = await serviceWorkerManager.clearCache(type);
+      if (success) {
+        await refreshStats();
+      }
+      return success;
+    },
+    [refreshStats]
+  );
 
   useEffect(() => {
     // Check if service worker is active
@@ -237,7 +251,7 @@ export const useServiceWorker = (): UseServiceWorkerReturn => {
 
     // Initial check
     checkActive();
-    
+
     // Load initial stats
     refreshStats();
 

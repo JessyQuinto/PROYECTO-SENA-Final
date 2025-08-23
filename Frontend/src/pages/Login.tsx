@@ -4,9 +4,13 @@ import { useForm } from '@/hooks/useForm';
 import { useToast } from '@/hooks/useToast';
 import { useSupabase } from '@/hooks/useSupabase';
 import { useNavigate, Link } from 'react-router-dom';
-import { Input } from '@/components/ui/shadcn/input';
 import { Label } from '@/components/ui/shadcn/label';
-import { Button } from '@/components/ui/shadcn/button';
+import {
+  SecureInput,
+  PasswordInput,
+  SecureButton,
+} from '@/components/security/SecureComponents';
+import { useRateLimit } from '@/hooks/useSecurity';
 import { z } from 'zod';
 
 const loginSchema = z.object({
@@ -25,10 +29,25 @@ const LoginPage: React.FC = () => {
     toastAction: 'login',
   });
 
+  // Rate limiting for login attempts
+  const rateLimit = useRateLimit('login', 5, 15 * 60 * 1000); // 5 attempts per 15 minutes
+
   const form = useForm<LoginForm>({
     initialValues: { email: '', password: '' },
     validationSchema: loginSchema,
     onSubmit: async values => {
+      // Check rate limit before attempting login
+      if (!rateLimit.checkLimit()) {
+        toast.error(
+          'Demasiados intentos de inicio de sesión. Intenta más tarde.',
+          {
+            role: 'comprador',
+            action: 'login',
+          }
+        );
+        return;
+      }
+
       const { error } = await executeMutation(
         () => signIn(values.email, values.password),
         'Inicio de sesión exitoso',
@@ -36,6 +55,8 @@ const LoginPage: React.FC = () => {
       );
 
       if (!error) {
+        // Clear rate limit on successful login
+        rateLimit.clearLimit();
         navigate('/dashboard');
       }
     },
@@ -63,43 +84,38 @@ const LoginPage: React.FC = () => {
               <form className='space-y-4' onSubmit={form.handleSubmit}>
                 <div className='space-y-2'>
                   <Label htmlFor='email'>Email</Label>
-                  <Input
+                  <SecureInput
                     id='email'
                     type='email'
                     value={form.values.email}
-                    onChange={form.handleChange}
-                    onBlur={form.handleBlur}
+                    onChange={value => form.handleChange('email', value)}
+                    validation='email'
                     placeholder='tu@email.com'
-                    className={form.errors.email ? 'border-red-500' : ''}
+                    maxLength={255}
                   />
-                  {form.errors.email && (
-                    <p className='text-sm text-red-600'>{form.errors.email}</p>
-                  )}
                 </div>
                 <div className='space-y-2'>
                   <Label htmlFor='password'>Contraseña</Label>
-                  <Input
+                  <PasswordInput
                     id='password'
-                    type='password'
                     value={form.values.password}
-                    onChange={form.handleChange}
-                    onBlur={form.handleBlur}
+                    onChange={value => form.handleChange('password', value)}
                     placeholder='••••••••'
-                    className={form.errors.password ? 'border-red-500' : ''}
+                    showStrength={false}
+                    showToggle={true}
                   />
-                  {form.errors.password && (
-                    <p className='text-sm text-red-600'>
-                      {form.errors.password}
-                    </p>
-                  )}
                 </div>
-                <Button
+                <SecureButton
                   type='submit'
                   className='w-full'
                   disabled={form.isSubmitting}
+                  rateLimitKey='login-submit'
+                  maxAttempts={5}
+                  lockoutDuration={15 * 60 * 1000}
+                  showRemainingAttempts={true}
                 >
                   {form.isSubmitting ? 'Iniciando sesión…' : 'Iniciar sesión'}
-                </Button>
+                </SecureButton>
                 <div className='text-sm text-center space-y-2'>
                   <div>
                     <Link

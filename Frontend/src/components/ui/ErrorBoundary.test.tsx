@@ -33,17 +33,17 @@ describe('ErrorBoundary', () => {
         <ThrowError shouldThrow={false} />
       </ErrorBoundary>
     );
-    
+
     expect(screen.getByText('No error')).toBeInTheDocument();
   });
 
   it('renders error fallback when child component throws', () => {
     render(
       <ErrorBoundary>
-        <ThrowError shouldThrow={true} errorMessage="Test error message" />
+        <ThrowError shouldThrow={true} errorMessage='Test error message' />
       </ErrorBoundary>
     );
-    
+
     expect(screen.getByText('Algo salió mal')).toBeInTheDocument();
     expect(screen.getByText('Test error message')).toBeInTheDocument();
   });
@@ -54,7 +54,7 @@ describe('ErrorBoundary', () => {
         <ThrowError shouldThrow={true} />
       </ErrorBoundary>
     );
-    
+
     expect(screen.getByText('Intentar de nuevo')).toBeInTheDocument();
     expect(screen.getByText('Recargar página')).toBeInTheDocument();
   });
@@ -63,29 +63,34 @@ describe('ErrorBoundary', () => {
     const CustomFallback = ({ error }: { error: any }) => (
       <div>Custom error: {error.message}</div>
     );
-    
+
     render(
       <ErrorBoundary fallback={CustomFallback}>
-        <ThrowError shouldThrow={true} errorMessage="Custom error test" />
+        <ThrowError shouldThrow={true} errorMessage='Custom error test' />
       </ErrorBoundary>
     );
-    
-    expect(screen.getByText('Custom error: Custom error test')).toBeInTheDocument();
+
+    expect(
+      screen.getByText('Custom error: Custom error test')
+    ).toBeInTheDocument();
   });
 });
 
 describe('ErrorHandler', () => {
   let errorHandler: ErrorHandler;
-  
+
   beforeEach(() => {
     errorHandler = new ErrorHandler();
     vi.clearAllMocks();
   });
 
   it('handles validation errors correctly', () => {
-    const validationError = new ValidationError('Invalid input', 'VALIDATION_001');
+    const validationError = new ValidationError(
+      'Invalid input',
+      'VALIDATION_001'
+    );
     const result = errorHandler.handleError(validationError);
-    
+
     expect(result.type).toBe('validation');
     expect(result.message).toBe('Invalid input');
     expect(result.code).toBe('VALIDATION_001');
@@ -94,7 +99,7 @@ describe('ErrorHandler', () => {
   it('handles network errors correctly', () => {
     const networkError = new NetworkError('Connection failed');
     const result = errorHandler.handleError(networkError);
-    
+
     expect(result.type).toBe('network');
     expect(result.message).toBe('Connection failed');
   });
@@ -102,7 +107,7 @@ describe('ErrorHandler', () => {
   it('logs errors to internal log', () => {
     const error = new Error('Test error');
     errorHandler.handleError(error);
-    
+
     const errorLog = errorHandler.getErrorLog();
     expect(errorLog).toHaveLength(1);
     expect(errorLog[0].message).toBe('Test error');
@@ -113,7 +118,7 @@ describe('ErrorHandler', () => {
     errorHandler.handleError(new ValidationError('Error 1'));
     errorHandler.handleError(new NetworkError('Error 2'));
     errorHandler.handleError(new Error('Error 3'));
-    
+
     const stats = errorHandler.getErrorStats();
     expect(stats.total).toBe(3);
     expect(stats.byType.validation).toBe(1);
@@ -124,7 +129,7 @@ describe('ErrorHandler', () => {
   it('clears error log when requested', () => {
     errorHandler.handleError(new Error('Test error'));
     expect(errorHandler.getErrorLog()).toHaveLength(1);
-    
+
     errorHandler.clearErrorLog();
     expect(errorHandler.getErrorLog()).toHaveLength(0);
   });

@@ -1,0 +1,43 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit checks..."
+
+# Change to Frontend directory
+cd Frontend
+
+# Check for TypeScript errors
+echo "📝 Type checking..."
+npx tsc --noEmit
+if [ $? -ne 0 ]; then
+  echo "❌ TypeScript errors found. Please fix them before committing."
+  exit 1
+fi
+
+# Run linting
+echo "🔍 Linting code..."
+npx eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0
+if [ $? -ne 0 ]; then
+  echo "❌ Linting errors found. Please fix them before committing."
+  exit 1
+fi
+
+# Check code formatting
+echo "✨ Checking code formatting..."
+npx prettier --check .
+if [ $? -ne 0 ]; then
+  echo "❌ Code formatting issues found. Running formatter..."
+  npx prettier --write .
+  echo "✅ Code formatted. Please stage the changes and commit again."
+  exit 1
+fi
+
+# Run tests
+echo "🧪 Running tests..."
+npx vitest run
+if [ $? -ne 0 ]; then
+  echo "❌ Tests failed. Please fix them before committing."
+  exit 1
+fi
+
+echo "✅ All pre-commit checks passed!"

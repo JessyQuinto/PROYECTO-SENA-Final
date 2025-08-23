@@ -53,7 +53,9 @@ export const useComponentPerformance = (componentName: string) => {
       // Log component render time
       if (import.meta.env.DEV && duration > 16) {
         // Log if component takes more than 16ms (one frame at 60fps)
-        console.warn(`🐌 Slow component render: ${componentName} took ${duration.toFixed(2)}ms`);
+        console.warn(
+          `🐌 Slow component render: ${componentName} took ${duration.toFixed(2)}ms`
+        );
       }
     };
   }, [componentName]);
@@ -63,11 +65,11 @@ export const useComponentPerformance = (componentName: string) => {
 export const useRoutePerformance = () => {
   useEffect(() => {
     const startTime = performance.now();
-    
+
     const handleRouteChange = () => {
       const endTime = performance.now();
       const duration = endTime - startTime;
-      
+
       if (import.meta.env.DEV) {
         console.log(`📍 Route change took ${duration.toFixed(2)}ms`);
       }
@@ -75,7 +77,7 @@ export const useRoutePerformance = () => {
 
     // Monitor for route changes
     window.addEventListener('popstate', handleRouteChange);
-    
+
     return () => {
       window.removeEventListener('popstate', handleRouteChange);
     };

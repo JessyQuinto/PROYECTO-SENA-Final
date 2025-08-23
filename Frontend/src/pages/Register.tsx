@@ -3,24 +3,41 @@ import { useAuth } from '@/auth/AuthContext';
 import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
-import { Input } from '@/components/ui/shadcn/input';
 import { Label } from '@/components/ui/shadcn/label';
-import { Button } from '@/components/ui/shadcn/button';
 import { Checkbox } from '@/components/ui/shadcn/checkbox';
 import { getDepartamentos, getCiudades } from '@/lib/geo';
 import { useForm } from '@/hooks/useForm';
 import { useToastWithAuth } from '@/hooks/useToast';
 import { useSupabase } from '@/hooks/useSupabase';
+import {
+  SecureInput,
+  PasswordInput,
+  SecureButton,
+} from '@/components/security/SecureComponents';
+import { useRateLimit } from '@/hooks/useSecurity';
 
 const signupSchema = z
   .object({
     email: z.string().email('Email inválido'),
     password: z
       .string()
-      .min(6, 'La contraseña debe tener al menos 6 caracteres'),
-    confirmPassword: z.string().min(6, 'Confirma tu contraseña'),
-    nombre: z.string().min(1, 'El nombre es obligatorio'),
-    telefono: z.string().min(1, 'El teléfono es obligatorio'),
+      .min(8, 'La contraseña debe tener al menos 8 caracteres')
+      .regex(/[A-Z]/, 'Debe contener al menos una letra mayúscula')
+      .regex(/[a-z]/, 'Debe contener al menos una letra minúscula')
+      .regex(/\d/, 'Debe contener al menos un número')
+      .regex(
+        /[!@#$%^&*(),.?":{}|<>]/,
+        'Debe contener al menos un carácter especial'
+      ),
+    confirmPassword: z.string().min(8, 'Confirma tu contraseña'),
+    nombre: z
+      .string()
+      .min(2, 'El nombre debe tener al menos 2 caracteres')
+      .max(50, 'El nombre no puede exceder 50 caracteres'),
+    telefono: z
+      .string()
+      .min(10, 'El teléfono debe tener al menos 10 dígitos')
+      .regex(/^[\+]?[1-9][\d]{9,15}$/, 'Formato de teléfono inválido'),
     ciudad: z.string().min(1, 'La ciudad es obligatoria'),
     departamento: z.string().min(1, 'El departamento es obligatorio'),
     confirmInfo: z
@@ -59,6 +76,9 @@ export const RegisterPage: React.FC = () => {
     toastAction: 'register',
   });
 
+  // Rate limiting for registration attempts
+  const rateLimit = useRateLimit('register', 3, 10 * 60 * 1000); // 3 attempts per 10 minutes
+
   // Unificar formulario (sin pasos)
   const [role, setRole] = useState<'comprador' | 'vendedor'>('comprador');
   const [success, setSuccess] = useState<string | null>(null);
@@ -82,6 +102,14 @@ export const RegisterPage: React.FC = () => {
     },
     validationSchema: signupSchema,
     onSubmit: async values => {
+      // Check rate limit before attempting registration
+      if (!rateLimit.checkLimit()) {
+        toast.error('Demasiados intentos de registro. Intenta más tarde.', {
+          action: 'register',
+        });
+        return;
+      }
+
       const res = await signUp(values.email, values.password, role, {
         nombre: values.nombre,
         telefono: values.telefono,
@@ -95,6 +123,8 @@ export const RegisterPage: React.FC = () => {
         return;
       }
 
+      // Clear rate limit on successful registration
+      rateLimit.clearLimit();
       setSuccess('Registro exitoso. Revisa tu correo para confirmar.');
       // Redirigir a pantalla de verificación con countdown
       navigate('/verifica-tu-correo', {

@@ -126,7 +126,13 @@ export class DatabaseError extends BaseAppError {
 
 export class BusinessLogicError extends BaseAppError {
   constructor(message: string, code?: string, details?: Record<string, any>) {
-    super(message, ErrorType.BUSINESS_LOGIC, ErrorSeverity.MEDIUM, code, details);
+    super(
+      message,
+      ErrorType.BUSINESS_LOGIC,
+      ErrorSeverity.MEDIUM,
+      code,
+      details
+    );
   }
 }
 
@@ -162,8 +168,8 @@ export const ErrorUtils = {
   isNetworkError: (error: any): boolean => {
     return (
       error instanceof NetworkError ||
-      (error?.name === 'NetworkError') ||
-      (error?.code === 'NETWORK_ERROR') ||
+      error?.name === 'NetworkError' ||
+      error?.code === 'NETWORK_ERROR' ||
       (error?.message?.includes('fetch') && error?.message?.includes('failed'))
     );
   },
@@ -171,8 +177,8 @@ export const ErrorUtils = {
   isValidationError: (error: any): boolean => {
     return (
       error instanceof ValidationError ||
-      (error?.name === 'ValidationError') ||
-      (error?.code === 'VALIDATION_ERROR')
+      error?.name === 'ValidationError' ||
+      error?.code === 'VALIDATION_ERROR'
     );
   },
 
@@ -180,8 +186,9 @@ export const ErrorUtils = {
     return (
       error instanceof AuthenticationError ||
       error instanceof AuthorizationError ||
-      (error?.message?.includes('auth')) ||
-      (error?.status === 401 || error?.status === 403)
+      error?.message?.includes('auth') ||
+      error?.status === 401 ||
+      error?.status === 403
     );
   },
 

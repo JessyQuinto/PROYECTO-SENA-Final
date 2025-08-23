@@ -24,7 +24,11 @@ interface FeaturedProduct {
 
 export const Home: React.FC = () => {
   const { user } = useAuth();
-  const { data: featuredProducts, loading, error } = useCachedFeaturedProducts();
+  const {
+    data: featuredProducts,
+    loading,
+    error,
+  } = useCachedFeaturedProducts();
 
   return (
     <div>
@@ -191,17 +195,39 @@ export const Home: React.FC = () => {
             </div>
           ) : (
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-              {featuredProducts.map(product => (
+              {(featuredProducts || []).map((product: FeaturedProduct) => (
                 <Card
                   key={product.id}
                   className='overflow-hidden hover:shadow-lg transition-shadow'
                 >
-                  <div className='aspect-square overflow-hidden'>
-                    <img
-                      src={product.imagen_url || '/placeholder-product.jpg'}
-                      alt={product.nombre}
-                      className='w-full h-full object-cover hover:scale-105 transition-transform duration-300'
-                    />
+                  <div className='aspect-square overflow-hidden bg-gray-100 flex items-center justify-center'>
+                    {product.imagen_url ? (
+                      <img
+                        src={product.imagen_url}
+                        alt={product.nombre}
+                        className='w-full h-full object-cover hover:scale-105 transition-transform duration-300'
+                        onError={e => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          target.parentElement!.innerHTML =
+                            '<div class="w-full h-full flex items-center justify-center text-gray-400"><svg class="w-16 h-16" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path></svg></div>';
+                        }}
+                      />
+                    ) : (
+                      <div className='w-full h-full flex items-center justify-center text-gray-400'>
+                        <svg
+                          className='w-16 h-16'
+                          fill='currentColor'
+                          viewBox='0 0 20 20'
+                        >
+                          <path
+                            fillRule='evenodd'
+                            d='M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z'
+                            clipRule='evenodd'
+                          ></path>
+                        </svg>
+                      </div>
+                    )}
                   </div>
                   <CardContent className='p-4'>
                     <h3 className='font-semibold text-lg mb-2 line-clamp-2'>
@@ -222,6 +248,15 @@ export const Home: React.FC = () => {
                   </CardContent>
                 </Card>
               ))}
+              {(!featuredProducts || featuredProducts.length === 0) &&
+                !loading &&
+                !error && (
+                  <div className='col-span-full text-center py-8'>
+                    <p className='text-gray-600'>
+                      No hay productos destacados disponibles en este momento.
+                    </p>
+                  </div>
+                )}
             </div>
           )}
 
