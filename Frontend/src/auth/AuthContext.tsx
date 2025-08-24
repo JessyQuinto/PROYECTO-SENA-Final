@@ -441,13 +441,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log('[AuthContext] Emergency cleanup result:', emergencyResult);
       }
       
-      setLoading(false);
-      console.log('[AuthContext] Sign out completed successfully');
-      console.log('[AuthContext] Final user state:', null);
+      // Force a complete UI refresh by triggering a custom event
+      console.log('[AuthContext] Triggering UI refresh event...');
+      try {
+        // Dispatch multiple events to ensure all components update
+        window.dispatchEvent(new Event('storage'));
+        window.dispatchEvent(new CustomEvent('userLoggedOut', { 
+          detail: { 
+            timestamp: Date.now(), 
+            emergency: false,
+            source: 'authContext'
+          } 
+        }));
+        window.dispatchEvent(new CustomEvent('userStateCleanup', { 
+          detail: { 
+            timestamp: Date.now(), 
+            source: 'authContext'
+          } 
+        }));
+        
+        // Small delay to allow event processing before releasing loading state
+        setTimeout(() => {
+          setLoading(false);
+          console.log('[AuthContext] Sign out completed successfully');
+          console.log('[AuthContext] Final user state:', null);
+        }, 100);
+      } catch (eventError) {
+        console.error('[AuthContext] Error dispatching refresh events:', eventError);
+        setLoading(false);
+      }
       
     } catch (error) {
       console.error('[AuthContext] Error during signOut:', error);
-      console.error('[AuthContext] Error stack:', error.stack);
+      console.error('[AuthContext] Error stack:', (error as Error).stack);
       
       // Asegurar que el estado se limpie incluso si hay error
       console.log('[AuthContext] Emergency cleanup due to error...');
@@ -460,6 +486,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const { emergencyCleanup } = await import('@/lib/stateCleanup');
         const emergencyResult = emergencyCleanup();
         console.log('[AuthContext] Emergency cleanup result:', emergencyResult);
+        
+        // Still try to trigger UI refresh
+        window.dispatchEvent(new Event('storage'));
+        window.dispatchEvent(new CustomEvent('userLoggedOut', { 
+          detail: { 
+            timestamp: Date.now(), 
+            emergency: true,
+            source: 'authContext-error'
+          } 
+        }));
       } catch (cleanupError) {
         console.error('[AuthContext] Emergency cleanup also failed:', cleanupError);
         
@@ -473,7 +509,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             });
             sessionStorage.clear();
             window.dispatchEvent(new Event('storage'));
-            window.dispatchEvent(new CustomEvent('userLoggedOut', { detail: { timestamp: Date.now(), emergency: true } }));
+            window.dispatchEvent(new CustomEvent('userLoggedOut', { 
+              detail: { 
+                timestamp: Date.now(), 
+                emergency: true,
+                source: 'authContext-fallback'
+              } 
+            }));
           }
         } catch (fallbackError) {
           console.error('[AuthContext] Even fallback cleanup failed:', fallbackError);
