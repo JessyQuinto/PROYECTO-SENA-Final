@@ -3,6 +3,24 @@
 @import './styles/checkout.css';
 
 @theme {
+  /* Nordic Color Palette */
+  --nord0: #2e3440;   /* Polar Night - Darkest */
+  --nord1: #3b4252;   /* Polar Night - Dark */
+  --nord2: #434c5e;   /* Polar Night - Medium */
+  --nord3: #4c566a;   /* Polar Night - Light */
+  --nord4: #d8dee9;   /* Snow Storm - Dark */
+  --nord5: #e5e9f0;   /* Snow Storm - Medium */
+  --nord6: #eceff4;   /* Snow Storm - Light */
+  --nord7: #8fbcbb;   /* Frost - Teal */
+  --nord8: #88c0d0;   /* Frost - Light Blue */
+  --nord9: #81a1c1;   /* Frost - Blue */
+  --nord10: #5e81ac;  /* Frost - Dark Blue */
+  --nord11: #bf616a;  /* Aurora - Red */
+  --nord12: #d08770;  /* Aurora - Orange */
+  --nord13: #ebcb8b;  /* Aurora - Yellow */
+  --nord14: #a3be8c;  /* Aurora - Green */
+  --nord15: #b48ead;  /* Aurora - Purple */
+
   /* Semantic Design Tokens - Brand Colors */
   --color-brand-primary: #00a67e;
   --color-brand-secondary: #0f766e;
@@ -413,31 +431,31 @@
   }
 }
 
-/* Dark Theme - Modern Dark Mode */
+/* Nordic Dark Theme */
 :root.dark {
-  /* Dark Mode Surface Colors */
-  --color-surface-primary: #0f172a;
-  --color-surface-secondary: #1e293b;
-  --color-surface-tertiary: #334155;
-  --color-surface-inverse: #ffffff;
+  /* Nordic Dark Mode Surface Colors */
+  --color-surface-primary: var(--nord0);     /* Darkest polar night */
+  --color-surface-secondary: var(--nord1);   /* Dark polar night */
+  --color-surface-tertiary: var(--nord2);    /* Medium polar night */
+  --color-surface-inverse: var(--nord6);     /* Light snow storm */
   
-  /* Dark Mode Text Colors */
-  --color-text-primary: #f8fafc;
-  --color-text-secondary: #cbd5e1;
-  --color-text-tertiary: #94a3b8;
-  --color-text-inverse: #0f172a;
-  --color-text-disabled: #64748b;
+  /* Nordic Dark Mode Text Colors */
+  --color-text-primary: var(--nord6);        /* Light snow storm */
+  --color-text-secondary: var(--nord5);      /* Medium snow storm */
+  --color-text-tertiary: var(--nord4);       /* Dark snow storm */
+  --color-text-inverse: var(--nord0);        /* Darkest polar night */
+  --color-text-disabled: var(--nord3);       /* Light polar night */
   
-  /* Dark Mode Borders */
-  --color-border-primary: #334155;
-  --color-border-secondary: #475569;
+  /* Nordic Dark Mode Borders */
+  --color-border-primary: var(--nord3);      /* Light polar night */
+  --color-border-secondary: var(--nord2);    /* Medium polar night */
   
-  /* Brand colors remain the same for consistency */
-  --color-brand-primary: #00a67e;
-  --color-brand-secondary: #0f766e;
-  --color-brand-accent: #0ea5a5;
+  /* Nordic brand colors with enhanced contrast for dark theme */
+  --color-brand-primary: var(--nord8);       /* Frost light blue */
+  --color-brand-secondary: var(--nord10);    /* Frost dark blue */
+  --color-brand-accent: var(--nord7);        /* Frost teal */
   
-  /* shadcn/ui dark mode mapping */
+  /* shadcn/ui Nordic dark mode mapping */
   --color-background: var(--color-surface-primary);
   --color-foreground: var(--color-text-primary);
   --color-card: var(--color-surface-secondary);
@@ -445,20 +463,20 @@
   --color-popover: var(--color-surface-secondary);
   --color-popover-foreground: var(--color-text-primary);
   --color-primary: var(--color-brand-primary);
-  --color-primary-foreground: var(--color-text-inverse);
+  --color-primary-foreground: var(--nord0);
   --color-secondary: var(--color-surface-tertiary);
   --color-secondary-foreground: var(--color-text-primary);
   --color-muted: var(--color-surface-tertiary);
   --color-muted-foreground: var(--color-text-secondary);
   --color-accent: var(--color-surface-tertiary);
   --color-accent-foreground: var(--color-text-primary);
-  --color-destructive: var(--color-error);
-  --color-destructive-foreground: var(--color-text-inverse);
+  --color-destructive: var(--nord11);         /* Aurora red */
+  --color-destructive-foreground: var(--nord6);
   --color-border: var(--color-border-primary);
   --color-input: var(--color-border-primary);
-  --color-ring: var(--color-border-focus);
+  --color-ring: var(--color-brand-primary);
 
-  /* Legacy compatibility for dark mode */
+  /* Legacy compatibility for Nordic dark mode */
   --color-terracotta-suave: var(--color-brand-primary);
   --color-ocre-africano: var(--color-brand-secondary);
   --color-verde-oliva-tenue: var(--color-brand-accent);
@@ -467,34 +485,32 @@
   --color-marron-cacao: var(--color-text-primary);
   --color-carbon-suave: var(--color-text-secondary);
 
-  /* Dark mode color scales */
-  --color-primary-50: color-mix(in oklab, var(--color-brand-primary) 8%, var(--color-surface-primary));
-  --color-primary-100: color-mix(in oklab, var(--color-brand-primary) 12%, var(--color-surface-primary));
-  --color-primary-500: var(--color-brand-primary);
-  --color-primary-600: color-mix(in oklab, var(--color-brand-primary) 90%, white);
-  --color-primary-700: color-mix(in oklab, var(--color-brand-primary) 70%, white);
-  --color-secondary-50: color-mix(in oklab, var(--color-brand-secondary) 8%, var(--color-surface-primary));
-  --color-secondary-100: color-mix(in oklab, var(--color-brand-secondary) 12%, var(--color-surface-primary));
-  --color-secondary-500: var(--color-brand-secondary);
-  --color-secondary-600: color-mix(in oklab, var(--color-brand-secondary) 90%,
-    white
-  );
-  --color-secondary-700: color-mix(in oklab, var(--color-brand-secondary) 70%, white);
-  --color-accent-50: color-mix(in oklab, var(--color-brand-accent) 8%, var(--color-surface-primary));
-  --color-accent-100: color-mix(in oklab, var(--color-brand-accent) 12%, var(--color-surface-primary));
-  --color-accent-500: var(--color-brand-accent);
-  --color-accent-600: color-mix(in oklab, var(--color-brand-accent) 90%, white);
-  --color-accent-700: color-mix(in oklab, var(--color-brand-accent) 70%, white);
+  /* Nordic dark mode color scales */
+  --color-primary-50: color-mix(in oklab, var(--nord8) 8%, var(--color-surface-primary));
+  --color-primary-100: color-mix(in oklab, var(--nord8) 12%, var(--color-surface-primary));
+  --color-primary-500: var(--nord8);
+  --color-primary-600: color-mix(in oklab, var(--nord8) 90%, var(--nord6));
+  --color-primary-700: color-mix(in oklab, var(--nord8) 70%, var(--nord6));
+  --color-secondary-50: color-mix(in oklab, var(--nord10) 8%, var(--color-surface-primary));
+  --color-secondary-100: color-mix(in oklab, var(--nord10) 12%, var(--color-surface-primary));
+  --color-secondary-500: var(--nord10);
+  --color-secondary-600: color-mix(in oklab, var(--nord10) 90%, var(--nord6));
+  --color-secondary-700: color-mix(in oklab, var(--nord10) 70%, var(--nord6));
+  --color-accent-50: color-mix(in oklab, var(--nord7) 8%, var(--color-surface-primary));
+  --color-accent-100: color-mix(in oklab, var(--nord7) 12%, var(--color-surface-primary));
+  --color-accent-500: var(--nord7);
+  --color-accent-600: color-mix(in oklab, var(--nord7) 90%, var(--nord6));
+  --color-accent-700: color-mix(in oklab, var(--nord7) 70%, var(--nord6));
 }
 
 /* Prefer system dark mode when no explicit theme is set */
 @media (prefers-color-scheme: dark) {
   :root:not(.light):not(.dark) {
-    /* Apply dark theme tokens when system prefers dark */
-    --color-surface-primary: #0f172a;
-    --color-surface-secondary: #1e293b;
-    --color-text-primary: #f8fafc;
-    --color-text-secondary: #cbd5e1;
+    /* Apply Nordic dark theme tokens when system prefers dark */
+    --color-surface-primary: var(--nord0);
+    --color-surface-secondary: var(--nord1);
+    --color-text-primary: var(--nord6);
+    --color-text-secondary: var(--nord5);
     --color-background: var(--color-surface-primary);
     --color-foreground: var(--color-text-primary);
   }
@@ -1032,7 +1048,7 @@
 
 /* Nordic dark overrides for common utility colors */
 :root.nord-dark .glass {
-  background: rgba(46, 52, 64, 0.6);
+  background: rgba(46, 52, 64, 0.8);  /* More opaque Nord0 */
   border-color: var(--color-border);
 }
 

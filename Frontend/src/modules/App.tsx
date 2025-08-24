@@ -9,13 +9,8 @@ import { CartProvider } from './buyer/CartContext';
 import { ToastProvider } from '@/components/ui/ToastProvider';
 import { Toaster } from '@/components/ui/shadcn/toaster';
 import { ThemeProvider } from '@/components/ui/ThemeProvider';
-import PerformanceDashboard from '@/components/ui/PerformanceDashboard';
-import DatabaseDashboard from '@/components/ui/DatabaseDashboard';
 import { PageErrorBoundary } from '@/components/ui/ErrorBoundary';
-import {
-  CacheProvider,
-  CacheStatusIndicator,
-} from '@/components/cache/CacheProvider';
+import { CacheProvider } from '@/components/cache/CacheProvider';
 
 // Lazy load pages for better performance
 const AuthPage = lazy(() => import('@/pages/Auth'));
@@ -244,9 +239,6 @@ export const App: React.FC = () => (
                   </Suspense>
                 </MainLayout>
                 <Toaster position='top-right' richColors closeButton />
-                <PerformanceDashboard />
-                <DatabaseDashboard />
-                <CacheStatusIndicator />
               </ToastProvider>
             </CartProvider>
           </BrowserRouter>
