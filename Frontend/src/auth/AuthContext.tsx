@@ -105,6 +105,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             ); // Exponential backoff
             return;
           }
+          console.warn('[auth] Max retries reached for network errors');
         }
 
         setProfileLoading(null);
@@ -243,7 +244,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [toast]);
 
   const signIn = async (email: string, password: string) => {
-    if (!supabase) return { error: 'Supabase no configurado' };
+    if (!supabase) {
+      return { error: 'Supabase no configurado' };
+    }
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,

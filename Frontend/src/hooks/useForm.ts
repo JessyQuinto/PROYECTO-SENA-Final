@@ -172,28 +172,22 @@ export const useForm = <T extends Record<string, any>>(
   const handleChange = useCallback(
     (field: keyof T, value: T[keyof T]) => {
       setValue(field, value);
-      setTouched(field, true);
-
-      // Solo validar inmediatamente si ya se intentó enviar el formulario
-      if (submitAttempted) {
-        setTimeout(() => {
-          validateField(field);
-        }, 300);
-      }
+      // No marcar como touched en cada cambio, solo en blur
     },
-    [setValue, setTouched, validateField, submitAttempted]
+    [setValue]
   );
 
   // Manejar blur de campo
   const handleBlur = useCallback(
     (field: keyof T) => {
       setTouched(field, true);
-      // Solo validar en blur si ya se intentó enviar el formulario
-      if (submitAttempted) {
+      // Validar en blur solo si el campo tiene contenido
+      const fieldValue = values[field];
+      if (fieldValue && typeof fieldValue === 'string' && fieldValue.trim() !== '') {
         validateField(field);
       }
     },
-    [setTouched, validateField, submitAttempted]
+    [setTouched, validateField, values]
   );
 
   // Enviar formulario
@@ -250,7 +244,8 @@ export const useForm = <T extends Record<string, any>>(
   // Verificar si un campo tiene error y debe mostrarse
   const hasError = useCallback(
     (field: keyof T): boolean => {
-      return !!formState[field].error && submitAttempted;
+      const fieldState = formState[field];
+      return !!(fieldState && fieldState.error && (submitAttempted || fieldState.touched));
     },
     [formState, submitAttempted]
   );
@@ -262,6 +257,22 @@ export const useForm = <T extends Record<string, any>>(
     },
     [formState]
   );
+
+  // Helpers para props de formulario
+  const getFormProps = useCallback(() => ({
+    onSubmit: handleSubmit,
+    noValidate: true,
+  }), [handleSubmit]);
+
+  const getInputProps = useCallback((field: keyof T) => ({
+    value: (values && values[field]) || '',
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+      handleChange(field, e.target.value as T[keyof T]);
+    },
+    onBlur: () => handleBlur(field),
+    'aria-invalid': hasError(field),
+    'aria-describedby': hasError(field) ? `${String(field)}-error` : undefined,
+  }), [values, handleChange, handleBlur, hasError]);
 
   return {
     // Estado
@@ -285,5 +296,7 @@ export const useForm = <T extends Record<string, any>>(
     getFieldState,
     hasError,
     isTouched,
+    getFormProps,
+    getInputProps,
   };
 };

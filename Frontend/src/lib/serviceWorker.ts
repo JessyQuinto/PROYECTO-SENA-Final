@@ -17,8 +17,29 @@ class ServiceWorkerManager {
   private isSupported = 'serviceWorker' in navigator;
 
   constructor() {
-    if (this.isSupported) {
+    // DESHABILITAR COMPLETAMENTE EL SERVICE WORKER EN DESARROLLO
+    if (this.isSupported && import.meta.env.DEV) {
+      console.log('🔧 Service worker disabled in development mode');
+      this.unregisterExisting();
+    } else if (this.isSupported && import.meta.env.PROD) {
       this.register();
+    }
+  }
+
+  /**
+   * Unregister any existing service workers to prevent loops
+   */
+  private async unregisterExisting(): Promise<void> {
+    try {
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
+          await registration.unregister();
+          console.log('🗑️ Unregistered existing service worker');
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to unregister service workers:', error);
     }
   }
 

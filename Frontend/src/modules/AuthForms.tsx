@@ -42,19 +42,25 @@ export const AuthForms: React.FC<AuthFormsProps> = ({
     initialValues: { email: '', password: '' },
     validationSchema: loginSchema,
     onSubmit: async values => {
+      console.log('🔍 Login form submitted:', values);
       try {
+        console.log('🔍 Calling signIn...');
         const result = await signIn(values.email, values.password);
+        console.log('🔍 SignIn result:', result);
         if (result.error) {
+          console.error('🔍 Login error:', result.error);
           toast.error('Error en el inicio de sesión', {
             action: 'login',
           });
         } else {
+          console.log('🔍 Login successful');
           toast.success('Inicio de sesión exitoso', {
             action: 'login',
           });
           navigate('/dashboard');
         }
       } catch (error: any) {
+        console.error('🔍 Unexpected error:', error);
         toast.error('Error inesperado', {
           action: 'login',
         });
@@ -67,13 +73,14 @@ export const AuthForms: React.FC<AuthFormsProps> = ({
     validationSchema: signupSchema,
     onSubmit: async values => {
       try {
-        const result = await signUp(values.email, values.password);
+        // Por defecto registrar como comprador, se puede extender para elegir rol
+        const result = await signUp(values.email, values.password, 'comprador');
         if (result.error) {
-          toast.error('Error en el registro', {
+          toast.error(result.error, {
             action: 'register',
           });
         } else {
-          toast.success('Registro exitoso', {
+          toast.success('Registro exitoso. Revisa tu correo para confirmar tu cuenta.', {
             action: 'register',
           });
           navigate('/verify-email', {
@@ -108,7 +115,13 @@ export const AuthForms: React.FC<AuthFormsProps> = ({
           </div>
 
           {mode === 'login' ? (
-            <form onSubmit={loginForm.handleSubmit} className='space-y-4'>
+            <form 
+              onSubmit={(e) => {
+                console.log('🔍 Form submit event triggered');
+                loginForm.handleSubmit(e);
+              }} 
+              className='space-y-4'
+            >
               <div className='space-y-2'>
                 <Label htmlFor='login-email'>Email</Label>
                 <Input
@@ -147,6 +160,7 @@ export const AuthForms: React.FC<AuthFormsProps> = ({
                 type='submit'
                 className='w-full'
                 disabled={loginForm.isSubmitting}
+                onClick={() => console.log('🔍 Login button clicked')}
               >
                 {loginForm.isSubmitting
                   ? 'Iniciando sesión…'
