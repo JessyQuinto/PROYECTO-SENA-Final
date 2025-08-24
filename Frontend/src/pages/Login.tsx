@@ -36,8 +36,19 @@ const LoginPage: React.FC = () => {
       email: '',
       password: '',
     },
-    validationSchema: loginSchema as any,
     onSubmit: async values => {
+      console.log('Form submitted with values:', values);
+      
+      // Validación manual simple
+      if (!values.email) {
+        toast.error('El correo electrónico es obligatorio', { action: 'login' });
+        return;
+      }
+      if (!values.password) {
+        toast.error('La contraseña es obligatoria', { action: 'login' });
+        return;
+      }
+      
       if (!rateLimit.checkLimit()) {
         toast.error('Demasiados intentos de inicio de sesión. Intenta más tarde.', {
           action: 'login',
@@ -45,7 +56,10 @@ const LoginPage: React.FC = () => {
         return;
       }
 
+      console.log('Attempting to sign in...');
       const result = await signIn(values.email, values.password);
+      console.log('Sign in result:', result);
+      
       if (result.error) {
         toast.error(result.error, {
           action: 'login',
@@ -175,9 +189,7 @@ const LoginPage: React.FC = () => {
                       id='email'
                       type='email'
                       placeholder='tu@email.com'
-                      value={form.values.email}
-                      onChange={e => form.handleChange('email', e.target.value)}
-                      onBlur={() => form.handleBlur('email')}
+                      {...form.getInputProps('email')}
                       className={form.hasError('email') ? 'border-red-500' : ''}
                     />
                     {form.hasError('email') && (
@@ -196,9 +208,7 @@ const LoginPage: React.FC = () => {
                       id='password'
                       type='password'
                       placeholder='••••••••'
-                      value={form.values.password}
-                      onChange={e => form.handleChange('password', e.target.value)}
-                      onBlur={() => form.handleBlur('password')}
+                      {...form.getInputProps('password')}
                       className={form.hasError('password') ? 'border-red-500' : ''}
                     />
                     {form.hasError('password') && (
@@ -213,6 +223,7 @@ const LoginPage: React.FC = () => {
                     type='submit'
                     className='w-full py-3 text-base'
                     disabled={form.isSubmitting || loading}
+                    onClick={() => console.log('Button clicked, form state:', { isSubmitting: form.isSubmitting, loading, values: form.values })}
                   >
                     {form.isSubmitting || loading ? (
                       <div className='flex items-center gap-2'>
