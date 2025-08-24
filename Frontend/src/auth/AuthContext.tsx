@@ -244,24 +244,54 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [toast]);
 
   const signIn = async (email: string, password: string) => {
+    console.log('[AuthContext] signIn called with email:', email);
+    
     if (!supabase) {
+      console.error('[AuthContext] Supabase not configured');
       return { error: 'Supabase no configurado' };
     }
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (!error && data.user) {
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      console.log('[AuthContext] Supabase auth result:', { data, error });
+      
+      if (error) {
+        console.error('[AuthContext] Auth error:', error);
+        return { error: error.message };
+      }
+      
+      if (!data.user) {
+        console.error('[AuthContext] No user data returned');
+        return { error: 'No se pudo obtener datos del usuario' };
+      }
+      
+      console.log('[AuthContext] User authenticated:', data.user.id);
+      
+      // Verificar si el email está confirmado
       const sessionNow = (await supabase.auth.getSession()).data.session;
       if (!isEmailConfirmed(sessionNow)) {
+        console.log('[AuthContext] Email not confirmed, signing out');
         await supabase.auth.signOut();
         return { error: 'Debes confirmar tu correo antes de iniciar sesión' };
       }
+      
+      // Cargar perfil del usuario
       if (profileLoading !== data.user.id) {
+        console.log('[AuthContext] Loading profile for user:', data.user.id);
         await loadProfile(data.user.id);
       }
+      
+      console.log('[AuthContext] Sign in completed successfully');
+      return { error: undefined };
+      
+    } catch (error) {
+      console.error('[AuthContext] Unexpected error in signIn:', error);
+      return { error: 'Error inesperado durante el inicio de sesión' };
     }
-    return { error: error?.message };
   };
 
   const signUp = async (
@@ -362,41 +392,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       // Limpiar estado local inmediatamente
       setUser(null);
-      setLoading(true); // Indicar que estamos procesando
+      setLoading(true);
       setProfileLoading('');
       
-      // Cerrar sesión en Supabase
+      // Cerrar sesión en Supabase (esto limpia automáticamente la sesión)
       if (supabase) {
         await supabase.auth.signOut();
       }
       
-      // Limpiar cualquier estado persistente
+      // Limpiar solo datos específicos que puedan persistir
       if (typeof window !== 'undefined') {
-        // Limpiar localStorage y sessionStorage relacionado con la sesión
-        const keysToRemove = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && (key.startsWith('supabase.') || key.includes('auth'))) {
-            keysToRemove.push(key);
-          }
-        }
-        keysToRemove.forEach(key => localStorage.removeItem(key));
+        console.log('[AuthContext] Cleaning persistent data...');
         
-        // Limpiar sessionStorage
+        // Limpiar solo datos específicos que no sean la sesión actual
+        const keysToRemove = [
+          'user_preferences',
+          'cart_data',
+          'last_visited',
+          'theme_preference',
+          'language_preference'
+        ];
+        
+        keysToRemove.forEach(key => {
+          if (localStorage.getItem(key)) {
+            localStorage.removeItem(key);
+            console.log(`[AuthContext] Removed key: ${key}`);
+          }
+        });
+        
+        // Limpiar sessionStorage completamente (es temporal)
         sessionStorage.clear();
         
-        // Forzar un refresh del estado de autenticación
-        // Esto asegura que todos los componentes se re-rendericen
+        // Forzar refresh de componentes
         window.dispatchEvent(new Event('storage'));
-        
-        // Pequeño delay para asegurar que todos los componentes se actualicen
-        setTimeout(() => {
-          setLoading(false);
-          console.log('[AuthContext] Sign out completed');
-        }, 100);
-      } else {
-        setLoading(false);
       }
+      
+      setLoading(false);
+      console.log('[AuthContext] Sign out completed successfully');
+      
     } catch (error) {
       console.error('[auth] Error during signOut:', error);
       // Asegurar que el estado se limpie incluso si hay error

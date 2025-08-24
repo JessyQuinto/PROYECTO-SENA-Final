@@ -1,12 +1,4 @@
 import React from 'react';
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from './shadcn/card';
 import { Button } from './shadcn/button';
 
 const LOCAL_STORAGE_KEY = 'cookie_consent';
@@ -17,64 +9,135 @@ export const CookieConsent: React.FC = () => {
   const [visible, setVisible] = React.useState(false);
 
   React.useEffect(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (!saved) {
+    // Verificar si ya se dio consentimiento
+    const checkConsent = () => {
+      try {
+        console.log('[CookieConsent] Checking consent...');
+        const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+        console.log('[CookieConsent] Saved consent:', saved);
+        
+        if (!saved) {
+          console.log('[CookieConsent] No saved consent, showing component');
+          setVisible(true);
+        } else {
+          const consent = JSON.parse(saved);
+          console.log('[CookieConsent] Parsed consent:', consent);
+          
+          if (consent && consent.value) {
+            console.log('[CookieConsent] Consent found, hiding component');
+            setVisible(false);
+          } else {
+            console.log('[CookieConsent] Invalid consent, showing component');
+            setVisible(true);
+          }
+        }
+      } catch (error) {
+        console.error('[CookieConsent] Error checking consent:', error);
         setVisible(true);
       }
-    } catch (_) {
-      setVisible(true);
-    }
+    };
+
+    checkConsent();
   }, []);
 
   const setConsent = (value: ConsentValue) => {
     try {
-      localStorage.setItem(
-        LOCAL_STORAGE_KEY,
-        JSON.stringify({ value, at: new Date().toISOString() })
-      );
-    } catch (_) {
-      // noop
+      console.log('[CookieConsent] Setting consent:', value);
+      
+      const consentData = {
+        value,
+        at: new Date().toISOString(),
+        timestamp: Date.now()
+      };
+      
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(consentData));
+      console.log('[CookieConsent] Consent saved successfully');
+      
+      setVisible(false);
+    } catch (error) {
+      console.error('[CookieConsent] Error saving consent:', error);
+      // Aún así ocultar el componente
+      setVisible(false);
     }
-    setVisible(false);
   };
 
-  if (!visible) return null;
+  const handleAccept = () => {
+    console.log('[CookieConsent] Accept button clicked');
+    setConsent('accepted');
+  };
+
+  const handleReject = () => {
+    console.log('[CookieConsent] Reject button clicked');
+    setConsent('rejected');
+  };
+
+  if (!visible) {
+    console.log('[CookieConsent] Component not visible');
+    return null;
+  }
+
+  console.log('[CookieConsent] Rendering component');
 
   return (
-    <div className='fixed inset-x-4 bottom-4 z-50 md:inset-x-auto md:right-6 md:left-auto md:max-w-xl'>
-      <Card
-        className='backdrop-blur supports-[backdrop-filter]:bg-background/80'
-        style={{ WebkitBackdropFilter: 'blur(12px)' }}
-      >
-        <CardHeader className='pb-3'>
-          <CardTitle>Aviso de cookies</CardTitle>
-          <CardDescription>
-            Esta aplicación tiene como propósito conectar artesanos del Chocó
-            con el mundo, facilitando la venta de productos hechos a mano de
-            manera segura y transparente. Usamos cookies esenciales para el
-            funcionamiento del sitio y, opcionalmente, para mejorar tu
-            experiencia. Puedes consultar la política de privacidad en la
-            sección correspondiente.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className='pt-0 text-sm opacity-90'>
-          <p className='mb-2'>
-            Proyecto educativo del SENA — Grupo 4:{' '}
-            <strong>Análisis y Desarrollo de Software (2879645)</strong>.
-          </p>
-          <p className='text-xs'>
-            Al hacer clic en "Aceptar", consientes el uso de cookies esenciales
-            y de preferencia.
-          </p>
-        </CardContent>
-        <CardFooter className='justify-end gap-2'>
-          <Button variant='secondary' onClick={() => setConsent('rejected')}>
-            Rechazar
-          </Button>
-          <Button onClick={() => setConsent('accepted')}>Aceptar</Button>
-        </CardFooter>
-      </Card>
+    <div className='fixed inset-x-4 bottom-4 z-50 md:inset-x-auto md:right-6 md:left-auto md:max-w-md'>
+      <div className='relative overflow-hidden rounded-lg border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 shadow-lg'>
+        {/* Decorative background */}
+        <div
+          aria-hidden
+          className='absolute inset-0 opacity-5'
+          style={{
+            backgroundImage:
+              "url('/assert/motif-de-fond-sans-couture-tribal-dessin-geometrique-noir-et-blanc-vecteur/v1045-03.jpg')",
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        />
+        
+        <div className='relative p-4'>
+          <div className='flex items-start gap-3'>
+            {/* Cookie icon */}
+            <div className='flex-shrink-0 mt-1'>
+              <svg
+                className='w-5 h-5 text-primary'
+                fill='currentColor'
+                viewBox='0 0 24 24'
+              >
+                <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z'/>
+              </svg>
+            </div>
+            
+            {/* Content */}
+            <div className='flex-1 min-w-0'>
+              <h3 className='text-sm font-semibold text-foreground mb-1'>
+                Aviso de cookies
+              </h3>
+              <p className='text-xs text-muted-foreground mb-3 leading-relaxed'>
+                Usamos cookies esenciales para el funcionamiento del sitio y mejorar tu experiencia. 
+                Proyecto educativo del SENA — Grupo 4: Análisis y Desarrollo de Software.
+              </p>
+              
+              {/* Buttons */}
+              <div className='flex gap-2'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={handleReject}
+                  className='text-xs h-8 px-3'
+                >
+                  Rechazar
+                </Button>
+                <Button
+                  size='sm'
+                  onClick={handleAccept}
+                  className='text-xs h-8 px-3'
+                >
+                  Aceptar
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

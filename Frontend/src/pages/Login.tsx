@@ -59,8 +59,10 @@ const LoginPage: React.FC = () => {
       console.log('Attempting to sign in...');
       const result = await signIn(values.email, values.password);
       console.log('Sign in result:', result);
+      console.log('Sign in result.error:', result.error);
       
       if (result.error) {
+        console.error('Login failed:', result.error);
         toast.error(result.error, {
           action: 'login',
         });

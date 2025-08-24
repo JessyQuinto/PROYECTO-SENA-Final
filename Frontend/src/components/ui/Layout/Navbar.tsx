@@ -22,25 +22,19 @@ interface NavigationItem {
 const Navbar: React.FC = () => {
   const { user, loading } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [forceUpdate, setForceUpdate] = useState(0);
   const location = useLocation();
 
   // Escuchar cambios en el estado de autenticación
   useEffect(() => {
     const handleStorageChange = () => {
       console.log('[Navbar] Storage event detected, forcing update');
-      setForceUpdate(prev => prev + 1);
+      // Forzar re-render sin usar estado
+      window.dispatchEvent(new Event('resize'));
     };
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
-
-  // Forzar re-render cuando cambie el usuario o el estado de carga
-  useEffect(() => {
-    console.log('[Navbar] User or loading state changed:', { user: !!user, loading });
-    setForceUpdate(prev => prev + 1);
-  }, [user, loading]);
 
   // Limpiar estado de menú móvil cuando cambie la autenticación
   useEffect(() => {
