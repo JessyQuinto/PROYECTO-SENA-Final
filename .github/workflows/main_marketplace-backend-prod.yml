@@ -12,6 +12,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read #This is required for actions/checkout
 
@@ -30,20 +31,50 @@ jobs:
           cache-dependency-path: Backend/package-lock.json
           registry-url: 'https://registry.npmjs.org/'
 
+      - name: Isolate Backend from workspace
+        run: |
+          echo "Preparing Backend for standalone deployment..."
+          echo "Current directory contents:"
+          ls -la
+          # Remove workspace references that might cause conflicts
+          rm -f package.json package-lock.json .npmrc || true
+          echo "Files removed. Backend directory contents:"
+          ls -la Backend/
+          echo "Backend isolated successfully"
+        working-directory: .
+
       - name: Install dependencies with retry
         run: |
           set -e
           max_attempts=3
           attempt=1
           
+          echo "Current working directory: $(pwd)"
+          echo "Node.js version: $(node --version)"
+          echo "npm version: $(npm --version)"
+          echo "Package.json exists: $(test -f package.json && echo 'yes' || echo 'no')"
+          echo ".npmrc exists: $(test -f .npmrc && echo 'yes' || echo 'no')"
+          
+          if [ -f .npmrc ]; then
+            echo "Contents of .npmrc:"
+            cat .npmrc
+          fi
+          
           while [ $attempt -le $max_attempts ]; do
             echo "Attempt $attempt of $max_attempts"
-            if npm ci --ignore-scripts --no-audit --no-fund; then
+            if timeout 300 npm ci --ignore-scripts --no-audit --no-fund --verbose; then
               echo "Dependencies installed successfully on attempt $attempt"
               break
             else
               if [ $attempt -eq $max_attempts ]; then
                 echo "Failed to install dependencies after $max_attempts attempts"
+                echo "Final debugging information:"
+                echo "Directory contents:"
+                ls -la
+                echo "Package.json contents:"
+                cat package.json || echo "No package.json found"
+                echo "npm cache info:"
+                npm config list || echo "Failed to get npm config"
                 exit 1
               fi
               echo "Attempt $attempt failed, waiting before retry..."
