@@ -124,9 +124,9 @@ export const CookieConsent: React.FC = () => {
     } catch (error) {
       console.error('[CookieConsent] Error saving consent:', error);
       console.error('[CookieConsent] Error details:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
+        name: (error as any).name,
+        message: (error as any).message,
+        stack: (error as any).stack
       });
       
       // Still hide the component to prevent it from blocking the UI
@@ -137,8 +137,6 @@ export const CookieConsent: React.FC = () => {
   }, []);
 
   const handleAccept = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
     console.log('[CookieConsent] Accept button clicked - event details:', {
       type: e.type,
       button: e.button,
@@ -155,8 +153,6 @@ export const CookieConsent: React.FC = () => {
   }, [loading, setConsent]);
 
   const handleReject = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
     console.log('[CookieConsent] Reject button clicked - event details:', {
       type: e.type,
       button: e.button,
