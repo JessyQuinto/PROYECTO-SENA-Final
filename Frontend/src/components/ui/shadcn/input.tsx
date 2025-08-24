@@ -83,17 +83,18 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const effectiveVariant = error
       ? 'error'
       : success
-      ? 'success'
-      : variant || 'default';
+        ? 'success'
+        : variant || 'default';
 
     const inputId = id || React.useId();
-    const helperId = helperText || errorMessage ? `${inputId}-helper` : undefined;
+    const helperId =
+      helperText || errorMessage ? `${inputId}-helper` : undefined;
     const errorId = errorMessage ? `${inputId}-error` : undefined;
 
     const inputElement = (
-      <div className="relative flex items-center">
+      <div className='relative flex items-center'>
         {leftIcon && (
-          <div className="absolute left-3 flex items-center pointer-events-none text-muted-foreground">
+          <div className='absolute left-3 flex items-center pointer-events-none text-muted-foreground'>
             {leftIcon}
           </div>
         )}
@@ -107,15 +108,14 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           id={inputId}
           aria-invalid={error ? 'true' : undefined}
-          aria-describedby={cn(
-            helperId && helperId,
-            errorId && errorId
-          ).trim() || undefined}
+          aria-describedby={
+            cn(helperId && helperId, errorId && errorId).trim() || undefined
+          }
           aria-required={required}
           {...props}
         />
         {rightIcon && (
-          <div className="absolute right-3 flex items-center pointer-events-none text-muted-foreground">
+          <div className='absolute right-3 flex items-center pointer-events-none text-muted-foreground'>
             {rightIcon}
           </div>
         )}
@@ -124,15 +124,15 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
     if (label || helperText || errorMessage) {
       return (
-        <div className="space-y-1">
+        <div className='space-y-1'>
           {label && (
             <label
               htmlFor={inputId}
-              className="text-sm font-medium text-foreground"
+              className='text-sm font-medium text-foreground'
             >
               {label}
               {required && (
-                <span className="text-destructive ml-1" aria-label="required">
+                <span className='text-destructive ml-1' aria-label='required'>
                   *
                 </span>
               )}

@@ -51,8 +51,24 @@ export class SecurityManager {
       cleaned = DOMPurify.sanitize(input, {
         ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'ol', 'ul', 'li', 'a'],
         ALLOWED_ATTR: ['href', 'target'],
-        FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input', 'style', 'link'],
-        FORBID_ATTR: ['onclick', 'onload', 'onerror', 'onmouseover', 'onfocus', 'style'],
+        FORBID_TAGS: [
+          'script',
+          'iframe',
+          'object',
+          'embed',
+          'form',
+          'input',
+          'style',
+          'link',
+        ],
+        FORBID_ATTR: [
+          'onclick',
+          'onload',
+          'onerror',
+          'onmouseover',
+          'onfocus',
+          'style',
+        ],
         KEEP_CONTENT: false, // Don't keep content of forbidden tags
       });
     } catch (error) {
@@ -63,7 +79,10 @@ export class SecurityManager {
 
     // Additional cleanup to ensure no script content remains
     cleaned = cleaned.replace(/<script[^>]*>.*?<\/script>/gis, '');
-    cleaned = cleaned.replace(/<\/?\s*(script|iframe|object|embed|form|input|style|link)[^>]*>/gis, '');
+    cleaned = cleaned.replace(
+      /<\/?\s*(script|iframe|object|embed|form|input|style|link)[^>]*>/gis,
+      ''
+    );
     cleaned = cleaned.replace(/javascript:/gi, '');
     cleaned = cleaned.replace(/on\w+\s*=[^>]*/gi, ''); // Remove event handlers
 
@@ -80,7 +99,10 @@ export class SecurityManager {
 
     try {
       // First attempt: Use DOMPurify if available
-      sanitized = DOMPurify.sanitize(input, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+      sanitized = DOMPurify.sanitize(input, {
+        ALLOWED_TAGS: [],
+        ALLOWED_ATTR: [],
+      });
     } catch (error) {
       // Fallback: Manual sanitization for test environments
       console.warn('DOMPurify failed, using fallback sanitization:', error);
@@ -131,9 +153,15 @@ export class SecurityManager {
     }
 
     // Check for dangerous protocols first
-    const dangerousProtocols = ['javascript:', 'data:', 'vbscript:', 'file:', 'ftp:'];
+    const dangerousProtocols = [
+      'javascript:',
+      'data:',
+      'vbscript:',
+      'file:',
+      'ftp:',
+    ];
     const lowerUrl = url.toLowerCase().trim();
-    
+
     for (const protocol of dangerousProtocols) {
       if (lowerUrl.startsWith(protocol)) {
         throw new Error('Protocolo de URL no permitido');

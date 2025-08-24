@@ -61,48 +61,57 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const loadProfile = async (uid: string, retryCount = 0) => {
     if (!supabase) return;
-    
+
     // Prevent duplicate calls for the same user
     if (profileLoading === uid) {
       return;
     }
-    
+
     // Circuit breaker: stop retrying after max attempts
     if (retryCount >= MAX_RETRIES) {
       console.warn('[auth] Max retries reached for loadProfile, giving up');
       setLoading(false);
       return;
     }
-    
+
     setProfileLoading(uid);
-    
+
     try {
       const { data, error } = await supabase
         .from('users')
         .select('id, email, role, vendedor_estado, bloqueado, nombre_completo')
         .eq('id', uid)
         .maybeSingle();
-        
+
       if (error) {
         if (import.meta.env.DEV) {
-          console.warn(`[auth] No se pudo cargar perfil users (attempt ${retryCount + 1}):`, error.message);
+          console.warn(
+            `[auth] No se pudo cargar perfil users (attempt ${retryCount + 1}):`,
+            error.message
+          );
         }
-        
+
         // Only retry on network errors, not on auth/permission errors
-        if (error.message.includes('Failed to fetch') || error.code === 'PGRST301') {
+        if (
+          error.message.includes('Failed to fetch') ||
+          error.code === 'PGRST301'
+        ) {
           if (retryCount < MAX_RETRIES) {
-            setTimeout(() => {
-              loadProfile(uid, retryCount + 1);
-            }, RETRY_DELAY * Math.pow(2, retryCount)); // Exponential backoff
+            setTimeout(
+              () => {
+                loadProfile(uid, retryCount + 1);
+              },
+              RETRY_DELAY * Math.pow(2, retryCount)
+            ); // Exponential backoff
             return;
           }
         }
-        
+
         setProfileLoading(null);
         setLoading(false);
         return;
       }
-      
+
       if (data) {
         // Seguridad: si usuario está bloqueado, cerrar sesión.
         if (data.bloqueado) {
@@ -112,16 +121,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setLoading(false);
           return;
         }
-        
+
         setUser({
           id: data.id,
           email: data.email || undefined,
           nombre: (data as any).nombre_completo || undefined,
           role: (data.role as SessionUser['role']) || undefined,
-          vendedor_estado: data.vendedor_estado as SessionUser['vendedor_estado'],
+          vendedor_estado:
+            data.vendedor_estado as SessionUser['vendedor_estado'],
           bloqueado: !!data.bloqueado,
         });
-        
+
         setProfileLoading(null);
         setLoading(false);
         return;
@@ -132,7 +142,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setProfileLoading(null);
       setLoading(false);
       return;
-      
     } catch (error) {
       console.error('[auth] Unexpected error in loadProfile:', error);
       setProfileLoading(null);
@@ -203,7 +212,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
     );
-    
+
     // Initial session check - but avoid duplicate calls
     supabase.auth
       .getSession()

@@ -30,23 +30,27 @@ interface ThemeToggleProps {
 }
 
 // Enhanced theme toggle using new context
-const EnhancedThemeToggle: React.FC<ThemeToggleProps> = ({ 
-  className, 
-  showLabels = false 
+const EnhancedThemeToggle: React.FC<ThemeToggleProps> = ({
+  className,
+  showLabels = false,
 }) => {
   const { config, effectiveTheme, setThemeMode, isTransitioning } = useTheme();
-  
+
   const toggleLight = () => {
     setThemeMode(config.mode === 'light' ? 'system' : 'light');
   };
-  
+
   const toggleDark = () => {
     setThemeMode(config.mode === 'dark' ? 'system' : 'dark');
   };
-  
-  const isLightActive = config.mode === 'light' || (config.mode === 'system' && effectiveTheme === 'light');
-  const isDarkActive = config.mode === 'dark' || (config.mode === 'system' && effectiveTheme === 'dark');
-  
+
+  const isLightActive =
+    config.mode === 'light' ||
+    (config.mode === 'system' && effectiveTheme === 'light');
+  const isDarkActive =
+    config.mode === 'dark' ||
+    (config.mode === 'system' && effectiveTheme === 'dark');
+
   return (
     <div
       className={`theme-toggle ${isTransitioning ? 'transitioning' : ''} ${className ?? ''}`}
@@ -56,7 +60,9 @@ const EnhancedThemeToggle: React.FC<ThemeToggleProps> = ({
       {/* Light */}
       <button
         type='button'
-        title={config.mode === 'light' ? 'Claro (clic para seguir sistema)' : 'Claro'}
+        title={
+          config.mode === 'light' ? 'Claro (clic para seguir sistema)' : 'Claro'
+        }
         aria-pressed={isLightActive}
         className={`seg ${isLightActive ? 'active' : ''}`}
         onClick={toggleLight}
@@ -81,11 +87,15 @@ const EnhancedThemeToggle: React.FC<ThemeToggleProps> = ({
         </svg>
         {showLabels && <span className='sr-only'>Claro</span>}
       </button>
-      
+
       {/* Dark */}
       <button
         type='button'
-        title={config.mode === 'dark' ? 'Oscuro (clic para seguir sistema)' : 'Oscuro'}
+        title={
+          config.mode === 'dark'
+            ? 'Oscuro (clic para seguir sistema)'
+            : 'Oscuro'
+        }
         aria-pressed={isDarkActive}
         className={`seg ${isDarkActive ? 'active' : ''}`}
         onClick={toggleDark}
@@ -109,10 +119,13 @@ const EnhancedThemeToggle: React.FC<ThemeToggleProps> = ({
         </svg>
         {showLabels && <span className='sr-only'>Oscuro</span>}
       </button>
-      
+
       {/* System mode indicator */}
       {config.mode === 'system' && (
-        <div className='system-indicator' title='Siguiendo preferencias del sistema'>
+        <div
+          className='system-indicator'
+          title='Siguiendo preferencias del sistema'
+        >
           <svg
             viewBox='0 0 24 24'
             width='12'
@@ -122,8 +135,8 @@ const EnhancedThemeToggle: React.FC<ThemeToggleProps> = ({
             strokeWidth='2'
             aria-hidden='true'
           >
-            <rect x='2' y='4' width='20' height='12' rx='2'/>
-            <path d='M2 12h20'/>
+            <rect x='2' y='4' width='20' height='12' rx='2' />
+            <path d='M2 12h20' />
           </svg>
         </div>
       )}
@@ -266,23 +279,17 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
   try {
     if (variant === 'enhanced') {
       return (
-        <EnhancedThemeToggle 
-          className={className} 
-          showLabels={showLabels} 
-        />
+        <EnhancedThemeToggle className={className} showLabels={showLabels} />
       );
     }
   } catch (error) {
     // Fall back to legacy version if theme context is not available
-    console.warn('Theme context not available, falling back to legacy theme toggle');
+    console.warn(
+      'Theme context not available, falling back to legacy theme toggle'
+    );
   }
-  
-  return (
-    <LegacyThemeToggle 
-      className={className} 
-      showLabels={showLabels} 
-    />
-  );
+
+  return <LegacyThemeToggle className={className} showLabels={showLabels} />;
 };
 
 export default ThemeToggle;

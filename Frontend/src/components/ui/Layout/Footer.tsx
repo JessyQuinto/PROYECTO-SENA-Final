@@ -14,7 +14,9 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
   const isAdmin = role === 'admin';
 
   return (
-    <footer className={`mt-auto border-t bg-card text-card-foreground relative overflow-hidden ${className}`}>
+    <footer
+      className={`mt-auto border-t bg-card text-card-foreground relative overflow-hidden ${className}`}
+    >
       {/* Decorative pattern background */}
       <div
         aria-hidden
@@ -209,8 +211,7 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
         <div
           className='border-t mt-8 pt-8 flex flex-col md:flex-row justify-between items-center'
           style={{
-            borderColor:
-              'color-mix(in oklab, var(--color-marfil) 80%, black)',
+            borderColor: 'color-mix(in oklab, var(--color-marfil) 80%, black)',
           }}
         >
           <p className='text-sm opacity-80'>

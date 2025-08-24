@@ -79,15 +79,16 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   }, [onError]);
 
   // Generate responsive srcSet for better performance
-  const generateSrcSet = useCallback((baseSrc: string): string => {
-    if (!baseSrc) return '';
-    
-    // This is a simplified version - in a real app you'd use a CDN like Cloudinary
-    const widths = [320, 480, 768, 1024, 1280, 1920];
-    return widths
-      .map(w => `${baseSrc}?w=${w}&q=${quality} ${w}w`)
-      .join(', ');
-  }, [quality]);
+  const generateSrcSet = useCallback(
+    (baseSrc: string): string => {
+      if (!baseSrc) return '';
+
+      // This is a simplified version - in a real app you'd use a CDN like Cloudinary
+      const widths = [320, 480, 768, 1024, 1280, 1920];
+      return widths.map(w => `${baseSrc}?w=${w}&q=${quality} ${w}w`).join(', ');
+    },
+    [quality]
+  );
 
   // Aspect ratio classes
   const aspectRatioClasses = {
@@ -100,7 +101,9 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
 
   const containerClassName = cn(
     'relative overflow-hidden bg-gray-100',
-    aspectRatio && (aspectRatioClasses[aspectRatio as keyof typeof aspectRatioClasses] || aspectRatio),
+    aspectRatio &&
+      (aspectRatioClasses[aspectRatio as keyof typeof aspectRatioClasses] ||
+        aspectRatio),
     className
   );
 
@@ -124,13 +127,13 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
     <div ref={containerRef} className={containerClassName}>
       {/* Skeleton placeholder */}
       {shouldShowPlaceholder && placeholder === 'skeleton' && (
-        <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+        <div className='absolute inset-0 bg-gray-200 animate-pulse' />
       )}
 
       {/* Blur placeholder */}
       {shouldShowPlaceholder && placeholder === 'blur' && (
-        <div 
-          className="absolute inset-0 bg-gray-200 filter blur-sm"
+        <div
+          className='absolute inset-0 bg-gray-200 filter blur-sm'
           style={{
             backgroundImage: `url("data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100' height='100' fill='%23f3f4f6'/%3e%3c/svg%3e")`,
             backgroundSize: 'cover',
@@ -149,7 +152,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
           sizes={sizes}
           srcSet={generateSrcSet(src)}
           loading={priority ? 'eager' : 'lazy'}
-          decoding="async"
+          decoding='async'
           className={cn(imageClassName, 'absolute inset-0 w-full h-full')}
           onLoad={handleLoad}
           onError={handleError}
@@ -168,18 +171,18 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
 
       {/* Error state */}
       {hasError && !fallback && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 text-gray-400">
+        <div className='absolute inset-0 flex items-center justify-center bg-gray-100 text-gray-400'>
           <svg
-            className="w-8 h-8"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+            className='w-8 h-8'
+            fill='none'
+            stroke='currentColor'
+            viewBox='0 0 24 24'
           >
             <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              strokeLinecap='round'
+              strokeLinejoin='round'
               strokeWidth={2}
-              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+              d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'
             />
           </svg>
         </div>
@@ -187,8 +190,8 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
 
       {/* Loading indicator */}
       {isLoading && isInView && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
+        <div className='absolute inset-0 flex items-center justify-center'>
+          <div className='w-6 h-6 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin' />
         </div>
       )}
     </div>
@@ -196,12 +199,14 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
 };
 
 // Higher-order component for existing img tags
-export const withImageOptimization = <P extends React.ImgHTMLAttributes<HTMLImageElement>>(
+export const withImageOptimization = <
+  P extends React.ImgHTMLAttributes<HTMLImageElement>,
+>(
   Component: React.ComponentType<P>
 ) => {
   return React.forwardRef<HTMLImageElement, P>((props, ref) => {
     const { src, alt, className, width, height, ...rest } = props;
-    
+
     if (!src || !alt) {
       return <Component {...(props as P)} ref={ref} />;
     }
@@ -214,7 +219,7 @@ export const withImageOptimization = <P extends React.ImgHTMLAttributes<HTMLImag
         width={typeof width === 'number' ? width : undefined}
         height={typeof height === 'number' ? height : undefined}
         lazy={true}
-        placeholder="skeleton"
+        placeholder='skeleton'
         {...(rest as any)}
       />
     );
@@ -222,20 +227,22 @@ export const withImageOptimization = <P extends React.ImgHTMLAttributes<HTMLImag
 };
 
 // Pre-configured variants for common use cases
-export const ProductImage: React.FC<Omit<OptimizedImageProps, 'aspectRatio' | 'objectFit'>> = (props) => (
-  <OptimizedImage {...props} aspectRatio="3/2" objectFit="cover" />
+export const ProductImage: React.FC<
+  Omit<OptimizedImageProps, 'aspectRatio' | 'objectFit'>
+> = props => <OptimizedImage {...props} aspectRatio='3/2' objectFit='cover' />;
+
+export const AvatarImage: React.FC<
+  Omit<OptimizedImageProps, 'aspectRatio' | 'objectFit'>
+> = props => (
+  <OptimizedImage {...props} aspectRatio='square' objectFit='cover' />
 );
 
-export const AvatarImage: React.FC<Omit<OptimizedImageProps, 'aspectRatio' | 'objectFit'>> = (props) => (
-  <OptimizedImage {...props} aspectRatio="square" objectFit="cover" />
-);
+export const HeroImage: React.FC<
+  Omit<OptimizedImageProps, 'aspectRatio' | 'priority'>
+> = props => <OptimizedImage {...props} aspectRatio='16/9' priority={true} />;
 
-export const HeroImage: React.FC<Omit<OptimizedImageProps, 'aspectRatio' | 'priority'>> = (props) => (
-  <OptimizedImage {...props} aspectRatio="16/9" priority={true} />
-);
-
-export const ThumbnailImage: React.FC<Omit<OptimizedImageProps, 'aspectRatio' | 'lazy'>> = (props) => (
-  <OptimizedImage {...props} aspectRatio="square" lazy={false} />
-);
+export const ThumbnailImage: React.FC<
+  Omit<OptimizedImageProps, 'aspectRatio' | 'lazy'>
+> = props => <OptimizedImage {...props} aspectRatio='square' lazy={false} />;
 
 export default OptimizedImage;

@@ -328,7 +328,9 @@ export const SecurityDashboard: React.FC = () => {
                       <span className='font-medium'>{rateLimit.key}</span>
                       <span
                         className={`badge ${
-                          rateLimit.isBlocked ? 'badge-danger' : 'badge-secondary'
+                          rateLimit.isBlocked
+                            ? 'badge-danger'
+                            : 'badge-secondary'
                         }`}
                       >
                         {rateLimit.isBlocked ? 'Bloqueado' : 'Activo'}

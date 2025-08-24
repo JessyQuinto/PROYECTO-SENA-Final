@@ -29,16 +29,14 @@ interface ProductCardProps {
   className?: string;
 }
 
-const ProductCardBase: React.FC<ProductCardProps> = ({ 
-  product, 
+const ProductCardBase: React.FC<ProductCardProps> = ({
+  product,
   avg,
-  className = '' 
+  className = '',
 }) => {
   const { add } = useCart();
   const isLowStock = Number(product.stock) <= 5 && Number(product.stock) > 0;
-  const createdAt = product.created_at
-    ? new Date(product.created_at)
-    : null;
+  const createdAt = product.created_at ? new Date(product.created_at) : null;
   const isNew = createdAt
     ? Date.now() - createdAt.getTime() < 1000 * 60 * 60 * 24 * 14
     : false;
@@ -55,7 +53,9 @@ const ProductCardBase: React.FC<ProductCardProps> = ({
   };
 
   return (
-    <Card className={`transition-all overflow-hidden group hover:shadow-xl border-gray-200 ${className}`}>
+    <Card
+      className={`transition-all overflow-hidden group hover:shadow-xl border-gray-200 ${className}`}
+    >
       <Link to={`/productos/${product.id}`} className='block'>
         <div className='relative bg-gray-100 overflow-hidden aspect-[3/2]'>
           {product.imagen_url ? (
@@ -99,14 +99,14 @@ const ProductCardBase: React.FC<ProductCardProps> = ({
           </div>
         </div>
       </Link>
-      
+
       <CardContent className='p-4'>
         <Link to={`/productos/${product.id}`} className='block'>
           <h3 className='text-base font-semibold line-clamp-2 group-hover:text-(--color-terracotta-suave)'>
             {product.nombre}
           </h3>
         </Link>
-        
+
         <div className='mt-1 flex items-center justify-between'>
           <span className='text-2xl font-bold text-(--color-terracotta-suave)'>
             ${Number(product.precio).toLocaleString()}
@@ -122,7 +122,7 @@ const ProductCardBase: React.FC<ProductCardProps> = ({
             </div>
           )}
         </div>
-        
+
         <div className='mt-3 flex items-center justify-between'>
           {isLowStock ? (
             <span className='inline-flex items-center px-2 py-1 rounded-full text-[11px] font-medium bg-yellow-100 text-yellow-800'>
@@ -138,7 +138,7 @@ const ProductCardBase: React.FC<ProductCardProps> = ({
               Stock: {product.stock}
             </span>
           )}
-          
+
           <div className='flex items-center gap-2'>
             <Link
               to={`/productos/${product.id}`}

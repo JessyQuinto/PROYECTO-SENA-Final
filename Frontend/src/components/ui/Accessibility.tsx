@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 export const SkipNavigation: React.FC = () => {
   return (
     <a
-      href="#main-content"
+      href='#main-content'
       className={cn(
         // Visually hidden by default
         'sr-only',
@@ -31,11 +31,7 @@ export const ScreenReaderOnly: React.FC<ScreenReaderOnlyProps> = ({
   children,
   className,
 }) => {
-  return (
-    <span className={cn('sr-only', className)}>
-      {children}
-    </span>
-  );
+  return <span className={cn('sr-only', className)}>{children}</span>;
 };
 
 // Accessible Focus Trap
@@ -59,9 +55,11 @@ export const FocusTrap: React.FC<FocusTrapProps> = ({
     const focusableElements = trapElement.querySelectorAll(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
     );
-    
+
     const firstElement = focusableElements[0] as HTMLElement;
-    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+    const lastElement = focusableElements[
+      focusableElements.length - 1
+    ] as HTMLElement;
 
     const handleTabKey = (e: KeyboardEvent) => {
       if (e.key !== 'Tab') return;
@@ -109,10 +107,10 @@ export const AccessibleHeading: React.FC<AccessibleHeadingProps> = ({
   id,
 }) => {
   const Tag = `h${level}` as keyof JSX.IntrinsicElements;
-  
+
   const levelClasses = {
     1: 'heading-4xl',
-    2: 'heading-3xl', 
+    2: 'heading-3xl',
     3: 'heading-2xl',
     4: 'heading-xl',
     5: 'heading-lg',
@@ -120,10 +118,7 @@ export const AccessibleHeading: React.FC<AccessibleHeadingProps> = ({
   };
 
   return (
-    <Tag 
-      className={cn(levelClasses[level], className)}
-      id={id}
-    >
+    <Tag className={cn(levelClasses[level], className)} id={id}>
       {children}
     </Tag>
   );
@@ -167,10 +162,7 @@ export const AccessibleDescription: React.FC<AccessibleDescriptionProps> = ({
   className,
 }) => {
   return (
-    <div
-      id={id}
-      className={cn('text-sm text-muted-foreground', className)}
-    >
+    <div id={id} className={cn('text-sm text-muted-foreground', className)}>
       {children}
     </div>
   );
@@ -188,7 +180,7 @@ export const MainContent: React.FC<MainContentProps> = ({
 }) => {
   return (
     <main
-      id="main-content"
+      id='main-content'
       className={cn('focus:outline-none', className)}
       tabIndex={-1}
     >

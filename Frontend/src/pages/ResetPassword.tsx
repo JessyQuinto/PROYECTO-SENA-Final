@@ -37,7 +37,9 @@ const ResetPasswordPage: React.FC = () => {
     onSubmit: async values => {
       const result = await executeMutation(
         async () => {
-          const { error } = await supabase.auth.updateUser({ password: values.password });
+          const { error } = await supabase.auth.updateUser({
+            password: values.password,
+          });
           return { data: null, error };
         },
         'No se pudo actualizar la contraseña',
@@ -79,7 +81,9 @@ const ResetPasswordPage: React.FC = () => {
                     id='password'
                     type='password'
                     value={form.values.password}
-                    onChange={e => form.handleChange('password', e.target.value)}
+                    onChange={e =>
+                      form.handleChange('password', e.target.value)
+                    }
                     onBlur={() => form.handleBlur('password')}
                     placeholder='••••••••'
                     className={form.errors.password ? 'border-red-500' : ''}

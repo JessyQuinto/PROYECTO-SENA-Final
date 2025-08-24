@@ -108,70 +108,126 @@ const DefaultErrorFallback: React.FC<DefaultErrorFallbackProps> = ({
   const isCritical = error.severity === ErrorSeverity.CRITICAL;
 
   return (
-    <div className="flex min-h-[400px] items-center justify-center p-4">
-      <Card 
-        variant="outlined" 
-        className="max-w-md w-full border-destructive/20 bg-destructive/5"
-        padding="lg"
+    <div className='flex min-h-[400px] items-center justify-center p-4'>
+      <Card
+        variant='outlined'
+        className='max-w-md w-full border-destructive/20 bg-destructive/5'
+        padding='lg'
       >
-        <div className="flex flex-col items-center text-center space-y-6">
+        <div className='flex flex-col items-center text-center space-y-6'>
           {/* Error Icon */}
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+          <div className='flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10'>
             {isCritical ? (
-              <svg className="h-8 w-8 text-destructive" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <circle cx="12" cy="12" r="10" strokeWidth={2} />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 9l-6 6M9 9l6 6" />
+              <svg
+                className='h-8 w-8 text-destructive'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+              >
+                <circle cx='12' cy='12' r='10' strokeWidth={2} />
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M15 9l-6 6M9 9l6 6'
+                />
               </svg>
             ) : isMinor ? (
-              <svg className="h-8 w-8 text-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v4M12 17h.01" />
+              <svg
+                className='h-8 w-8 text-warning'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z'
+                />
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M12 9v4M12 17h.01'
+                />
               </svg>
             ) : (
-              <svg className="h-8 w-8 text-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <circle cx="12" cy="12" r="10" strokeWidth={2} />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4M12 16h.01" />
+              <svg
+                className='h-8 w-8 text-warning'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+              >
+                <circle cx='12' cy='12' r='10' strokeWidth={2} />
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M12 8v4M12 16h.01'
+                />
               </svg>
             )}
           </div>
 
           {/* Error Message */}
-          <div className="space-y-2">
-            <h2 className="heading-lg text-foreground">
+          <div className='space-y-2'>
+            <h2 className='heading-lg text-foreground'>
               {isCritical
                 ? 'Error crítico'
                 : isMinor
-                ? 'Pequeño problema'
-                : 'Algo salió mal'}
+                  ? 'Pequeño problema'
+                  : 'Algo salió mal'}
             </h2>
 
-            <p className="body-base text-muted-foreground">
-              {error.message || 'Ha ocurrido un error inesperado. Por favor, intenta de nuevo.'}
+            <p className='body-base text-muted-foreground'>
+              {error.message ||
+                'Ha ocurrido un error inesperado. Por favor, intenta de nuevo.'}
             </p>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 w-full">
-            <Button 
-              onClick={onRetry} 
-              variant="default"
-              className="flex-1"
+          <div className='flex flex-col sm:flex-row gap-3 w-full'>
+            <Button
+              onClick={onRetry}
+              variant='default'
+              className='flex-1'
               leftIcon={
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                <svg
+                  className='h-4 w-4'
+                  viewBox='0 0 24 24'
+                  fill='none'
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
+                  />
                 </svg>
               }
             >
               Intentar de nuevo
             </Button>
 
-            <Button 
-              onClick={() => window.location.reload()} 
-              variant="outline"
-              className="flex-1"
+            <Button
+              onClick={() => window.location.reload()}
+              variant='outline'
+              className='flex-1'
               leftIcon={
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                <svg
+                  className='h-4 w-4'
+                  viewBox='0 0 24 24'
+                  fill='none'
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
+                  />
                 </svg>
               }
             >
@@ -181,35 +237,35 @@ const DefaultErrorFallback: React.FC<DefaultErrorFallbackProps> = ({
 
           {/* Debug Info (Development Only) */}
           {import.meta.env.DEV && (
-            <details className="w-full">
-              <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <details className='w-full'>
+              <summary className='cursor-pointer text-sm text-muted-foreground hover:text-foreground transition-colors'>
                 Detalles del error (desarrollo)
               </summary>
-              <div className="mt-3 p-4 bg-muted rounded-md text-left border">
-                <div className="space-y-2 text-xs">
-                  <div className="flex justify-between">
-                    <span className="font-medium">ID:</span>
-                    <span className="font-mono">{error.id}</span>
+              <div className='mt-3 p-4 bg-muted rounded-md text-left border'>
+                <div className='space-y-2 text-xs'>
+                  <div className='flex justify-between'>
+                    <span className='font-medium'>ID:</span>
+                    <span className='font-mono'>{error.id}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Tipo:</span>
-                    <span className="font-mono">{error.type}</span>
+                  <div className='flex justify-between'>
+                    <span className='font-medium'>Tipo:</span>
+                    <span className='font-mono'>{error.type}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Severidad:</span>
-                    <span className="font-mono">{error.severity}</span>
+                  <div className='flex justify-between'>
+                    <span className='font-medium'>Severidad:</span>
+                    <span className='font-mono'>{error.severity}</span>
                   </div>
                   {error.code && (
-                    <div className="flex justify-between">
-                      <span className="font-medium">Código:</span>
-                      <span className="font-mono">{error.code}</span>
+                    <div className='flex justify-between'>
+                      <span className='font-medium'>Código:</span>
+                      <span className='font-mono'>{error.code}</span>
                     </div>
                   )}
                 </div>
                 {error.stack && (
-                  <div className="mt-3 pt-3 border-t">
-                    <span className="font-medium text-xs">Stack trace:</span>
-                    <pre className="mt-1 text-xs text-muted-foreground overflow-auto max-h-32 font-mono">
+                  <div className='mt-3 pt-3 border-t'>
+                    <span className='font-medium text-xs'>Stack trace:</span>
+                    <pre className='mt-1 text-xs text-muted-foreground overflow-auto max-h-32 font-mono'>
                       {error.stack}
                     </pre>
                   </div>

@@ -4,7 +4,10 @@ import CatalogHeader from './CatalogHeader';
 import ProductFilters from './ProductFilters';
 import ProductGrid from './ProductGrid';
 import { LoadingPageSkeleton } from '@/components/ui/Skeleton';
-import { useCachedCategories, useCachedProductRatings } from '../../hooks/useCache';
+import {
+  useCachedCategories,
+  useCachedProductRatings,
+} from '../../hooks/useCache';
 
 interface Product {
   id: string;
@@ -155,11 +158,7 @@ const ProductCatalog: React.FC = () => {
   // Loading state with enhanced skeleton
   if (loading || categoriesLoading) {
     return (
-      <LoadingPageSkeleton 
-        showNavigation={false}
-        layout="grid"
-        itemCount={8}
-      />
+      <LoadingPageSkeleton showNavigation={false} layout='grid' itemCount={8} />
     );
   }
 

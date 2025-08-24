@@ -1,10 +1,10 @@
-import React, { 
-  createContext, 
-  useContext, 
-  useEffect, 
-  useState, 
-  useCallback, 
-  ReactNode 
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  ReactNode,
 } from 'react';
 
 // Enhanced theme configuration interface
@@ -15,7 +15,7 @@ export interface ThemeConfig {
   reducedMotion: boolean;
   autoSwitchTime?: {
     lightStart: string; // e.g., "06:00"
-    darkStart: string;  // e.g., "18:00"
+    darkStart: string; // e.g., "18:00"
   };
 }
 
@@ -62,46 +62,46 @@ const setStoredConfig = (config: ThemeConfig): void => {
 
 // Apply theme to document
 const applyTheme = (
-  theme: 'light' | 'dark', 
-  config: ThemeConfig, 
+  theme: 'light' | 'dark',
+  config: ThemeConfig,
   isTransitioning: boolean = false
 ): void => {
   const root = document.documentElement;
   const body = document.body;
-  
+
   // Add transition class for smooth switching
   if (isTransitioning) {
     body.classList.add('theme-transitioning');
   }
-  
+
   // Remove existing theme classes
   root.classList.remove('nord-dark', 'nord-light', 'dark', 'light');
-  
+
   // Apply new theme
   if (theme === 'dark') {
     root.classList.add('nord-dark', 'dark');
   } else {
     root.classList.add('nord-light', 'light');
   }
-  
+
   // Apply accent color as CSS custom property
   root.style.setProperty('--color-brand-primary', config.accentColor);
-  
+
   // Apply font size scaling
   const fontSizeScale = {
     sm: '0.875',
     md: '1',
-    lg: '1.125'
+    lg: '1.125',
   };
   root.style.setProperty('--font-size-scale', fontSizeScale[config.fontSize]);
-  
+
   // Apply reduced motion preference
   if (config.reducedMotion) {
     root.classList.add('reduce-motion');
   } else {
     root.classList.remove('reduce-motion');
   }
-  
+
   // Remove transition class after animation
   if (isTransitioning) {
     setTimeout(() => {
@@ -121,10 +121,10 @@ const useMediaQuery = (query: string): boolean => {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    
+
     const mq = window.matchMedia(query);
     const onChange = (event: MediaQueryListEvent) => setMatches(event.matches);
-    
+
     // Add listeners with fallbacks for older browsers
     if (mq.addEventListener) {
       mq.addEventListener('change', onChange);
@@ -132,10 +132,10 @@ const useMediaQuery = (query: string): boolean => {
       // Safari fallback
       mq.addListener(onChange);
     }
-    
+
     // Set initial value
     setMatches(mq.matches);
-    
+
     return () => {
       if (mq.removeEventListener) {
         mq.removeEventListener('change', onChange);
@@ -148,21 +148,25 @@ const useMediaQuery = (query: string): boolean => {
   return matches;
 };
 
-export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const ThemeProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   // Initialize config from stored values
   const [config, setConfig] = useState<ThemeConfig>(() => ({
     ...defaultConfig,
     ...getStoredConfig(),
   }));
-  
+
   const [isTransitioning, setIsTransitioning] = useState(false);
-  
+
   // Detect system preferences
   const isSystemDark = useMediaQuery('(prefers-color-scheme: dark)');
-  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
-  
+  const prefersReducedMotion = useMediaQuery(
+    '(prefers-reduced-motion: reduce)'
+  );
+
   // Calculate effective theme
-  const effectiveTheme: 'light' | 'dark' = 
+  const effectiveTheme: 'light' | 'dark' =
     config.mode === 'system' ? (isSystemDark ? 'dark' : 'light') : config.mode;
 
   // Apply theme whenever config or system preference changes
@@ -252,14 +256,14 @@ export const useThemeMode = () => {
 };
 
 export const useThemePreferences = () => {
-  const { 
-    config, 
-    setAccentColor, 
-    setFontSize, 
-    setReducedMotion, 
-    resetToDefaults 
+  const {
+    config,
+    setAccentColor,
+    setFontSize,
+    setReducedMotion,
+    resetToDefaults,
   } = useTheme();
-  
+
   return {
     accentColor: config.accentColor,
     fontSize: config.fontSize,
