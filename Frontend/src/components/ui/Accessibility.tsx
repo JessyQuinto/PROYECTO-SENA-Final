@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 export const SkipNavigation: React.FC = () => {
   return (
     <a
-      href=\"#main-content\"
+      href="#main-content"
       className={cn(
         // Visually hidden by default
         'sr-only',
@@ -57,7 +57,7 @@ export const FocusTrap: React.FC<FocusTrapProps> = ({
 
     const trapElement = trapRef.current;
     const focusableElements = trapElement.querySelectorAll(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex=\"-1\"])'
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
     );
     
     const firstElement = focusableElements[0] as HTMLElement;
@@ -188,7 +188,7 @@ export const MainContent: React.FC<MainContentProps> = ({
 }) => {
   return (
     <main
-      id=\"main-content\"
+      id="main-content"
       className={cn('focus:outline-none', className)}
       tabIndex={-1}
     >

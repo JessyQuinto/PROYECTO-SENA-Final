@@ -49,45 +49,101 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     | string
     | undefined;
 
+  // Track loading state to prevent duplicate calls
+  const [profileLoading, setProfileLoading] = useState<string | null>(null);
+  const [profileRetryCount, setProfileRetryCount] = useState(0);
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 1000; // 1 second
+
   const isEmailConfirmed = (session: Session | null): boolean => {
     const u: any = session?.user;
     return !!(u?.email_confirmed_at || u?.confirmed_at || u?.email_confirmed);
   };
 
-  const loadProfile = async (uid: string) => {
+  const loadProfile = async (uid: string, retryCount = 0) => {
     if (!supabase) return;
-    const { data, error } = await supabase
-      .from('users')
-      .select('id, email, role, vendedor_estado, bloqueado, nombre_completo')
-      .eq('id', uid)
-      .maybeSingle();
-    if (error) {
-      if (import.meta.env.DEV) {
-        console.warn('[auth] No se pudo cargar perfil users:', error.message);
-      }
+    
+    // Prevent duplicate calls for the same user
+    if (profileLoading === uid) {
       return;
     }
-    if (data) {
-      // Seguridad: si usuario está bloqueado, cerrar sesión.
-      if (data.bloqueado) {
-        await supabase.auth.signOut();
-        setUser(null);
+    
+    // Circuit breaker: stop retrying after max attempts
+    if (retryCount >= MAX_RETRIES) {
+      console.warn('[auth] Max retries reached for loadProfile, giving up');
+      setLoading(false);
+      return;
+    }
+    
+    setProfileLoading(uid);
+    
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, email, role, vendedor_estado, bloqueado, nombre_completo')
+        .eq('id', uid)
+        .maybeSingle();
+        
+      if (error) {
+        if (import.meta.env.DEV) {
+          console.warn(`[auth] No se pudo cargar perfil users (attempt ${retryCount + 1}):`, error.message);
+        }
+        
+        // Only retry on network errors, not on auth/permission errors
+        if (error.message.includes('Failed to fetch') || error.code === 'PGRST301') {
+          if (retryCount < MAX_RETRIES) {
+            setProfileRetryCount(retryCount + 1);
+            setTimeout(() => {
+              loadProfile(uid, retryCount + 1);
+            }, RETRY_DELAY * Math.pow(2, retryCount)); // Exponential backoff
+            return;
+          }
+        }
+        
+        setProfileLoading(null);
+        setLoading(false);
         return;
       }
-      setUser({
-        id: data.id,
-        email: data.email || undefined,
-        nombre: (data as any).nombre_completo || undefined,
-        role: (data.role as SessionUser['role']) || undefined,
-        vendedor_estado: data.vendedor_estado as SessionUser['vendedor_estado'],
-        bloqueado: !!data.bloqueado,
-      });
+      
+      if (data) {
+        // Reset retry count on success
+        setProfileRetryCount(0);
+        
+        // Seguridad: si usuario está bloqueado, cerrar sesión.
+        if (data.bloqueado) {
+          await supabase.auth.signOut();
+          setUser(null);
+          setProfileLoading(null);
+          setLoading(false);
+          return;
+        }
+        
+        setUser({
+          id: data.id,
+          email: data.email || undefined,
+          nombre: (data as any).nombre_completo || undefined,
+          role: (data.role as SessionUser['role']) || undefined,
+          vendedor_estado: data.vendedor_estado as SessionUser['vendedor_estado'],
+          bloqueado: !!data.bloqueado,
+        });
+        
+        setProfileLoading(null);
+        setLoading(false);
+        return;
+      }
+
+      // Si no existe perfil, no lo creamos desde cliente para evitar conflictos de FK/RLS.
+      // El perfil debe crearlo el backend en /auth/post-signup usando service role.
+      setProfileLoading(null);
+      setLoading(false);
+      return;
+      
+    } catch (error) {
+      console.error('[auth] Unexpected error in loadProfile:', error);
+      setProfileLoading(null);
+      setLoading(false);
       return;
     }
-
-    // Si no existe perfil, no lo creamos desde cliente para evitar conflictos de FK/RLS.
-    // El perfil debe crearlo el backend en /auth/post-signup usando service role.
-    return;
   };
 
   useEffect(() => {
@@ -142,13 +198,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             return;
           }
           // Intentar obtener perfil desde tabla users para reflejar cambios admin.
-          loadProfile(session.user.id).finally(() => setLoading(false));
+          // Only load if not already loading for this user
+          if (profileLoading !== session.user.id) {
+            loadProfile(session.user.id);
+          }
         } else {
           setUser(null);
           setLoading(false);
         }
       }
     );
+    
+    // Initial session check - but avoid duplicate calls
     supabase.auth
       .getSession()
       .then(async ({ data }: { data: { session: Session | null } }) => {
@@ -160,8 +221,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setLoading(false);
             return;
           }
-          await loadProfile(session.user.id);
+          // Only load if not already loading for this user
+          if (profileLoading !== session.user.id) {
+            await loadProfile(session.user.id);
+          }
+        } else {
+          setLoading(false);
         }
+      })
+      .catch((error: Error) => {
+        console.error('[auth] Error getting initial session:', error);
         setLoading(false);
       });
     return () => {
@@ -181,7 +250,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await supabase.auth.signOut();
         return { error: 'Debes confirmar tu correo antes de iniciar sesión' };
       }
-      await loadProfile(data.user.id);
+      if (profileLoading !== data.user.id) {
+        await loadProfile(data.user.id);
+      }
     }
     return { error: error?.message };
   };
@@ -285,7 +356,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const refreshProfile = async () => {
     if (!supabase) return;
     const session = (await supabase.auth.getSession()).data.session;
-    if (session?.user?.id) {
+    if (session?.user?.id && profileLoading !== session.user.id) {
       await loadProfile(session.user.id);
     }
   };

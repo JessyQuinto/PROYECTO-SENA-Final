@@ -8,6 +8,7 @@ import { Landing } from './Landing';
 import { CartProvider } from './buyer/CartContext';
 import { ToastProvider } from '@/components/ui/ToastProvider';
 import { Toaster } from '@/components/ui/shadcn/toaster';
+import { ThemeProvider } from '@/components/ui/ThemeProvider';
 import PerformanceDashboard from '@/components/ui/PerformanceDashboard';
 import DatabaseDashboard from '@/components/ui/DatabaseDashboard';
 import { PageErrorBoundary } from '@/components/ui/ErrorBoundary';
@@ -58,8 +59,9 @@ const LoadingSpinner = () => (
 
 export const App: React.FC = () => (
   <PageErrorBoundary>
-    <CacheProvider>
-      <AuthProvider>
+    <ThemeProvider>
+      <CacheProvider>
+        <AuthProvider>
         <BrowserRouter
           future={
             {
@@ -247,5 +249,6 @@ export const App: React.FC = () => (
         </BrowserRouter>
       </AuthProvider>
     </CacheProvider>
+    </ThemeProvider>
   </PageErrorBoundary>
 );

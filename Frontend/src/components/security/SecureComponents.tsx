@@ -6,6 +6,7 @@ import {
   usePasswordValidation,
   useRateLimit,
 } from '@/hooks/useSecurity';
+import { security } from '@/lib/security';
 import { secureValidationSchemas } from '@/hooks/useSecurity';
 import { cn } from '@/lib/utils';
 
@@ -40,6 +41,7 @@ export const SecureInput = forwardRef<HTMLInputElement, SecureInputProps>(
       showValidation = true,
       maxLength = 255,
       className,
+      size,
       ...props
     },
     ref
@@ -125,6 +127,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
       showStrength = true,
       showToggle = true,
       className,
+      size,
       ...props
     },
     ref
@@ -273,10 +276,14 @@ export const SecureButton = forwardRef<HTMLButtonElement, SecureButtonProps>(
       children,
       onClick,
       disabled,
-      ...props
+      variant,
+      size,
+      ...remainingProps
     },
     ref
   ) => {
+    // Remove any disabled property from remainingProps to prevent conflicts
+    const { disabled: _, ...props } = remainingProps as any;
     const rateLimit = useRateLimit(
       rateLimitKey || 'default',
       maxAttempts,
@@ -298,13 +305,15 @@ export const SecureButton = forwardRef<HTMLButtonElement, SecureButtonProps>(
       }
     };
 
-    const isDisabled = disabled || (rateLimitKey && !rateLimit.isAllowed);
+    const isDisabled = !!disabled || (rateLimitKey && !rateLimit.isAllowed);
 
     return (
       <div className='space-y-2'>
         <Button
           ref={ref}
           {...props}
+          variant={variant}
+          size={size}
           onClick={handleClick}
           disabled={isDisabled}
         >

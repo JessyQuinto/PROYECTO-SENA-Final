@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTheme } from '@/components/ui/ThemeProvider';
 
 type ThemePref = 'nord-dark' | 'nord-light' | 'auto';
 
+// Legacy theme functions for backward compatibility
 function getInitialTheme(): ThemePref {
   try {
     const saved = localStorage.getItem('theme') as string | null;
@@ -21,9 +23,116 @@ function applyTheme(theme: 'nord-dark' | 'nord-light') {
   if (theme === 'nord-light') root.classList.add('nord-light');
 }
 
-export const ThemeToggle: React.FC<{ className?: string }> = ({
-  className,
+interface ThemeToggleProps {
+  className?: string;
+  variant?: 'default' | 'enhanced';
+  showLabels?: boolean;
+}
+
+// Enhanced theme toggle using new context
+const EnhancedThemeToggle: React.FC<ThemeToggleProps> = ({ 
+  className, 
+  showLabels = false 
 }) => {
+  const { config, effectiveTheme, setThemeMode, isTransitioning } = useTheme();
+  
+  const toggleLight = () => {
+    setThemeMode(config.mode === 'light' ? 'system' : 'light');
+  };
+  
+  const toggleDark = () => {
+    setThemeMode(config.mode === 'dark' ? 'system' : 'dark');
+  };
+  
+  const isLightActive = config.mode === 'light' || (config.mode === 'system' && effectiveTheme === 'light');
+  const isDarkActive = config.mode === 'dark' || (config.mode === 'system' && effectiveTheme === 'dark');
+  
+  return (
+    <div
+      className={`theme-toggle ${isTransitioning ? 'transitioning' : ''} ${className ?? ''}`}
+      role='group'
+      aria-label='Preferencia de tema'
+    >
+      {/* Light */}
+      <button
+        type='button'
+        title={config.mode === 'light' ? 'Claro (clic para seguir sistema)' : 'Claro'}
+        aria-pressed={isLightActive}
+        className={`seg ${isLightActive ? 'active' : ''}`}
+        onClick={toggleLight}
+        disabled={isTransitioning}
+      >
+        <svg
+          className='sun-icon'
+          viewBox='0 0 24 24'
+          width='16'
+          height='16'
+          fill='none'
+          stroke='currentColor'
+          strokeWidth='2'
+          aria-hidden='true'
+        >
+          <path
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            d='M12 3v2m0 14v2m9-9h-2M5 12H3m15.364-6.364l-1.414 1.414M7.05 16.95l-1.414 1.414m12.728 0l-1.414-1.414M7.05 7.05L5.636 5.636'
+          />
+          <circle cx='12' cy='12' r='4' />
+        </svg>
+        {showLabels && <span className='sr-only'>Claro</span>}
+      </button>
+      
+      {/* Dark */}
+      <button
+        type='button'
+        title={config.mode === 'dark' ? 'Oscuro (clic para seguir sistema)' : 'Oscuro'}
+        aria-pressed={isDarkActive}
+        className={`seg ${isDarkActive ? 'active' : ''}`}
+        onClick={toggleDark}
+        disabled={isTransitioning}
+      >
+        <svg
+          className='moon-icon'
+          viewBox='0 0 24 24'
+          width='16'
+          height='16'
+          fill='none'
+          stroke='currentColor'
+          strokeWidth='2'
+          aria-hidden='true'
+        >
+          <path
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            d='M20.354 15.354A9 9 0 118.646 3.646 7 7 0 0020.354 15.354z'
+          />
+        </svg>
+        {showLabels && <span className='sr-only'>Oscuro</span>}
+      </button>
+      
+      {/* System mode indicator */}
+      {config.mode === 'system' && (
+        <div className='system-indicator' title='Siguiendo preferencias del sistema'>
+          <svg
+            viewBox='0 0 24 24'
+            width='12'
+            height='12'
+            fill='none'
+            stroke='currentColor'
+            strokeWidth='2'
+            aria-hidden='true'
+          >
+            <rect x='2' y='4' width='20' height='12' rx='2'/>
+            <path d='M2 12h20'/>
+          </svg>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Legacy theme toggle for backward compatibility
+const LegacyThemeToggle: React.FC<ThemeToggleProps> = ({ className }) => {
   const [pref, setPref] = useState<ThemePref>(getInitialTheme());
 
   const isDark = useMemo(() => {
@@ -69,9 +178,6 @@ export const ThemeToggle: React.FC<{ className?: string }> = ({
       mq.removeListener?.(onChange as any);
     };
   }, [pref]);
-
-  const effectiveLabel = isDark ? 'Oscuro' : 'Claro';
-  const label = `Preferencia de tema (${pref === 'auto' ? 'Automático' : effectiveLabel})`;
 
   const toggleLight = () => {
     // If already forced light, clicking again returns to auto
@@ -148,6 +254,34 @@ export const ThemeToggle: React.FC<{ className?: string }> = ({
         <span className='sr-only'>Oscuro</span>
       </button>
     </div>
+  );
+};
+
+export const ThemeToggle: React.FC<ThemeToggleProps> = ({
+  className,
+  variant = 'enhanced',
+  showLabels = false,
+}) => {
+  // Use enhanced version by default, fall back to legacy if context is not available
+  try {
+    if (variant === 'enhanced') {
+      return (
+        <EnhancedThemeToggle 
+          className={className} 
+          showLabels={showLabels} 
+        />
+      );
+    }
+  } catch (error) {
+    // Fall back to legacy version if theme context is not available
+    console.warn('Theme context not available, falling back to legacy theme toggle');
+  }
+  
+  return (
+    <LegacyThemeToggle 
+      className={className} 
+      showLabels={showLabels} 
+    />
   );
 };
 

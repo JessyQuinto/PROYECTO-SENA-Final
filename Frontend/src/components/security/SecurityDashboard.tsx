@@ -6,7 +6,6 @@ import {
   CardTitle,
 } from '@/components/ui/shadcn/card';
 import { Button } from '@/components/ui/shadcn/button';
-import { Badge } from '@/components/ui/shadcn/badge';
 import { SecurityBadge } from './SecureComponents';
 import { cspManager } from '@/lib/csp';
 import { security, SECURITY_CONSTANTS } from '@/lib/security';
@@ -327,13 +326,13 @@ export const SecurityDashboard: React.FC = () => {
                   <div className='flex-1'>
                     <div className='flex items-center gap-2'>
                       <span className='font-medium'>{rateLimit.key}</span>
-                      <Badge
-                        variant={
-                          rateLimit.isBlocked ? 'destructive' : 'secondary'
-                        }
+                      <span
+                        className={`badge ${
+                          rateLimit.isBlocked ? 'badge-danger' : 'badge-secondary'
+                        }`}
                       >
                         {rateLimit.isBlocked ? 'Bloqueado' : 'Activo'}
-                      </Badge>
+                      </span>
                     </div>
                     <div className='text-sm text-gray-600 mt-1'>
                       {rateLimit.attempts} intentos • Último:{' '}

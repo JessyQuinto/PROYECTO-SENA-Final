@@ -74,7 +74,7 @@ class ServiceWorkerManager {
         resolve(event.data);
       };
 
-      messageChannel.port1.onerror = error => {
+      messageChannel.port1.onmessageerror = error => {
         reject(error);
       };
 

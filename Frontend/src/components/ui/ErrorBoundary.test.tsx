@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { ErrorBoundary } from '../ErrorBoundary';
+import { ErrorBoundary } from './ErrorBoundary';
 import { ErrorHandler } from '../../lib/errorHandler';
 import { ValidationError, NetworkError } from '../../lib/errors';
 

@@ -48,13 +48,17 @@ const LoginPage: React.FC = () => {
         return;
       }
 
-      const { error } = await executeMutation(
-        () => signIn(values.email, values.password),
-        'Inicio de sesión exitoso',
-        'Error en el inicio de sesión'
+      const result = await executeMutation(
+        async () => {
+          const signInResult = await signIn(values.email, values.password);
+          return { data: null, error: signInResult.error };
+        },
+        'Error en el inicio de sesión',
+        'Inicio de sesión exitoso'
       );
 
-      if (!error) {
+      // If result is not null, it means no error occurred
+      if (result !== null) {
         // Clear rate limit on successful login
         rateLimit.clearLimit();
         navigate('/dashboard');

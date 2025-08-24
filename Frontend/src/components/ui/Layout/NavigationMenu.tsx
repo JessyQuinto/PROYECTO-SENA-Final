@@ -16,7 +16,7 @@ interface NavigationMenuProps {
   className?: string;
 }
 
-export const NavigationMenu: React.FC<NavigationMenuProps> = ({
+const NavigationMenu: React.FC<NavigationMenuProps> = ({
   items,
   currentPath,
   className,
@@ -45,5 +45,10 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
     </nav>
   );
 };
+
+const MemoizedNavigationMenu = React.memo(NavigationMenu);
+MemoizedNavigationMenu.displayName = 'NavigationMenu';
+
+export { MemoizedNavigationMenu as NavigationMenu };
 
 export default NavigationMenu;

@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   security,
+  SecurityManager,
   SECURITY_CONSTANTS,
   ValidationSchemas,
 } from '@/lib/security';
@@ -166,15 +167,15 @@ export function useSecureFileUpload(
   const validateFile = useCallback(
     async (file: File): Promise<boolean> => {
       try {
-        // Use custom allowed types if provided
-        const originalConfig = allowedTypes
-          ? {
-              ...security,
-              config: { ...security.config, allowedFileTypes: allowedTypes },
-            }
-          : security;
-
-        originalConfig.validateFile(file, maxSizeMB);
+        // Use custom SecurityManager instance if custom allowed types are provided
+        if (allowedTypes) {
+          const customSecurity = new SecurityManager({
+            allowedFileTypes: allowedTypes,
+          });
+          customSecurity.validateFile(file, maxSizeMB);
+        } else {
+          security.validateFile(file, maxSizeMB);
+        }
         return true;
       } catch (error) {
         return false;
@@ -192,7 +193,15 @@ export function useSecureFileUpload(
 
       for (const file of fileArray) {
         try {
-          security.validateFile(file, maxSizeMB);
+          // Use custom SecurityManager instance if custom allowed types are provided
+          if (allowedTypes) {
+            const customSecurity = new SecurityManager({
+              allowedFileTypes: allowedTypes,
+            });
+            customSecurity.validateFile(file, maxSizeMB);
+          } else {
+            security.validateFile(file, maxSizeMB);
+          }
           validFiles.push(file);
         } catch (error) {
           fileErrors.push(
