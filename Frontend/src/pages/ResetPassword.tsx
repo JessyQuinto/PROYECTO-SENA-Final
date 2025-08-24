@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/shadcn/input';
 import { Label } from '@/components/ui/shadcn/label';
 import { Button } from '@/components/ui/shadcn/button';
+import { supabase } from '@/lib/supabaseClient';
 import { z } from 'zod';
 
 const resetPasswordSchema = z
@@ -34,15 +35,17 @@ const ResetPasswordPage: React.FC = () => {
     initialValues: { password: '', confirm: '' },
     validationSchema: resetPasswordSchema,
     onSubmit: async values => {
-      const { error } = await executeMutation(
-        () => supabase.auth.updateUser({ password: values.password }),
-        'Contraseña actualizada exitosamente',
-        'No se pudo actualizar la contraseña'
+      const result = await executeMutation(
+        async () => {
+          const { error } = await supabase.auth.updateUser({ password: values.password });
+          return { data: null, error };
+        },
+        'No se pudo actualizar la contraseña',
+        'Contraseña actualizada exitosamente'
       );
 
-      if (!error) {
+      if (result !== null) {
         toast.success('Contraseña actualizada', {
-          message: 'Redirigiendo a login...',
           action: 'update',
         });
         setTimeout(() => navigate('/login', { replace: true }), 1500);
@@ -76,8 +79,8 @@ const ResetPasswordPage: React.FC = () => {
                     id='password'
                     type='password'
                     value={form.values.password}
-                    onChange={form.handleChange}
-                    onBlur={form.handleBlur}
+                    onChange={e => form.handleChange('password', e.target.value)}
+                    onBlur={() => form.handleBlur('password')}
                     placeholder='••••••••'
                     className={form.errors.password ? 'border-red-500' : ''}
                   />
@@ -93,8 +96,8 @@ const ResetPasswordPage: React.FC = () => {
                     id='confirm'
                     type='password'
                     value={form.values.confirm}
-                    onChange={form.handleChange}
-                    onBlur={form.handleBlur}
+                    onChange={e => form.handleChange('confirm', e.target.value)}
+                    onBlur={() => form.handleBlur('confirm')}
                     placeholder='••••••••'
                     className={form.errors.confirm ? 'border-red-500' : ''}
                   />

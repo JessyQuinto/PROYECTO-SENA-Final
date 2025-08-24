@@ -1,6 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { errorHandler } from '@/lib/errorHandler';
-import { AppError, ErrorSeverity, ErrorType } from '@/lib/errors';
+import { AppError, ErrorSeverity } from '@/lib/errors';
 import { Button } from '@/components/ui/shadcn/button';
 import { Card } from '@/components/ui/shadcn/card';
 

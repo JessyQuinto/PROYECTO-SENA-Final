@@ -1,4 +1,4 @@
-import React, {
+import {
   createContext,
   useContext,
   useEffect,
@@ -51,7 +51,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Track loading state to prevent duplicate calls
   const [profileLoading, setProfileLoading] = useState<string | null>(null);
-  const [profileRetryCount, setProfileRetryCount] = useState(0);
   const MAX_RETRIES = 3;
   const RETRY_DELAY = 1000; // 1 second
 
@@ -92,7 +91,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Only retry on network errors, not on auth/permission errors
         if (error.message.includes('Failed to fetch') || error.code === 'PGRST301') {
           if (retryCount < MAX_RETRIES) {
-            setProfileRetryCount(retryCount + 1);
             setTimeout(() => {
               loadProfile(uid, retryCount + 1);
             }, RETRY_DELAY * Math.pow(2, retryCount)); // Exponential backoff
@@ -106,9 +104,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       
       if (data) {
-        // Reset retry count on success
-        setProfileRetryCount(0);
-        
         // Seguridad: si usuario está bloqueado, cerrar sesión.
         if (data.bloqueado) {
           await supabase.auth.signOut();

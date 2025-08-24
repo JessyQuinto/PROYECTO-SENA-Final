@@ -26,13 +26,43 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
         cache-dependency-path: Frontend/package-lock.json
+        registry-url: 'https://registry.npmjs.org/'
         
-    - name: Install dependencies
+    - name: Configure npm for better reliability
       working-directory: ./Frontend
-      run: npm ci --ignore-scripts
+      run: |
+        npm config set registry https://registry.npmjs.org/
+        npm config set fetch-retries 5
+        npm config set fetch-retry-mintimeout 20000
+        npm config set fetch-retry-maxtimeout 120000
+        npm config set fetch-timeout 300000
+        
+    - name: Install dependencies with retry
+      working-directory: ./Frontend
+      run: |
+        set -e
+        max_attempts=3
+        attempt=1
+        
+        while [ $attempt -le $max_attempts ]; do
+          echo "Attempt $attempt of $max_attempts"
+          if npm ci --ignore-scripts --prefer-offline --no-audit; then
+            echo "Dependencies installed successfully on attempt $attempt"
+            break
+          else
+            if [ $attempt -eq $max_attempts ]; then
+              echo "Failed to install dependencies after $max_attempts attempts"
+              exit 1
+            fi
+            echo "Attempt $attempt failed, waiting before retry..."
+            sleep $(( attempt * 30 ))
+            ((attempt++))
+          fi
+        done
       env:
         CI: true
         HUSKY: 0
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
     - name: Type checking
       working-directory: ./Frontend
@@ -72,13 +102,43 @@ jobs:
         node-version: '20.x'
         cache: 'npm'
         cache-dependency-path: Frontend/package-lock.json
+        registry-url: 'https://registry.npmjs.org/'
         
-    - name: Install dependencies
+    - name: Configure npm for security audit
       working-directory: ./Frontend
-      run: npm ci --ignore-scripts
+      run: |
+        npm config set registry https://registry.npmjs.org/
+        npm config set fetch-retries 5
+        npm config set fetch-retry-mintimeout 20000
+        npm config set fetch-retry-maxtimeout 120000
+        npm config set fetch-timeout 300000
+        
+    - name: Install dependencies with retry for security
+      working-directory: ./Frontend
+      run: |
+        set -e
+        max_attempts=3
+        attempt=1
+        
+        while [ $attempt -le $max_attempts ]; do
+          echo "Security audit attempt $attempt of $max_attempts"
+          if npm ci --ignore-scripts --prefer-offline --no-audit; then
+            echo "Dependencies installed successfully for security audit on attempt $attempt"
+            break
+          else
+            if [ $attempt -eq $max_attempts ]; then
+              echo "Failed to install dependencies for security audit after $max_attempts attempts"
+              exit 1
+            fi
+            echo "Security audit attempt $attempt failed, waiting before retry..."
+            sleep $(( attempt * 30 ))
+            ((attempt++))
+          fi
+        done
       env:
         CI: true
         HUSKY: 0
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
     - name: Run security audit
       working-directory: ./Frontend
@@ -101,13 +161,43 @@ jobs:
         node-version: '20.x'
         cache: 'npm'
         cache-dependency-path: Frontend/package-lock.json
+        registry-url: 'https://registry.npmjs.org/'
         
-    - name: Install dependencies
+    - name: Configure npm for build
       working-directory: ./Frontend
-      run: npm ci --ignore-scripts
+      run: |
+        npm config set registry https://registry.npmjs.org/
+        npm config set fetch-retries 5
+        npm config set fetch-retry-mintimeout 20000
+        npm config set fetch-retry-maxtimeout 120000
+        npm config set fetch-timeout 300000
+        
+    - name: Install dependencies with retry for build
+      working-directory: ./Frontend
+      run: |
+        set -e
+        max_attempts=3
+        attempt=1
+        
+        while [ $attempt -le $max_attempts ]; do
+          echo "Build attempt $attempt of $max_attempts"
+          if npm ci --ignore-scripts --prefer-offline --no-audit; then
+            echo "Dependencies installed successfully for build on attempt $attempt"
+            break
+          else
+            if [ $attempt -eq $max_attempts ]; then
+              echo "Failed to install dependencies for build after $max_attempts attempts"
+              exit 1
+            fi
+            echo "Build attempt $attempt failed, waiting before retry..."
+            sleep $(( attempt * 30 ))
+            ((attempt++))
+          fi
+        done
       env:
         CI: true
         HUSKY: 0
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
     - name: Build application
       working-directory: ./Frontend
@@ -137,13 +227,43 @@ jobs:
         node-version: '20.x'
         cache: 'npm'
         cache-dependency-path: Frontend/package-lock.json
+        registry-url: 'https://registry.npmjs.org/'
         
-    - name: Install dependencies
+    - name: Configure npm for performance testing
       working-directory: ./Frontend
-      run: npm ci --ignore-scripts
+      run: |
+        npm config set registry https://registry.npmjs.org/
+        npm config set fetch-retries 5
+        npm config set fetch-retry-mintimeout 20000
+        npm config set fetch-retry-maxtimeout 120000
+        npm config set fetch-timeout 300000
+        
+    - name: Install dependencies with retry for performance
+      working-directory: ./Frontend
+      run: |
+        set -e
+        max_attempts=3
+        attempt=1
+        
+        while [ $attempt -le $max_attempts ]; do
+          echo "Performance test attempt $attempt of $max_attempts"
+          if npm ci --ignore-scripts --prefer-offline --no-audit; then
+            echo "Dependencies installed successfully for performance testing on attempt $attempt"
+            break
+          else
+            if [ $attempt -eq $max_attempts ]; then
+              echo "Failed to install dependencies for performance testing after $max_attempts attempts"
+              exit 1
+            fi
+            echo "Performance test attempt $attempt failed, waiting before retry..."
+            sleep $(( attempt * 30 ))
+            ((attempt++))
+          fi
+        done
       env:
         CI: true
         HUSKY: 0
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
     - name: Download build artifacts
       uses: actions/download-artifact@v3
