@@ -7,11 +7,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Label } from '@/components/ui/shadcn/label';
 import { Button } from '@/components/ui/shadcn/button';
 import { Input } from '@/components/ui/shadcn/input';
-import { RateLimitReset } from '@/components/RateLimitReset';
-import { EnvDiagnostic } from '@/components/EnvDiagnostic';
 import { useRateLimit } from '@/hooks/useSecurity';
 import { z } from 'zod';
-
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -97,91 +94,117 @@ const LoginPage: React.FC = () => {
         
         // Mark that login was successful - the useEffect will handle redirect
         loginSuccessRef.current = true;
-        
-        // If user data is already available, redirect immediately
-        if (user && !loading) {
-          const redirectPath = getRedirectPath(user.role);
-          navigate(redirectPath, { replace: true });
-        }
       }
     },
   });
 
+  // If already loading or user is authenticated, show loading
+  if (loading || user) {
     return (
-    <div className='min-h-[calc(100vh-120px)] grid place-items-center'>
-      <div className='container-sm'>
-        <div className='grid md:grid-cols-2 gap-8 items-center'>
-          <div className='hidden md:block'>
-            <div className='card card-hover'>
-              <div className='card-body'>
-                <h1 className='text-2xl font-semibold mb-2 font-display'>
-                  Bienvenido de vuelta
-                </h1>
-                <p className='opacity-80'>
-                  Inicia sesión en tu cuenta para continuar.
-                </p>
-              </div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-secondary/5">
+        <div className="text-center">
+          <div className="loading loading-spinner loading-lg text-primary"></div>
+          <p className="mt-4 text-muted-foreground">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-secondary/5 p-4">
+      <div className="w-full max-w-md">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+              <span className="text-2xl font-bold">TC</span>
             </div>
           </div>
-          <div className='card card-hover'>
-            <div className='card-body'>
-              <h2 className='text-xl font-semibold mb-4'>Iniciar sesión</h2>
-              {/* TEMPORAL: Componentes de diagnóstico */}
-              <EnvDiagnostic />
-              <RateLimitReset />
-              
-              <form {...form.getFormProps()}>
-                <div className='space-y-4'>
-                  <div>
-                    <Label htmlFor='email'>Email</Label>
-                    <Input
-                      {...form.getInputProps('email')}
-                      id='email'
-                      type='email'
-                      placeholder='tu-email@ejemplo.com'
-                      autoComplete='email'
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor='password'>Contraseña</Label>
-                    <Input
-                      {...form.getInputProps('password')}
-                      id='password'
-                      type='password'
-                      placeholder='••••••••'
-                      autoComplete='current-password'
-                    />
-                  </div>
-                  <Button
-                    type='submit'
-                    className='w-full'
-                    disabled={loading}
-                  >
-                    {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
-                  </Button>
-                </div>
-              </form>
-              <div className='text-sm text-center space-y-2 mt-4'>
-                <div>
-                  <Link
-                    to='/forgot-password'
-                    className='text-(--color-terracotta-suave) hover:underline'
-                  >
-                    ¿Olvidaste tu contraseña?
-                  </Link>
-                </div>
-                <div>
-                  ¿No tienes cuenta?{' '}
-                  <Link
-                    to='/register'
-                    className='text-(--color-terracotta-suave) hover:underline'
-                  >
-                    Regístrate aquí
-                  </Link>
-                </div>
-              </div>
+          <h1 className="text-3xl font-bold tracking-tight">Bienvenido de vuelta</h1>
+          <p className="text-muted-foreground mt-2">
+            Inicia sesión en tu cuenta de Tesoros Chocó
+          </p>
+        </div>
+
+        {/* Login Form */}
+        <div className="bg-card rounded-2xl border shadow-lg p-8">
+          <form onSubmit={form.handleSubmit} className="space-y-6">
+            {/* Email Field */}
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-medium">
+                Correo electrónico
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="tu@email.com"
+                {...form.getInputProps('email')}
+                className={form.hasError('email') ? 'border-destructive' : ''}
+              />
+              {form.hasError('email') && (
+                <p className="text-sm text-destructive">{form.getError('email')}</p>
+              )}
+            </div>
+
+            {/* Password Field */}
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-sm font-medium">
+                Contraseña
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                {...form.getInputProps('password')}
+                className={form.hasError('password') ? 'border-destructive' : ''}
+              />
+              {form.hasError('password') && (
+                <p className="text-sm text-destructive">{form.getError('password')}</p>
+              )}
+            </div>
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={form.isSubmitting}
+            >
+              {form.isSubmitting ? (
+                <>
+                  <div className="loading loading-spinner loading-sm mr-2"></div>
+                  Iniciando sesión...
+                </>
+              ) : (
+                'Iniciar sesión'
+              )}
+            </Button>
+          </form>
+
+          {/* Links */}
+          <div className="mt-6 text-center space-y-3">
+            <div className="text-sm">
+              <Link
+                to="/forgot-password"
+                className="text-primary hover:underline font-medium"
+              >
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              ¿No tienes una cuenta?{' '}
+              <Link
+                to="/register"
+                className="text-primary hover:underline font-medium"
+              >
+                Crear cuenta
+              </Link>
             </div>
           </div>
+        </div>
+
+        {/* Footer */}
+        <div className="text-center mt-8 text-sm text-muted-foreground">
+          <p>© 2024 Tesoros Chocó. Todos los derechos reservados.</p>
         </div>
       </div>
     </div>

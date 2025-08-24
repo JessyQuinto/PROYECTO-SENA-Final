@@ -26,8 +26,8 @@ const UsersAdmin: React.FC = () => {
     email?: string;
   } | null>(null);
 
-  // Super admin autorizado (el único que puede degradar otros admins)
-  const SUPER_ADMIN_EMAIL = 'quitojessy@gmail.com';
+  // Super admin único autorizado (el único que puede modificar otros admins)
+  const SUPER_ADMIN_EMAIL = 'admin@tesoros-choco.com';
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -199,8 +199,8 @@ const UsersAdmin: React.FC = () => {
       // Por defecto habilitado si no existe registro/config (alineado con la Edge Function)
       const enabled = (notif?.value?.enabled ?? true) as boolean;
       const from = sender?.value?.from as string | undefined;
-      if (!enabled || !user?.email) return;
-      const resp = await fetch(
+      if (enabled && from && user?.email) {
+        await fetch(
         `https://${projectRef}.functions.supabase.co/notify-vendor-status`,
         {
           method: 'POST',
@@ -215,172 +215,42 @@ const UsersAdmin: React.FC = () => {
             from,
           }),
         }
-      );
-      if (!resp.ok) {
-        const errText = await resp.text().catch(() => '');
-        console.warn(
-          '[notify-vendor-status] respuesta no OK',
-          resp.status,
-          errText
-        );
+        ).catch(() => {});
       }
     } catch (e) {
-      // Silencioso; solo log a consola para no bloquear UI
-      console.warn('[notify-vendor-status] warning', e);
-    }
-  };
-
-  const setBlocked = async (id: string, bloqueado: boolean) => {
-    const { error } = await supabase
-      .from('users')
-      .update({ bloqueado })
-      .eq('id', id);
-    if (error) {
-      (window as any).toast?.error(error.message, {
-        role: 'admin',
-        action: 'update',
-      });
-      return;
-    }
-    setUsers(list => list.map(u => (u.id === id ? { ...u, bloqueado } : u)));
-    (window as any).toast?.success(
-      bloqueado ? 'Usuario bloqueado' : 'Usuario desbloqueado',
-      { role: 'admin', action: 'update' }
-    );
-  };
-
-  const setRole = async (id: string, role: UserRole) => {
-    try {
-      const user = users.find(u => u.id === id);
-
-      // Validación: Si es vendedor y tiene productos, no permitir cambio de rol
-      if (user?.role === 'vendedor' && role !== 'vendedor') {
-        // Verificar si tiene productos
-        const { data: productos, error: productosError } = await supabase
-          .from('productos')
-          .select('id, nombre')
-          .eq('vendedor_id', id);
-
-        if (productosError) throw productosError;
-
-        if (productos && productos.length > 0) {
-          const productosList = productos.map(p => `• ${p.nombre}`).join('\n');
-          const errorMessage =
-            `❌ NO SE PUEDE CAMBIAR EL ROL ❌\n\n` +
-            `El vendedor "${user.nombre_completo}" tiene ${productos.length} producto(s) en su inventario:\n\n` +
-            `${productosList}\n\n` +
-            `Para cambiar el rol, primero debe:\n` +
-            `1. Eliminar todos sus productos, o\n` +
-            `2. Transferir los productos a otro vendedor\n\n` +
-            `Esta restricción protege la integridad de los datos de productos.`;
-
-          alert(errorMessage);
-          (window as any).toast?.error(
-            `No se puede cambiar rol: vendedor tiene ${productos.length} producto(s)`,
-            { role: 'admin', action: 'update' }
-          );
-          return;
-        }
-      }
-
-      // Si está degradando un admin, pedir confirmación adicional
-      if (user?.role === 'admin' && role !== 'admin') {
-        const confirmMessage =
-          `⚠️ DEGRADAR ADMINISTRADOR ⚠️\n\n` +
-          `Estás a punto de quitar privilegios de administrador a:\n` +
-          `${user.email} - ${user.nombre_completo}\n\n` +
-          `Esta acción es IRREVERSIBLE y solo tú como super-admin puedes revertirla.\n\n` +
-          `¿Estás SEGURO de que quieres continuar?`;
-
-        if (!confirm(confirmMessage)) {
-          return;
-        }
-
-        // Segunda confirmación para admins
-        if (
-          !confirm(
-            `SEGUNDA CONFIRMACIÓN:\n\n¿Realmente quieres degradar a este administrador?\n\nEsto quitará TODOS sus privilegios administrativos.`
-          )
-        ) {
-          return;
-        }
-      }
-
-      const session = (await supabase.auth.getSession()).data.session;
-      const token = session?.access_token;
-      const supaUrl = (import.meta as any).env?.VITE_SUPABASE_URL as
-        | string
-        | undefined;
-      if (supaUrl && token) {
-        const projectRef = new URL(supaUrl).host.split('.')[0];
-        const resp = await fetch(
-          `https://${projectRef}.functions.supabase.co/admin-users`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ action: 'setRole', user_id: id, role }),
-          }
-        );
-        const j = await resp.json();
-        if (!resp.ok) throw new Error(j?.error || 'No se pudo actualizar rol');
-        setUsers(list => list.map(u => (u.id === id ? { ...u, role } : u)));
-
-        // Mensaje especial para degradación de admin
-        if (user?.role === 'admin' && role !== 'admin') {
-          (window as any).toast?.success(
-            `⚠️ Admin degradado exitosamente a ${role}`,
-            { role: 'admin', action: 'update' }
-          );
-        } else {
-          (window as any).toast?.success(`Rol actualizado a ${role}`, {
-            role: 'admin',
-            action: 'update',
-          });
-        }
-      }
-    } catch (e: any) {
-      (window as any).toast?.error(e?.message || 'No se pudo actualizar rol', {
-        role: 'admin',
-        action: 'update',
-      });
+      console.warn('[notify-vendor-status] status warning', e);
     }
   };
 
   const suspend = async (id: string, blocked: boolean) => {
     try {
+      const { error } = await supabase
+        .from('users')
+        .update({ bloqueado: blocked })
+        .eq('id', id);
+      if (error) throw error;
+
+      setUsers(list =>
+        list.map(u => (u.id === id ? { ...u, bloqueado: blocked } : u))
+      );
+
+      (window as any).toast?.success(
+        `Usuario ${blocked ? 'bloqueado' : 'reactivado'}`,
+        {
+          role: 'admin',
+          action: 'update',
+        }
+      );
+
+      // Notificar por correo si está habilitado en app_config
+    try {
       const session = (await supabase.auth.getSession()).data.session;
       const token = session?.access_token;
       const supaUrl = (import.meta as any).env?.VITE_SUPABASE_URL as
         | string
         | undefined;
-      if (supaUrl && token) {
+        if (!token || !supaUrl) return;
         const projectRef = new URL(supaUrl).host.split('.')[0];
-        const resp = await fetch(
-          `https://${projectRef}.functions.supabase.co/admin-users`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ action: 'suspend', user_id: id, blocked }),
-          }
-        );
-        const j = await resp.json();
-        if (!resp.ok) throw new Error(j?.error || 'No se pudo suspender');
-        setUsers(list =>
-          list.map(u => (u.id === id ? { ...u, bloqueado: blocked } : u))
-        );
-        (window as any).toast?.success(
-          blocked ? 'Usuario suspendido' : 'Usuario reactivado',
-          { role: 'admin', action: 'update' }
-        );
-
-        // Notificar por correo (bloqueado/reactivado)
-        try {
           const u = users.find(x => x.id === id);
           if (u?.email) {
             const [{ data: notif }, { data: sender }] = await Promise.all([
@@ -419,7 +289,6 @@ const UsersAdmin: React.FC = () => {
           }
         } catch (e) {
           console.warn('[notify-vendor-status] suspend warning', e);
-        }
       }
     } catch (e: any) {
       (window as any).toast?.error(e?.message || 'No se pudo suspender', {
@@ -502,116 +371,154 @@ const UsersAdmin: React.FC = () => {
     } catch (e: any) {
       (window as any).toast?.error(e?.message || 'No se pudo eliminar', {
         role: 'admin',
+        action: 'delete',
+      });
+    }
+  };
+
+  // Función para cambiar el rol de un usuario (solo vendedor o comprador)
+  const changeUserRole = async (id: string, newRole: 'vendedor' | 'comprador') => {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ 
+          role: newRole,
+          vendedor_estado: newRole === 'vendedor' ? 'pendiente' : null
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+
+      setUsers(list =>
+        list.map(u => (u.id === id ? { 
+          ...u, 
+          role: newRole,
+          vendedor_estado: newRole === 'vendedor' ? 'pendiente' : null
+        } : u))
+      );
+
+      (window as any).toast?.success(`Rol cambiado a ${newRole}`, {
+        role: 'admin',
+        action: 'update',
+      });
+    } catch (e: any) {
+      (window as any).toast?.error(e?.message || 'No se pudo cambiar el rol', {
+        role: 'admin',
         action: 'update',
       });
     }
   };
 
-  const isSuperAdmin = currentUser?.email === SUPER_ADMIN_EMAIL;
+  if (loading) {
+    return (
+      <AdminLayout title="Cargando usuarios...">
+        <div className='flex items-center justify-center h-64'>
+          <div className='loading loading-spinner loading-lg'></div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
-    <AdminLayout
-      title='Usuarios'
-      subtitle={
-        isSuperAdmin
-          ? '🔑 Super-Admin: Gestiona roles, bloqueos y puedes degradar otros administradores'
-          : 'Gestiona roles, bloqueos y aprobación de vendedores'
-      }
-    >
-      <div className='mb-6 flex items-center justify-between'>
+    <AdminLayout title="Gestión de Usuarios">
+      <div className='space-y-6'>
+        <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
+          <div>
+            <h1 className='text-3xl font-bold tracking-tight'>Gestión de Usuarios</h1>
+            <p className='text-muted-foreground'>
+              Administra usuarios, roles y permisos del sistema
+            </p>
+          </div>
+        </div>
+
+        <div className='space-y-4'>
+          {/* Filtros y búsqueda */}
+          <div className='flex flex-col sm:flex-row gap-4'>
+            <div className='flex-1'>
         <input
-          className='input-hero max-w-md'
-          placeholder='Buscar usuarios por correo o nombre...'
+                type='text'
+                placeholder='Buscar usuarios por email o nombre...'
+                className='input input-bordered w-full'
           value={query}
           onChange={e => setQuery(e.target.value)}
         />
-        {isSuperAdmin && (
-          <div className='flex items-center gap-2 text-sm text-orange-600 font-medium'>
-            <Icon
-              category='Administrador'
-              name='MdiShieldCheck'
-              className='w-4 h-4'
-              alt=''
-            />
-            Super-Admin: Privilegios completos
+            </div>
           </div>
-        )}
-      </div>
 
-      <div className='card card-hover'>
-        <div className='card-body overflow-x-auto'>
-          {loading ? (
-            <p>Cargando...</p>
+          {/* Tabla de usuarios */}
+          {filtered.length === 0 ? (
+            <div className='text-center py-8 text-muted-foreground'>
+              No se encontraron usuarios
+      </div>
           ) : (
-            <table className='min-w-full text-sm table-auto'>
+            <div className='overflow-x-auto'>
+              <table className='table table-zebra w-full'>
               <thead>
-                <tr className='text-left text-gray-500 whitespace-nowrap'>
-                  <th className='py-2 pr-4 w-[32%]'>Email</th>
-                  <th className='py-2 pr-4 w-[20%]'>Nombre</th>
-                  <th className='py-2 pr-4 w-[14%]'>Rol</th>
-                  <th className='py-2 pr-4 w-[22%]'>Estados</th>
-                  <th className='py-2 pr-4 w-[6%]'>Bloqueado</th>
-                  <th className='py-2 w-[6%]'>Acciones</th>
+                  <tr>
+                    <th>Usuario</th>
+                    <th>Rol</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                    <th>Gestión</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map(u => (
-                  <tr key={u.id} className='border-t'>
+                    <tr key={u.id}>
                     <td className='py-2 pr-4'>
-                      <div
-                        className='max-w-[280px] truncate'
-                        title={u.email || ''}
-                      >
+                        <div className='flex flex-col'>
+                          <span className='font-medium'>
+                            {u.nombre_completo || 'Sin nombre'}
+                          </span>
+                          <span className='text-sm text-muted-foreground'>
                         {u.email}
+                          </span>
+                          {u.created_at && (
+                            <span className='text-xs text-muted-foreground'>
+                              Registrado: {new Date(u.created_at).toLocaleDateString()}
+                            </span>
+                          )}
                       </div>
                     </td>
                     <td className='py-2 pr-4'>
-                      <div
-                        className='max-w-[200px] truncate'
-                        title={u.nombre_completo || '-'}
-                      >
-                        {u.nombre_completo || '-'}
-                      </div>
-                    </td>
-                    <td className='py-2 pr-4'>
-                      {canShowButton(u, 'changeRole') ? (
+                        {u.role === 'admin' ? (
                         <div className='flex flex-col gap-1'>
-                          <select
-                            className='form-select w-36'
-                            value={u.role || 'comprador'}
-                            onChange={e =>
-                              setRole(u.id, e.target.value as UserRole)
-                            }
-                          >
-                            <option value='comprador'>comprador</option>
-                            <option value='vendedor'>vendedor</option>
-                            <option value='admin'>admin</option>
-                          </select>
-                          {u.role === 'admin' &&
-                            currentUser?.email === SUPER_ADMIN_EMAIL && (
-                              <span className='text-xs text-orange-600 font-medium'>
-                                ⚠️ Super-admin: Puedes degradar
+                            <span className='badge badge-error flex items-center gap-1'>
+                              <Icon
+                                category='Administrador'
+                                name='MdiShieldCheck'
+                                className='w-3 h-3'
+                                alt=''
+                              />
+                              Admin
+                            </span>
+                            {u.email === SUPER_ADMIN_EMAIL ? (
+                              <span className='text-xs text-green-600 font-medium'>
+                                👑 Super Administrador
                               </span>
-                            )}
-                          {u.role === 'vendedor' &&
-                            vendedoresConProductos.has(u.id) && (
-                              <span className='text-xs text-red-600 font-medium'>
-                                ⚠️ Tiene productos: No se puede cambiar rol
+                            ) : (
+                              <span className='text-xs text-gray-500'>
+                                🔒 Solo super-admin puede modificar
                               </span>
                             )}
                         </div>
                       ) : (
                         <div className='flex flex-col gap-1'>
                           <span
-                            className={`badge ${u.role === 'admin' ? 'badge-error' : u.role === 'vendedor' ? 'badge-warning' : 'badge-info'}`}
+                              className={`badge ${u.role === 'vendedor' ? 'badge-warning' : 'badge-info'}`}
                           >
                             {u.role || 'comprador'}
                           </span>
-                          {u.role === 'admin' &&
-                            currentUser?.email !== SUPER_ADMIN_EMAIL && (
-                              <span className='text-xs text-gray-500'>
-                                🔒 Solo super-admin puede modificar
-                              </span>
+                            {/* Selector de rol solo para vendedores y compradores */}
+                            {canShowButton(u, 'changeRole') && (
+                              <select
+                                className='select select-sm select-bordered w-full'
+                                value={u.role || 'comprador'}
+                                onChange={(e) => changeUserRole(u.id, e.target.value as 'vendedor' | 'comprador')}
+                              >
+                                <option value='comprador'>Comprador</option>
+                                <option value='vendedor'>Vendedor</option>
+                              </select>
                             )}
                         </div>
                       )}
@@ -679,8 +586,8 @@ const UsersAdmin: React.FC = () => {
                                 aria-label='Rechazar vendedor'
                               >
                                 <Icon
-                                  category='Administrador'
-                                  name='FluentGavelProhibited16Filled'
+                                    category='Vendedor'
+                                    name='LineMdTrash'
                                   className='w-4 h-4 md:mr-1'
                                   alt=''
                                 />
@@ -802,6 +709,7 @@ const UsersAdmin: React.FC = () => {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </div>

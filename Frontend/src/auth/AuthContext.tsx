@@ -357,7 +357,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
-    if (supabase) await supabase.auth.signOut();
+    try {
+      // Limpiar estado local inmediatamente
+      setUser(null);
+      setLoading(false);
+      
+      // Cerrar sesión en Supabase
+      if (supabase) {
+        await supabase.auth.signOut();
+      }
+      
+      // Limpiar cualquier estado persistente
+      if (typeof window !== 'undefined') {
+        // Limpiar localStorage y sessionStorage relacionado con la sesión
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key.startsWith('supabase.') || key.includes('auth'))) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+        
+        // Limpiar sessionStorage
+        sessionStorage.clear();
+      }
+    } catch (error) {
+      console.error('[auth] Error during signOut:', error);
+      // Asegurar que el estado se limpie incluso si hay error
+      setUser(null);
+      setLoading(false);
+    }
   };
 
   const refreshProfile = async () => {

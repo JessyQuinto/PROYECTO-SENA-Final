@@ -73,7 +73,8 @@ export const AuthForms: React.FC<AuthFormsProps> = ({
     validationSchema: signupSchema,
     onSubmit: async values => {
       try {
-        // Por defecto registrar como comprador, se puede extender para elegir rol
+        // Solo permitir registro como comprador o vendedor
+        // Los administradores solo pueden ser creados por el super-admin
         const result = await signUp(values.email, values.password, 'comprador');
         if (result.error) {
           toast.error(result.error, {
