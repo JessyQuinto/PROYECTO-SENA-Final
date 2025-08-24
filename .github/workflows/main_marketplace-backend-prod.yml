@@ -30,15 +30,6 @@ jobs:
           cache-dependency-path: Backend/package-lock.json
           registry-url: 'https://registry.npmjs.org/'
 
-      - name: Configure npm for better reliability
-        run: |
-          npm config set registry https://registry.npmjs.org/
-          npm config set fetch-retries 5
-          npm config set fetch-retry-mintimeout 20000
-          npm config set fetch-retry-maxtimeout 120000
-          npm config set fetch-timeout 300000
-        working-directory: Backend
-
       - name: Install dependencies with retry
         run: |
           set -e
@@ -47,7 +38,7 @@ jobs:
           
           while [ $attempt -le $max_attempts ]; do
             echo "Attempt $attempt of $max_attempts"
-            if npm ci --ignore-scripts --prefer-offline --no-audit; then
+            if npm ci --ignore-scripts --no-audit --no-fund; then
               echo "Dependencies installed successfully on attempt $attempt"
               break
             else
@@ -64,7 +55,6 @@ jobs:
         env:
           CI: true
           HUSKY: 0
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Build with error handling
         run: |
