@@ -33,7 +33,7 @@ const signupSchema = z
     telefono: z
       .string()
       .min(10, 'El teléfono debe tener al menos 10 dígitos')
-      .regex(/^[\+]?[1-9][\d]{9,15}$/, 'Formato de teléfono inválido'),
+      .regex(/^[+]?[1-9][\d]{9,15}$/, 'Formato de teléfono inválido'),
     ciudad: z.string().min(1, 'La ciudad es obligatoria'),
     departamento: z.string().min(1, 'El departamento es obligatorio'),
     confirmInfo: z
@@ -309,13 +309,24 @@ export const RegisterPage: React.FC = () => {
                   </div>
                 </div>
 
-                <form onSubmit={form.handleSubmit} className='space-y-4'>
-                  <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                <form onSubmit={form.handleSubmit} className='space-y-6'>
+                  {/* Sección 1: Información Personal */}
+                  <div className='space-y-4'>
+                    <div className='border-b pb-2'>
+                      <h3 className='text-lg font-semibold text-gray-900'>
+                        Información Personal
+                      </h3>
+                      <p className='text-sm text-gray-600'>
+                        Datos básicos para tu cuenta
+                      </p>
+                    </div>
+
                     <div>
-                      <Label htmlFor='nombre'>Nombre completo</Label>
+                      <Label htmlFor='nombre'>Nombre completo *</Label>
                       <Input
                         id='nombre'
                         type='text'
+                        placeholder='Ingresa tu nombre completo'
                         value={form.values.nombre}
                         onChange={e =>
                           form.handleChange('nombre', e.target.value)
@@ -331,196 +342,263 @@ export const RegisterPage: React.FC = () => {
                         </p>
                       )}
                     </div>
-                    <div>
-                      <Label htmlFor='email'>Email</Label>
-                      <Input
-                        id='email'
-                        type='email'
-                        value={form.values.email}
-                        onChange={e =>
-                          form.handleChange('email', e.target.value)
-                        }
-                        onBlur={() => form.handleBlur('email')}
-                        className={
-                          form.hasError('email') ? 'border-red-500' : ''
-                        }
-                      />
-                      {form.hasError('email') && (
-                        <p className='text-red-500 text-sm mt-1'>
-                          {form.getFieldState('email').error}
-                        </p>
-                      )}
+
+                    <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                      <div>
+                        <Label htmlFor='email'>Correo electrónico *</Label>
+                        <Input
+                          id='email'
+                          type='email'
+                          placeholder='ejemplo@correo.com'
+                          value={form.values.email}
+                          onChange={e =>
+                            form.handleChange('email', e.target.value)
+                          }
+                          onBlur={() => form.handleBlur('email')}
+                          className={
+                            form.hasError('email') ? 'border-red-500' : ''
+                          }
+                        />
+                        {form.hasError('email') && (
+                          <p className='text-red-500 text-sm mt-1'>
+                            {form.getFieldState('email').error}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <Label htmlFor='telefono'>Teléfono *</Label>
+                        <Input
+                          id='telefono'
+                          type='tel'
+                          placeholder='+57 300 123 4567'
+                          value={form.values.telefono}
+                          onChange={e =>
+                            form.handleChange('telefono', e.target.value)
+                          }
+                          onBlur={() => form.handleBlur('telefono')}
+                          className={
+                            form.hasError('telefono') ? 'border-red-500' : ''
+                          }
+                        />
+                        {form.hasError('telefono') && (
+                          <p className='text-red-500 text-sm mt-1'>
+                            {form.getFieldState('telefono').error}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                    <div>
-                      <Label htmlFor='telefono'>Teléfono</Label>
-                      <Input
-                        id='telefono'
-                        type='tel'
-                        value={form.values.telefono}
-                        onChange={e =>
-                          form.handleChange('telefono', e.target.value)
-                        }
-                        onBlur={() => form.handleBlur('telefono')}
-                        className={
-                          form.hasError('telefono') ? 'border-red-500' : ''
-                        }
-                      />
-                      {form.hasError('telefono') && (
-                        <p className='text-red-500 text-sm mt-1'>
-                          {form.getFieldState('telefono').error}
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <Label htmlFor='departamento'>Departamento</Label>
-                      <select
-                        id='departamento'
-                        value={selectedDepartamento}
-                        onChange={e => handleDepartamentoChange(e.target.value)}
-                        className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent'
-                      >
-                        <option value=''>Selecciona un departamento</option>
-                        {departamentos.map(dept => (
-                          <option key={dept} value={dept}>
-                            {dept}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor='ciudad'>Ciudad</Label>
-                    <select
-                      id='ciudad'
-                      value={form.values.ciudad}
-                      onChange={e => handleCiudadChange(e.target.value)}
-                      disabled={!selectedDepartamento}
-                      className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50'
-                    >
-                      <option value=''>Selecciona una ciudad</option>
-                      {ciudades.map(ciudad => (
-                        <option key={ciudad} value={ciudad}>
-                          {ciudad}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                    <div>
-                      <Label htmlFor='password'>Contraseña</Label>
-                      <Input
-                        id='password'
-                        type='password'
-                        value={form.values.password}
-                        onChange={e =>
-                          form.handleChange('password', e.target.value)
-                        }
-                        onBlur={() => form.handleBlur('password')}
-                        className={
-                          form.hasError('password') ? 'border-red-500' : ''
-                        }
-                      />
-                      {form.hasError('password') && (
-                        <p className='text-red-500 text-sm mt-1'>
-                          {form.getFieldState('password').error}
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <Label htmlFor='confirmPassword'>
-                        Confirmar contraseña
-                      </Label>
-                      <Input
-                        id='confirmPassword'
-                        type='password'
-                        value={form.values.confirmPassword}
-                        onChange={e =>
-                          form.handleChange('confirmPassword', e.target.value)
-                        }
-                        onBlur={() => form.handleBlur('confirmPassword')}
-                        className={
-                          form.hasError('confirmPassword')
-                            ? 'border-red-500'
-                            : ''
-                        }
-                      />
-                      {form.hasError('confirmPassword') && (
-                        <p className='text-red-500 text-sm mt-1'>
-                          {form.getFieldState('confirmPassword').error}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className='space-y-3'>
-                    <div className='flex items-start gap-3'>
-                      <Checkbox
-                        id='confirmInfo'
-                        checked={form.values.confirmInfo}
-                        onCheckedChange={checked =>
-                          form.setValue('confirmInfo', checked as boolean)
-                        }
-                      />
-                      <Label
-                        htmlFor='confirmInfo'
-                        className='text-sm leading-relaxed'
-                      >
-                        Confirmo que toda la información proporcionada es
-                        verdadera y actualizada
-                      </Label>
-                    </div>
-                    {form.hasError('confirmInfo') && (
-                      <p className='text-red-500 text-sm'>
-                        {form.getFieldState('confirmInfo').error}
+                  {/* Sección 2: Ubicación */}
+                  <div className='space-y-4'>
+                    <div className='border-b pb-2'>
+                      <h3 className='text-lg font-semibold text-gray-900'>
+                        Ubicación
+                      </h3>
+                      <p className='text-sm text-gray-600'>
+                        Dinos dónde te encuentras
                       </p>
-                    )}
-
-                    <div className='flex items-start gap-3'>
-                      <Checkbox
-                        id='acceptedTerms'
-                        checked={form.values.acceptedTerms}
-                        onCheckedChange={checked =>
-                          form.setValue('acceptedTerms', checked as boolean)
-                        }
-                      />
-                      <Label
-                        htmlFor='acceptedTerms'
-                        className='text-sm leading-relaxed'
-                      >
-                        Acepto los{' '}
-                        <Link
-                          to='/terminos'
-                          className='text-primary hover:underline'
-                        >
-                          términos y condiciones
-                        </Link>{' '}
-                        y la{' '}
-                        <Link
-                          to='/privacidad'
-                          className='text-primary hover:underline'
-                        >
-                          política de privacidad
-                        </Link>
-                      </Label>
                     </div>
-                    {form.hasError('acceptedTerms') && (
-                      <p className='text-red-500 text-sm'>
-                        {form.getFieldState('acceptedTerms').error}
+
+                    <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                      <div>
+                        <Label htmlFor='departamento'>Departamento *</Label>
+                        <select
+                          id='departamento'
+                          value={selectedDepartamento}
+                          onChange={e =>
+                            handleDepartamentoChange(e.target.value)
+                          }
+                          className='form-select'
+                        >
+                          <option value=''>Selecciona un departamento</option>
+                          {departamentos.map(dept => (
+                            <option key={dept} value={dept}>
+                              {dept}
+                            </option>
+                          ))}
+                        </select>
+                        {form.hasError('departamento') && (
+                          <p className='text-red-500 text-sm mt-1'>
+                            {form.getFieldState('departamento').error}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <Label htmlFor='ciudad'>Ciudad *</Label>
+                        <select
+                          id='ciudad'
+                          value={form.values.ciudad}
+                          onChange={e => handleCiudadChange(e.target.value)}
+                          disabled={!selectedDepartamento}
+                          className='form-select disabled:opacity-50'
+                        >
+                          <option value=''>Selecciona una ciudad</option>
+                          {ciudades.map(ciudad => (
+                            <option key={ciudad} value={ciudad}>
+                              {ciudad}
+                            </option>
+                          ))}
+                        </select>
+                        {form.hasError('ciudad') && (
+                          <p className='text-red-500 text-sm mt-1'>
+                            {form.getFieldState('ciudad').error}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Sección 3: Seguridad */}
+                  <div className='space-y-4'>
+                    <div className='border-b pb-2'>
+                      <h3 className='text-lg font-semibold text-gray-900'>
+                        Seguridad
+                      </h3>
+                      <p className='text-sm text-gray-600'>
+                        Crea una contraseña segura para tu cuenta
                       </p>
-                    )}
+                    </div>
+
+                    <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                      <div>
+                        <Label htmlFor='password'>Contraseña *</Label>
+                        <Input
+                          id='password'
+                          type='password'
+                          placeholder='Mínimo 8 caracteres'
+                          value={form.values.password}
+                          onChange={e =>
+                            form.handleChange('password', e.target.value)
+                          }
+                          onBlur={() => form.handleBlur('password')}
+                          className={
+                            form.hasError('password') ? 'border-red-500' : ''
+                          }
+                        />
+                        {form.hasError('password') && (
+                          <p className='text-red-500 text-sm mt-1'>
+                            {form.getFieldState('password').error}
+                          </p>
+                        )}
+                        <div className='mt-1 text-xs text-gray-500'>
+                          Debe contener mayúsculas, minúsculas, números y
+                          símbolos
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor='confirmPassword'>
+                          Confirmar contraseña *
+                        </Label>
+                        <Input
+                          id='confirmPassword'
+                          type='password'
+                          placeholder='Repite tu contraseña'
+                          value={form.values.confirmPassword}
+                          onChange={e =>
+                            form.handleChange('confirmPassword', e.target.value)
+                          }
+                          onBlur={() => form.handleBlur('confirmPassword')}
+                          className={
+                            form.hasError('confirmPassword')
+                              ? 'border-red-500'
+                              : ''
+                          }
+                        />
+                        {form.hasError('confirmPassword') && (
+                          <p className='text-red-500 text-sm mt-1'>
+                            {form.getFieldState('confirmPassword').error}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Sección 4: Términos y Confirmación */}
+                  <div className='space-y-4'>
+                    <div className='border-b pb-2'>
+                      <h3 className='text-lg font-semibold text-gray-900'>
+                        Confirmación
+                      </h3>
+                      <p className='text-sm text-gray-600'>
+                        Acepta nuestros términos para continuar
+                      </p>
+                    </div>
+
+                    <div className='space-y-4 bg-gray-50 p-4 rounded-lg'>
+                      <div className='flex items-start gap-3'>
+                        <Checkbox
+                          id='confirmInfo'
+                          checked={form.values.confirmInfo}
+                          onCheckedChange={checked =>
+                            form.setValue('confirmInfo', checked as boolean)
+                          }
+                        />
+                        <Label
+                          htmlFor='confirmInfo'
+                          className='text-sm leading-relaxed cursor-pointer'
+                        >
+                          Confirmo que toda la información proporcionada es
+                          verdadera y actualizada
+                        </Label>
+                      </div>
+                      {form.hasError('confirmInfo') && (
+                        <p className='text-red-500 text-sm'>
+                          {form.getFieldState('confirmInfo').error}
+                        </p>
+                      )}
+
+                      <div className='flex items-start gap-3'>
+                        <Checkbox
+                          id='acceptedTerms'
+                          checked={form.values.acceptedTerms}
+                          onCheckedChange={checked =>
+                            form.setValue('acceptedTerms', checked as boolean)
+                          }
+                        />
+                        <Label
+                          htmlFor='acceptedTerms'
+                          className='text-sm leading-relaxed cursor-pointer'
+                        >
+                          Acepto los{' '}
+                          <Link
+                            to='/terminos'
+                            className='text-primary hover:underline font-medium'
+                            target='_blank'
+                          >
+                            términos y condiciones
+                          </Link>{' '}
+                          y la{' '}
+                          <Link
+                            to='/privacidad'
+                            className='text-primary hover:underline font-medium'
+                            target='_blank'
+                          >
+                            política de privacidad
+                          </Link>
+                        </Label>
+                      </div>
+                      {form.hasError('acceptedTerms') && (
+                        <p className='text-red-500 text-sm'>
+                          {form.getFieldState('acceptedTerms').error}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
                   <Button
                     type='submit'
-                    className='w-full'
-                    disabled={form.isSubmitting || !form.isValid}
+                    className='w-full py-3 text-base'
+                    disabled={form.isSubmitting}
                   >
-                    {form.isSubmitting ? 'Creando cuenta...' : 'Crear cuenta'}
+                    {form.isSubmitting ? (
+                      <div className='flex items-center gap-2'>
+                        <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
+                        Creando cuenta...
+                      </div>
+                    ) : (
+                      'Crear cuenta'
+                    )}
                   </Button>
                 </form>
 

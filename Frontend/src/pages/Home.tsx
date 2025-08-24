@@ -63,7 +63,7 @@ export const Home: React.FC = () => {
           </div>
 
           <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
-            <Card className='text-center'>
+            <Card className='featured-card text-center'>
               <CardContent className='p-6'>
                 <div
                   className='w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4'
@@ -97,7 +97,7 @@ export const Home: React.FC = () => {
               </CardContent>
             </Card>
 
-            <Card className='text-center'>
+            <Card className='featured-card text-center'>
               <CardContent className='p-6'>
                 <div
                   className='w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4'
@@ -131,7 +131,7 @@ export const Home: React.FC = () => {
               </CardContent>
             </Card>
 
-            <Card className='text-center'>
+            <Card className='featured-card text-center'>
               <CardContent className='p-6'>
                 <div
                   className='w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4'
@@ -196,7 +196,7 @@ export const Home: React.FC = () => {
               {(featuredProducts || []).map((product: FeaturedProduct) => (
                 <Card
                   key={product.id}
-                  className='overflow-hidden hover:shadow-lg transition-shadow'
+                  className='featured-card overflow-hidden hover:shadow-lg transition-shadow'
                 >
                   <div className='aspect-square overflow-hidden bg-gray-100 flex items-center justify-center'>
                     {product.imagen_url ? (
@@ -270,10 +270,16 @@ export const Home: React.FC = () => {
 
       {/* CTA Section */}
       <section
-        className='py-16'
-        style={{ backgroundColor: 'var(--color-terracotta-suave)' }}
+        className='py-16 relative overflow-hidden'
+        style={{
+          backgroundImage:
+            "linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0.3)), url('/assert/2/9a92cd16-82e0-4b9b-bc8f-a7805b2ad499.jpg')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
       >
-        <div className='container text-center'>
+        <div className='container text-center relative z-10'>
           <h2 className='heading-lg mb-4 text-white'>
             ¿Eres Artesano del Chocó?
           </h2>

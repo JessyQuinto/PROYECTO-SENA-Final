@@ -54,7 +54,7 @@ const ProductCardBase: React.FC<ProductCardProps> = ({
 
   return (
     <Card
-      className={`transition-all overflow-hidden group hover:shadow-xl border-gray-200 ${className}`}
+      className={`product-card transition-all overflow-hidden group hover:shadow-xl border-gray-200 ${className}`}
     >
       <Link to={`/productos/${product.id}`} className='block'>
         <div className='relative bg-gray-100 overflow-hidden aspect-[3/2]'>
@@ -85,86 +85,29 @@ const ProductCardBase: React.FC<ProductCardProps> = ({
               />
             </div>
           )}
-          <div className='absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-3'>
-            <div className='flex items-center justify-between'>
-              {product.categorias?.nombre && (
-                <span className='inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-surface-90 text-gray-700'>
-                  {product.categorias.nombre}
-                </span>
-              )}
-              {isNew && (
-                <span className='text-[11px] text-white/90'>Nuevo</span>
-              )}
-            </div>
-          </div>
         </div>
       </Link>
 
-      <CardContent className='p-4'>
-        <Link to={`/productos/${product.id}`} className='block'>
-          <h3 className='text-base font-semibold line-clamp-2 group-hover:text-(--color-terracotta-suave)'>
+      <CardContent className='p-3'>
+        <Link to={`/productos/${product.id}`} className='block mb-2'>
+          <h3 className='text-sm font-medium line-clamp-1 group-hover:text-(--color-terracotta-suave)'>
             {product.nombre}
           </h3>
         </Link>
 
-        <div className='mt-1 flex items-center justify-between'>
-          <span className='text-2xl font-bold text-(--color-terracotta-suave)'>
+        <div className='flex items-center justify-between'>
+          <span className='text-lg font-bold text-(--color-terracotta-suave)'>
             ${Number(product.precio).toLocaleString()}
           </span>
-          {avg !== undefined && (
-            <div className='text-xs text-yellow-600 flex items-center gap-1'>
-              <Icon
-                category='Catálogo y producto'
-                name='LucideHeart'
-                className='w-3 h-3'
-              />
-              {avg.toFixed(1)}
-            </div>
-          )}
-        </div>
-
-        <div className='mt-3 flex items-center justify-between'>
-          {isLowStock ? (
-            <span className='inline-flex items-center px-2 py-1 rounded-full text-[11px] font-medium bg-yellow-100 text-yellow-800'>
-              <Icon
-                category='Estados y Feedback'
-                name='MaterialSymbolsWarning'
-                className='w-3 h-3 mr-1'
-              />
-              ¡Pocas unidades!
-            </span>
-          ) : (
-            <span className='text-xs text-gray-500'>
-              Stock: {product.stock}
-            </span>
-          )}
-
-          <div className='flex items-center gap-2'>
-            <Link
-              to={`/productos/${product.id}`}
-              className='btn btn-outline btn-sm flex items-center gap-1'
-            >
-              <Icon
-                category='Catálogo y producto'
-                name='LineMdSearch'
-                className='w-3 h-3'
-              />
-              Ver
-            </Link>
-            <button
-              className='btn btn-primary btn-sm flex items-center gap-1'
-              onClick={handleAddToCart}
-              disabled={Number(product.stock) <= 0}
-              aria-label={`Añadir ${product.nombre} al carrito`}
-            >
-              <Icon
-                category='Carrito y checkout'
-                name='WhhShoppingcart'
-                className='w-3 h-3'
-              />
-              Añadir
-            </button>
-          </div>
+          
+          <button
+            className='btn btn-primary btn-sm'
+            onClick={handleAddToCart}
+            disabled={Number(product.stock) <= 0}
+            aria-label={`Añadir ${product.nombre} al carrito`}
+          >
+            +
+          </button>
         </div>
       </CardContent>
     </Card>

@@ -716,22 +716,23 @@
 
   /* Cards */
   .card {
-    @apply bg-white overflow-hidden border border-gray-200;
+    @apply bg-transparent overflow-hidden border border-gray-200;
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-soft);
     position: relative;
   }
 
-  /* Fondo decorativo coherente (patrón tribal suave) para todas las cards */
+  /* Fondo decorativo elegante para todas las cards */
   .card-pattern::before,
   .card::before {
     content: '';
     position: absolute;
     inset: 0;
-    background-image: url('/assert/motif-de-fond-sans-couture-tribal-dessin-geometrique-noir-et-blanc-vecteur/v1045-03.jpg');
+    background-image: url('/assert/2/9a92cd16-82e0-4b9b-bc8f-a7805b2ad499.jpg');
     background-size: cover;
     background-position: center;
-    opacity: 0.06;
+    background-repeat: no-repeat;
+    opacity: 0.08;
     pointer-events: none;
     z-index: 0;
   }
@@ -744,6 +745,27 @@
 
   .card-hover {
     @apply transition-all duration-200 hover:shadow-md hover:-translate-y-1;
+  }
+
+  /* Específico para tarjetas de productos y inicio */
+  .product-card,
+  .featured-card {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .product-card::before,
+  .featured-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url('/assert/2/9a92cd16-82e0-4b9b-bc8f-a7805b2ad499.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.12;
+    pointer-events: none;
+    z-index: 0;
   }
 
   .card-body {
@@ -820,6 +842,51 @@
     color: var(--color-foreground);
     border: 1px solid var(--color-input);
     --tw-ring-color: var(--color-ring);
+    
+    /* Dark mode dropdown arrow */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+  }
+  
+  /* Dark mode specific select styling */
+  :root.nord-dark .form-select,
+  :root.dark .form-select {
+    background-color: var(--color-surface-secondary);
+    border-color: var(--color-border-primary);
+    color: var(--color-text-primary);
+    
+    /* Dark mode dropdown arrow */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23d1d5db' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  }
+  
+  /* Select options styling */
+  .form-select option {
+    background-color: var(--color-card);
+    color: var(--color-foreground);
+    padding: 0.5rem 0.75rem;
+  }
+  
+  /* Dark mode options */
+  :root.nord-dark .form-select option,
+  :root.dark .form-select option {
+    background-color: var(--color-surface-secondary);
+    color: var(--color-text-primary);
+  }
+  
+  /* Focus and hover states for dark mode */
+  :root.nord-dark .form-select:focus,
+  :root.dark .form-select:focus {
+    border-color: var(--color-brand-primary);
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-brand-primary) 20%, transparent);
+  }
+  
+  :root.nord-dark .form-select:hover,
+  :root.dark .form-select:hover {
+    border-color: var(--color-border-secondary);
+    background-color: var(--color-surface-tertiary);
   }
 
   .form-error {
@@ -1052,10 +1119,41 @@
   border-color: var(--color-border);
 }
 
+/* Dark mode dropdown and modal overlays */
+:root.nord-dark .bg-card,
+:root.dark .bg-card {
+  background-color: var(--color-surface-secondary) !important;
+}
+
+/* Dark mode text in dropdowns */
+:root.nord-dark .text-card-foreground,
+:root.dark .text-card-foreground {
+  color: var(--color-text-primary) !important;
+}
+
+/* Dark mode borders in dropdowns */
+:root.nord-dark .border,
+:root.dark .border {
+  border-color: var(--color-border-primary) !important;
+}
+
+/* Dark mode muted text */
+:root.nord-dark .text-muted-foreground,
+:root.dark .text-muted-foreground {
+  color: var(--color-text-secondary) !important;
+}
+
 :root.nord-dark .card,
 :root.nord-dark .card-pattern {
   background-color: var(--color-card);
   border-color: var(--color-border);
+}
+
+/* Enhanced African pattern visibility on Nordic dark theme */
+:root.nord-dark .card::before,
+:root.nord-dark .card-pattern::before {
+  opacity: 0.08;
+  background-blend-mode: soft-light;
 }
 
 :root.nord-dark .card-header,

@@ -38,6 +38,7 @@ export const useForm = <T extends Record<string, any>>(
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isValid, setIsValid] = useState(true);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   // Obtener valores actuales del formulario
   const values = useMemo(() => {
@@ -173,21 +174,26 @@ export const useForm = <T extends Record<string, any>>(
       setValue(field, value);
       setTouched(field, true);
 
-      // Validar campo después de un delay para mejor UX
-      setTimeout(() => {
-        validateField(field);
-      }, 300);
+      // Solo validar inmediatamente si ya se intentó enviar el formulario
+      if (submitAttempted) {
+        setTimeout(() => {
+          validateField(field);
+        }, 300);
+      }
     },
-    [setValue, setTouched, validateField]
+    [setValue, setTouched, validateField, submitAttempted]
   );
 
   // Manejar blur de campo
   const handleBlur = useCallback(
     (field: keyof T) => {
       setTouched(field, true);
-      validateField(field);
+      // Solo validar en blur si ya se intentó enviar el formulario
+      if (submitAttempted) {
+        validateField(field);
+      }
     },
-    [setTouched, validateField]
+    [setTouched, validateField, submitAttempted]
   );
 
   // Enviar formulario
@@ -196,6 +202,8 @@ export const useForm = <T extends Record<string, any>>(
       if (e) {
         e.preventDefault();
       }
+
+      setSubmitAttempted(true);
 
       if (!validateForm()) {
         return;
@@ -228,6 +236,7 @@ export const useForm = <T extends Record<string, any>>(
     });
     setIsValid(true);
     setIsSubmitting(false);
+    setSubmitAttempted(false);
   }, [initialValues]);
 
   // Obtener estado de un campo específico
@@ -238,12 +247,12 @@ export const useForm = <T extends Record<string, any>>(
     [formState]
   );
 
-  // Verificar si un campo tiene error
+  // Verificar si un campo tiene error y debe mostrarse
   const hasError = useCallback(
     (field: keyof T): boolean => {
-      return !!formState[field].error;
+      return !!formState[field].error && submitAttempted;
     },
-    [formState]
+    [formState, submitAttempted]
   );
 
   // Verificar si un campo ha sido tocado
@@ -260,6 +269,7 @@ export const useForm = <T extends Record<string, any>>(
     errors,
     isValid,
     isSubmitting,
+    submitAttempted,
 
     // Acciones
     setValue,
