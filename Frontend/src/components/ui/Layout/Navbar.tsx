@@ -26,15 +26,38 @@ const Navbar: React.FC = () => {
 
   // Escuchar cambios en el estado de autenticación
   useEffect(() => {
-    const handleStorageChange = () => {
-      console.log('[Navbar] Storage event detected, forcing update');
-      // Forzar re-render sin usar estado
-      window.dispatchEvent(new Event('resize'));
+    const handleStorageChange = (e: StorageEvent | Event) => {
+      console.log('[Navbar] Storage/logout event detected, forcing update');
+      console.log('[Navbar] Event type:', e.type);
+      console.log('[Navbar] Current user in Navbar:', user);
+      
+      // Force a re-render by dispatching a custom event
+      setTimeout(() => {
+        console.log('[Navbar] Triggering component update');
+        setIsMobileMenuOpen(false); // This will trigger a re-render
+      }, 100);
     };
 
+    const handleLogout = (e: CustomEvent) => {
+      console.log('[Navbar] Custom logout event detected:', e.detail);
+      console.log('[Navbar] Closing mobile menu and updating state');
+      setIsMobileMenuOpen(false);
+      
+      // Force component cleanup
+      setTimeout(() => {
+        console.log('[Navbar] Post-logout cleanup complete');
+      }, 200);
+    };
+
+    // Listen to both storage events and custom logout events
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+    window.addEventListener('userLoggedOut', handleLogout as EventListener);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('userLoggedOut', handleLogout as EventListener);
+    };
+  }, [user]); // Include user as dependency to track changes
 
   // Limpiar estado de menú móvil cuando cambie la autenticación
   useEffect(() => {
