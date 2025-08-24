@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '@/auth/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/shadcn/button';
@@ -75,11 +75,11 @@ const LoginPage: React.FC = () => {
     },
   });
 
-  // Si ya está autenticado, redirigir
-  if (user) {
-    navigate('/');
-    return null;
-  }
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
 
   return (
     <div className='min-h-[calc(100vh-120px)] grid place-items-center relative overflow-hidden'>

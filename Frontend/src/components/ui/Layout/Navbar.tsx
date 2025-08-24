@@ -20,7 +20,7 @@ interface NavigationItem {
 }
 
 const Navbar: React.FC = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [forceUpdate, setForceUpdate] = useState(0);
   const location = useLocation();
@@ -28,6 +28,7 @@ const Navbar: React.FC = () => {
   // Escuchar cambios en el estado de autenticación
   useEffect(() => {
     const handleStorageChange = () => {
+      console.log('[Navbar] Storage event detected, forcing update');
       setForceUpdate(prev => prev + 1);
     };
 
@@ -35,9 +36,15 @@ const Navbar: React.FC = () => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // Forzar re-render cuando cambie el usuario
+  // Forzar re-render cuando cambie el usuario o el estado de carga
   useEffect(() => {
+    console.log('[Navbar] User or loading state changed:', { user: !!user, loading });
     setForceUpdate(prev => prev + 1);
+  }, [user, loading]);
+
+  // Limpiar estado de menú móvil cuando cambie la autenticación
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
   }, [user]);
 
   const navigationItems: NavigationItem[] = [
@@ -59,7 +66,7 @@ const Navbar: React.FC = () => {
 
   const visibleNavItems = navigationItems.filter(item => {
     if (item.public) return true;
-    if (!user) return false;
+    if (!user || loading) return false;
     if (item.roles && !item.roles.includes(user.role || '')) return false;
     if (
       item.requireApproval &&

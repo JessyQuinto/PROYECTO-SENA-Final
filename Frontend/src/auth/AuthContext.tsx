@@ -358,9 +358,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     try {
+      console.log('[AuthContext] Sign out initiated');
+      
       // Limpiar estado local inmediatamente
       setUser(null);
-      setLoading(false);
+      setLoading(true); // Indicar que estamos procesando
       setProfileLoading('');
       
       // Cerrar sesión en Supabase
@@ -386,6 +388,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Forzar un refresh del estado de autenticación
         // Esto asegura que todos los componentes se re-rendericen
         window.dispatchEvent(new Event('storage'));
+        
+        // Pequeño delay para asegurar que todos los componentes se actualicen
+        setTimeout(() => {
+          setLoading(false);
+          console.log('[AuthContext] Sign out completed');
+        }, 100);
+      } else {
+        setLoading(false);
       }
     } catch (error) {
       console.error('[auth] Error during signOut:', error);
