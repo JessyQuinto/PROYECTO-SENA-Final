@@ -361,6 +361,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Limpiar estado local inmediatamente
       setUser(null);
       setLoading(false);
+      setProfileLoading('');
       
       // Cerrar sesión en Supabase
       if (supabase) {
@@ -381,12 +382,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         // Limpiar sessionStorage
         sessionStorage.clear();
+        
+        // Forzar un refresh del estado de autenticación
+        // Esto asegura que todos los componentes se re-rendericen
+        window.dispatchEvent(new Event('storage'));
       }
     } catch (error) {
       console.error('[auth] Error during signOut:', error);
       // Asegurar que el estado se limpie incluso si hay error
       setUser(null);
       setLoading(false);
+      setProfileLoading('');
     }
   };
 

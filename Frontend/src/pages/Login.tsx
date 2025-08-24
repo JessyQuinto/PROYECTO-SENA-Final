@@ -1,210 +1,253 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { useAuth } from '@/auth/AuthContext';
-import { useForm } from '@/hooks/useForm';
-import { useToast } from '@/hooks/useToast';
-import { useSupabase } from '@/hooks/useSupabase';
-import { useNavigate, Link } from 'react-router-dom';
-import { Label } from '@/components/ui/shadcn/label';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/shadcn/button';
 import { Input } from '@/components/ui/shadcn/input';
+import { Label } from '@/components/ui/shadcn/label';
+import { useForm } from '@/hooks/useForm';
+import { useToastWithAuth } from '@/hooks/useToast';
 import { useRateLimit } from '@/hooks/useSecurity';
-import { z } from 'zod';
 
-const loginSchema = z.object({
-  email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
-});
+const loginSchema = {
+  email: (value: string) => {
+    if (!value) return 'El correo electrónico es obligatorio';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Email inválido';
+    return null;
+  },
+  password: (value: string) => {
+    if (!value) return 'La contraseña es obligatoria';
+    return null;
+  },
+};
 
-type LoginForm = z.infer<typeof loginSchema>;
+interface FormData {
+  email: string;
+  password: string;
+}
 
 const LoginPage: React.FC = () => {
-  const { signIn, user, loading } = useAuth();
+  const { signIn, loading, user } = useAuth();
   const navigate = useNavigate();
-  const toast = useToast();
-  const { executeMutation } = useSupabase({
-    showToast: true,
-    toastAction: 'login',
-  });
+  const toast = useToastWithAuth();
+  const rateLimit = useRateLimit('login', 5, 15 * 60 * 1000); // 5 intentos por 15 minutos
 
-  // Rate limiting for login attempts
-  const rateLimit = useRateLimit('login', 5, 15 * 60 * 1000); // 5 attempts per 15 minutes
-  
-  // Track if we just completed a successful login
-  const loginSuccessRef = useRef(false);
-
-  // Helper function to determine redirect path based on user role
-  const getRedirectPath = (userRole?: string) => {
-    switch (userRole) {
-      case 'admin':
-        return '/admin';
-      case 'vendedor':
-        return '/vendedor';
-      case 'comprador':
-      default:
-        return '/';
-    }
-  };
-
-  // Effect to handle redirect after successful login when user data is available
-  useEffect(() => {
-    if (loginSuccessRef.current && user && !loading) {
-      loginSuccessRef.current = false;
-      const redirectPath = getRedirectPath(user.role);
-      navigate(redirectPath, { replace: true });
-    }
-  }, [user, loading, navigate]);
-
-  // Redirect already authenticated users
-  useEffect(() => {
-    if (user && !loading && !loginSuccessRef.current) {
-      const redirectPath = getRedirectPath(user.role);
-      navigate(redirectPath, { replace: true });
-    }
-  }, [user, loading, navigate]);
-
-  const form = useForm<LoginForm>({
-    initialValues: { email: '', password: '' },
-    validationSchema: loginSchema,
+  const form = useForm<FormData>({
+    initialValues: {
+      email: '',
+      password: '',
+    },
+    validationSchema: loginSchema as any,
     onSubmit: async values => {
-      // Check rate limit before attempting login
       if (!rateLimit.checkLimit()) {
-        toast.error(
-          'Demasiados intentos de inicio de sesión. Intenta más tarde.',
-          {
-            role: 'comprador',
-            action: 'login',
-          }
-        );
+        toast.error('Demasiados intentos de inicio de sesión. Intenta más tarde.', {
+          action: 'login',
+        });
         return;
       }
 
-      const result = await executeMutation(
-        async () => {
-          const signInResult = await signIn(values.email, values.password);
-          return { data: null, error: signInResult.error };
-        },
-        'Error en el inicio de sesión',
-        'Inicio de sesión exitoso'
-      );
-      
-      // If result is not null, it means no error occurred
-      if (result !== null) {
-        // Clear rate limit on successful login
-        rateLimit.clearLimit();
-        
-        // Mark that login was successful - the useEffect will handle redirect
-        loginSuccessRef.current = true;
+      const result = await signIn(values.email, values.password);
+      if (result.error) {
+        toast.error(result.error, {
+          action: 'login',
+        });
+        return;
       }
+
+      // Limpiar rate limit en login exitoso
+      rateLimit.clearLimit();
+      toast.success('Inicio de sesión exitoso', {
+        action: 'login',
+      });
     },
   });
 
-  // If already loading or user is authenticated, show loading
-  if (loading || user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-secondary/5">
-        <div className="text-center">
-          <div className="loading loading-spinner loading-lg text-primary"></div>
-          <p className="mt-4 text-muted-foreground">Cargando...</p>
-        </div>
-      </div>
-    );
+  // Si ya está autenticado, redirigir
+  if (user) {
+    navigate('/');
+    return null;
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-secondary/5 p-4">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-              <span className="text-2xl font-bold">TC</span>
+    <div className='min-h-[calc(100vh-120px)] grid place-items-center relative overflow-hidden'>
+      {/* Decorative auth background */}
+      <div
+        aria-hidden
+        className='absolute inset-0 opacity-12'
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, rgba(0,0,0,0.04), rgba(0,0,0,0.00)), url('/assert/motif-de-fond-sans-couture-tribal-dessin-geometrico-noir-et-blanc-vecteur/v1045-03.jpg')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      />
+      <div className='container max-w-5xl relative z-10'>
+        <div className='grid md:grid-cols-3 gap-8 items-start'>
+          <div className='hidden md:block md:col-span-1'>
+            <div className='card card-hover'>
+              <div className='card-body'>
+                <h2 className='card-title text-2xl mb-4'>
+                  Bienvenido de vuelta
+                </h2>
+                <p className='opacity-80 mb-6'>
+                  Accede a tu cuenta para continuar explorando los tesoros artesanales del Chocó.
+                </p>
+                <div className='space-y-4'>
+                  <div className='flex items-center gap-3'>
+                    <div className='w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center'>
+                      <svg
+                        className='w-4 h-4 text-primary'
+                        fill='none'
+                        stroke='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth={2}
+                          d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
+                        />
+                      </svg>
+                    </div>
+                    <span className='text-sm'>
+                      Acceso rápido a tu perfil
+                    </span>
+                  </div>
+                  <div className='flex items-center gap-3'>
+                    <div className='w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center'>
+                      <svg
+                        className='w-4 h-4 text-primary'
+                        fill='none'
+                        stroke='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth={2}
+                          d='M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z'
+                        />
+                      </svg>
+                    </div>
+                    <span className='text-sm'>Gestiona tus pedidos</span>
+                  </div>
+                  <div className='flex items-center gap-3'>
+                    <div className='w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center'>
+                      <svg
+                        className='w-4 h-4 text-primary'
+                        fill='none'
+                        stroke='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth={2}
+                          d='M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z'
+                        />
+                      </svg>
+                    </div>
+                    <span className='text-sm'>
+                      Favoritos y listas personalizadas
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Bienvenido de vuelta</h1>
-          <p className="text-muted-foreground mt-2">
-            Inicia sesión en tu cuenta de Tesoros Chocó
-          </p>
-        </div>
 
-        {/* Login Form */}
-        <div className="bg-card rounded-2xl border shadow-lg p-8">
-          <form onSubmit={form.handleSubmit} className="space-y-6">
-            {/* Email Field */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">
-                Correo electrónico
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="tu@email.com"
-                {...form.getInputProps('email')}
-                className={form.hasError('email') ? 'border-destructive' : ''}
-              />
-              {form.hasError('email') && (
-                <p className="text-sm text-destructive">{form.getError('email')}</p>
-              )}
-            </div>
+          <div className='md:col-span-2'>
+            <div className='card card-hover'>
+              <div className='card-body'>
+                <div className='text-center mb-6'>
+                  <h1 className='text-3xl font-bold mb-2'>Iniciar Sesión</h1>
+                  <p className='opacity-80'>
+                    Accede a tu cuenta para continuar
+                  </p>
+                </div>
 
-            {/* Password Field */}
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium">
-                Contraseña
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                {...form.getInputProps('password')}
-                className={form.hasError('password') ? 'border-destructive' : ''}
-              />
-              {form.hasError('password') && (
-                <p className="text-sm text-destructive">{form.getError('password')}</p>
-              )}
-            </div>
+                <form onSubmit={form.handleSubmit} className='space-y-6'>
+                  {/* Email Field */}
+                  <div className='space-y-2'>
+                    <Label htmlFor='email' className='text-sm font-medium'>
+                      Correo electrónico
+                    </Label>
+                    <Input
+                      id='email'
+                      type='email'
+                      placeholder='tu@email.com'
+                      value={form.values.email}
+                      onChange={e => form.handleChange('email', e.target.value)}
+                      onBlur={() => form.handleBlur('email')}
+                      className={form.hasError('email') ? 'border-red-500' : ''}
+                    />
+                    {form.hasError('email') && (
+                      <p className='text-red-500 text-sm mt-1'>
+                        {form.getFieldState('email').error}
+                      </p>
+                    )}
+                  </div>
 
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={form.isSubmitting}
-            >
-              {form.isSubmitting ? (
-                <>
-                  <div className="loading loading-spinner loading-sm mr-2"></div>
-                  Iniciando sesión...
-                </>
-              ) : (
-                'Iniciar sesión'
-              )}
-            </Button>
-          </form>
+                  {/* Password Field */}
+                  <div className='space-y-2'>
+                    <Label htmlFor='password' className='text-sm font-medium'>
+                      Contraseña
+                    </Label>
+                    <Input
+                      id='password'
+                      type='password'
+                      placeholder='••••••••'
+                      value={form.values.password}
+                      onChange={e => form.handleChange('password', e.target.value)}
+                      onBlur={() => form.handleBlur('password')}
+                      className={form.hasError('password') ? 'border-red-500' : ''}
+                    />
+                    {form.hasError('password') && (
+                      <p className='text-red-500 text-sm mt-1'>
+                        {form.getFieldState('password').error}
+                      </p>
+                    )}
+                  </div>
 
-          {/* Links */}
-          <div className="mt-6 text-center space-y-3">
-            <div className="text-sm">
-              <Link
-                to="/forgot-password"
-                className="text-primary hover:underline font-medium"
-              >
-                ¿Olvidaste tu contraseña?
-              </Link>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              ¿No tienes una cuenta?{' '}
-              <Link
-                to="/register"
-                className="text-primary hover:underline font-medium"
-              >
-                Crear cuenta
-              </Link>
+                  {/* Submit Button */}
+                  <Button
+                    type='submit'
+                    className='w-full py-3 text-base'
+                    disabled={form.isSubmitting || loading}
+                  >
+                    {form.isSubmitting || loading ? (
+                      <div className='flex items-center gap-2'>
+                        <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
+                        Iniciando sesión...
+                      </div>
+                    ) : (
+                      'Iniciar sesión'
+                    )}
+                  </Button>
+                </form>
+
+                {/* Links */}
+                <div className='mt-6 text-center space-y-3'>
+                  <div className='text-sm'>
+                    <Link
+                      to='/forgot-password'
+                      className='text-primary hover:underline font-medium'
+                    >
+                      ¿Olvidaste tu contraseña?
+                    </Link>
+                  </div>
+                  <div className='text-sm text-muted-foreground'>
+                    ¿No tienes una cuenta?{' '}
+                    <Link
+                      to='/register'
+                      className='text-primary hover:underline font-medium'
+                    >
+                      Crear cuenta
+                    </Link>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Footer */}
-        <div className="text-center mt-8 text-sm text-muted-foreground">
-          <p>© 2024 Tesoros Chocó. Todos los derechos reservados.</p>
         </div>
       </div>
     </div>

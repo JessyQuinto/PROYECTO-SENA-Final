@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthContext';
 import { Button } from '@/components/ui/shadcn/button';
@@ -22,7 +22,23 @@ interface NavigationItem {
 const Navbar: React.FC = () => {
   const { user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [forceUpdate, setForceUpdate] = useState(0);
   const location = useLocation();
+
+  // Escuchar cambios en el estado de autenticación
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setForceUpdate(prev => prev + 1);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // Forzar re-render cuando cambie el usuario
+  useEffect(() => {
+    setForceUpdate(prev => prev + 1);
+  }, [user]);
 
   const navigationItems: NavigationItem[] = [
     { path: '/', label: 'Inicio', public: true },
