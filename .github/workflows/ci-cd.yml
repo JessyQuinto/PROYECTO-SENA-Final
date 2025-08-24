@@ -309,13 +309,3 @@ jobs:
         # - Deploy to AWS S3: aws s3 sync dist/ s3://your-bucket/
         # - Deploy to your server via SSH/SCP
         echo "✅ Deployment completed!"
-        
-    - name: Create deployment notification
-      uses: 8398a7/action-slack@v3
-      with:
-        status: ${{ job.status }}
-        channel: '#deployments'
-        text: '🚀 Production deployment completed!'
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      if: always()
