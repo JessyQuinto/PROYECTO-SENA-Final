@@ -3,104 +3,165 @@
 @import './styles/checkout.css';
 
 @theme {
-  /* shadcn/ui tokens -> mapeo a nuestro tema (Tailwind v4 usa --color-*) */
-  --color-background: var(--color-marfil);
-  --color-foreground: var(--color-marron-cacao);
-  --color-card: #ffffff;
-  --color-card-foreground: var(--color-marron-cacao);
-  --color-popover: #ffffff;
-  --color-popover-foreground: var(--color-marron-cacao);
-  --color-primary: var(--color-terracotta-suave);
-  --color-primary-foreground: #ffffff;
-  --color-secondary: var(--color-ocre-africano);
-  --color-secondary-foreground: #ffffff;
-  --color-muted: #f3f4f6;
-  --color-muted-foreground: #6b7280;
-  --color-accent: var(--color-verde-oliva-tenue);
-  --color-accent-foreground: #ffffff;
-  --color-destructive: #ef4444;
-  --color-destructive-foreground: #ffffff;
-  --color-border: #e5e7eb;
-  --color-input: #e5e7eb;
-  --color-ring: var(--color-terracotta-suave);
+  /* Semantic Design Tokens - Brand Colors */
+  --color-brand-primary: #00a67e;
+  --color-brand-secondary: #0f766e;
+  --color-brand-accent: #0ea5a5;
+  
+  /* Surface Colors */
+  --color-surface-primary: #ffffff;
+  --color-surface-secondary: #f8fafc;
+  --color-surface-tertiary: #f1f5f9;
+  --color-surface-inverse: #0f172a;
+  
+  /* Text Colors */
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #64748b;
+  --color-text-inverse: #ffffff;
+  --color-text-disabled: #94a3b8;
+  
+  /* Interactive States */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+  
+  /* Border & Divider Colors */
+  --color-border-primary: #e2e8f0;
+  --color-border-secondary: #cbd5e1;
+  --color-border-focus: var(--color-brand-primary);
+  
+  /* shadcn/ui compatibility mapping */
+  --color-background: var(--color-surface-secondary);
+  --color-foreground: var(--color-text-primary);
+  --color-card: var(--color-surface-primary);
+  --color-card-foreground: var(--color-text-primary);
+  --color-popover: var(--color-surface-primary);
+  --color-popover-foreground: var(--color-text-primary);
+  --color-primary: var(--color-brand-primary);
+  --color-primary-foreground: var(--color-text-inverse);
+  --color-secondary: var(--color-brand-secondary);
+  --color-secondary-foreground: var(--color-text-inverse);
+  --color-muted: var(--color-surface-tertiary);
+  --color-muted-foreground: var(--color-text-tertiary);
+  --color-accent: var(--color-brand-accent);
+  --color-accent-foreground: var(--color-text-inverse);
+  --color-destructive: var(--color-error);
+  --color-destructive-foreground: var(--color-text-inverse);
+  --color-border: var(--color-border-primary);
+  --color-input: var(--color-border-primary);
+  --color-ring: var(--color-border-focus);
 
-  /* Paleta base clara (actual) */
-  --color-terracotta-suave: #00a67e; /* Primary */
-  --color-ocre-africano: #0f766e; /* Primary dark */
-  --color-verde-oliva-tenue: #0ea5a5; /* Accent */
-  --color-arena-calida: #ffffff; /* Surfaces */
-  --color-marfil: #f5f7f7; /* App background */
-  --color-marron-cacao: #101828; /* Text */
-  --color-carbon-suave: #1f2937; /* Headings/dark */
+  /* Legacy color mapping for backward compatibility */
+  --color-terracotta-suave: var(--color-brand-primary);
+  --color-ocre-africano: var(--color-brand-secondary);
+  --color-verde-oliva-tenue: var(--color-brand-accent);
+  --color-arena-calida: var(--color-surface-primary);
+  --color-marfil: var(--color-surface-secondary);
+  --color-marron-cacao: var(--color-text-primary);
+  --color-carbon-suave: var(--color-surface-inverse);
 
-  /* Mapas de compatibilidad (clases bg-*, text-*) */
-  --color-primary-100: color-mix(
-    in oklab,
-    var(--color-terracotta-suave) 12%,
-    white
-  );
-  --color-primary-600: var(--color-terracotta-suave);
-  --color-primary-500: color-mix(
-    in oklab,
-    var(--color-terracotta-suave) 85%,
-    white
-  );
-  --color-primary-700: color-mix(
-    in oklab,
-    var(--color-terracotta-suave) 85%,
-    black
-  );
-  --color-primary-800: color-mix(
-    in oklab,
-    var(--color-terracotta-suave) 70%,
-    black
-  );
-  --color-secondary-100: color-mix(
-    in oklab,
-    var(--color-ocre-africano) 10%,
-    white
-  );
-  --color-secondary-500: color-mix(
-    in oklab,
-    var(--color-ocre-africano) 85%,
-    white
-  );
-  --color-secondary-600: var(--color-ocre-africano);
-  --color-secondary-700: color-mix(
-    in oklab,
-    var(--color-ocre-africano) 85%,
-    black
-  );
-  --color-accent-100: color-mix(
-    in oklab,
-    var(--color-verde-oliva-tenue) 12%,
-    white
-  );
-  --color-accent-500: var(--color-verde-oliva-tenue);
-  --color-accent-600: color-mix(
-    in oklab,
-    var(--color-verde-oliva-tenue) 85%,
-    black
-  );
-  --color-accent-700: color-mix(
-    in oklab,
-    var(--color-verde-oliva-tenue) 70%,
-    black
-  );
+  /* Color Scale Tokens for Tailwind Compatibility */
+  --color-primary-50: color-mix(in oklab, var(--color-brand-primary) 8%, white);
+  --color-primary-100: color-mix(in oklab, var(--color-brand-primary) 12%, white);
+  --color-primary-200: color-mix(in oklab, var(--color-brand-primary) 20%, white);
+  --color-primary-300: color-mix(in oklab, var(--color-brand-primary) 35%, white);
+  --color-primary-400: color-mix(in oklab, var(--color-brand-primary) 55%, white);
+  --color-primary-500: var(--color-brand-primary);
+  --color-primary-600: color-mix(in oklab, var(--color-brand-primary) 85%, black);
+  --color-primary-700: color-mix(in oklab, var(--color-brand-primary) 70%, black);
+  --color-primary-800: color-mix(in oklab, var(--color-brand-primary) 55%, black);
+  --color-primary-900: color-mix(in oklab, var(--color-brand-primary) 40%, black);
+  --color-primary-950: color-mix(in oklab, var(--color-brand-primary) 25%, black);
+  
+  --color-secondary-50: color-mix(in oklab, var(--color-brand-secondary) 8%, white);
+  --color-secondary-100: color-mix(in oklab, var(--color-brand-secondary) 12%, white);
+  --color-secondary-200: color-mix(in oklab, var(--color-brand-secondary) 20%, white);
+  --color-secondary-300: color-mix(in oklab, var(--color-brand-secondary) 35%, white);
+  --color-secondary-400: color-mix(in oklab, var(--color-brand-secondary) 55%, white);
+  --color-secondary-500: var(--color-brand-secondary);
+  --color-secondary-600: color-mix(in oklab, var(--color-brand-secondary) 85%, black);
+  --color-secondary-700: color-mix(in oklab, var(--color-brand-secondary) 70%, black);
+  --color-secondary-800: color-mix(in oklab, var(--color-brand-secondary) 55%, black);
+  --color-secondary-900: color-mix(in oklab, var(--color-brand-secondary) 40%, black);
+  --color-secondary-950: color-mix(in oklab, var(--color-brand-secondary) 25%, black);
+  
+  --color-accent-50: color-mix(in oklab, var(--color-brand-accent) 8%, white);
+  --color-accent-100: color-mix(in oklab, var(--color-brand-accent) 12%, white);
+  --color-accent-200: color-mix(in oklab, var(--color-brand-accent) 20%, white);
+  --color-accent-300: color-mix(in oklab, var(--color-brand-accent) 35%, white);
+  --color-accent-400: color-mix(in oklab, var(--color-brand-accent) 55%, white);
+  --color-accent-500: var(--color-brand-accent);
+  --color-accent-600: color-mix(in oklab, var(--color-brand-accent) 85%, black);
+  --color-accent-700: color-mix(in oklab, var(--color-brand-accent) 70%, black);
+  --color-accent-800: color-mix(in oklab, var(--color-brand-accent) 55%, black);
+  --color-accent-900: color-mix(in oklab, var(--color-brand-accent) 40%, black);
+  --color-accent-950: color-mix(in oklab, var(--color-brand-accent) 25%, black);
 
-  /* Tipografías */
-  --font-sans:
-    'Manrope', 'Noto Sans', system-ui, -apple-system, Segoe UI, Roboto,
-    sans-serif;
-  --font-display: 'Manrope', 'Noto Serif', Georgia, serif;
-
-  /* Radii y sombras para look moderno (inspiración estilo cards/botones pill) */
-  /* Bordes cuadrados por defecto */
-  --radius-pill: 0px;
-  --radius-lg: 0px;
-  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.06);
-  --shadow-strong:
-    0 2px 6px rgba(0, 0, 0, 0.08), 0 16px 40px rgba(0, 0, 0, 0.12);
+  /* Typography System */
+  --font-sans: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Manrope', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  
+  /* Typography Scale */
+  --text-xs: 0.75rem; /* 12px */
+  --text-sm: 0.875rem; /* 14px */
+  --text-base: 1rem; /* 16px */
+  --text-lg: 1.125rem; /* 18px */
+  --text-xl: 1.25rem; /* 20px */
+  --text-2xl: 1.5rem; /* 24px */
+  --text-3xl: 1.875rem; /* 30px */
+  --text-4xl: 2.25rem; /* 36px */
+  --text-5xl: 3rem; /* 48px */
+  
+  /* Line Heights */
+  --leading-none: 1;
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+  --leading-loose: 2;
+  
+  /* Border Radius */
+  --radius-none: 0px;
+  --radius-sm: 0.125rem;
+  --radius-default: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
+  
+  /* Elevation System (Shadows) */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  
+  /* Spacing System */
+  --space-xs: 0.25rem; /* 4px */
+  --space-sm: 0.5rem; /* 8px */
+  --space-md: 1rem; /* 16px */
+  --space-lg: 1.5rem; /* 24px */
+  --space-xl: 2rem; /* 32px */
+  --space-2xl: 3rem; /* 48px */
+  --space-3xl: 4rem; /* 64px */
+  
+  /* Responsive Breakpoints */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+  
+  /* Container Sizes */
+  --container-sm: 640px;
+  --container-md: 768px;
+  --container-lg: 1024px;
+  --container-xl: 1280px;
+  --container-2xl: 1536px;
 }
 
 @layer base {
@@ -112,122 +173,330 @@
 
   body {
     @apply font-sans antialiased;
-    background-color: var(--color-marfil);
-    color: var(--color-marron-cacao);
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-feature-settings: 'cv01', 'cv02', 'cv03', 'cv04';
   }
 
   * {
     @apply box-border;
   }
+  
+  /* Typography Hierarchy */
+  .heading-xs {
+    font-size: var(--text-sm);
+    line-height: var(--leading-snug);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+  }
+  
+  .heading-sm {
+    font-size: var(--text-base);
+    line-height: var(--leading-normal);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+  }
+  
+  .heading-base {
+    font-size: var(--text-lg);
+    line-height: var(--leading-normal);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+  }
+  
+  .heading-lg {
+    font-size: var(--text-xl);
+    line-height: var(--leading-tight);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+  
+  .heading-xl {
+    font-size: var(--text-2xl);
+    line-height: var(--leading-tight);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+  
+  .heading-2xl {
+    font-size: var(--text-3xl);
+    line-height: var(--leading-tight);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+  }
+  
+  .heading-3xl {
+    font-size: var(--text-4xl);
+    line-height: var(--leading-none);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+  }
+  
+  .heading-4xl {
+    font-size: var(--text-5xl);
+    line-height: var(--leading-none);
+    font-weight: 900;
+    letter-spacing: -0.025em;
+  }
+  
+  /* Body Text Variants */
+  .body-xs {
+    font-size: var(--text-xs);
+    line-height: var(--leading-normal);
+    color: var(--color-text-secondary);
+  }
+  
+  .body-sm {
+    font-size: var(--text-sm);
+    line-height: var(--leading-relaxed);
+    color: var(--color-text-secondary);
+  }
+  
+  .body-base {
+    font-size: var(--text-base);
+    line-height: var(--leading-relaxed);
+    color: var(--color-text-primary);
+  }
+  
+  .body-lg {
+    font-size: var(--text-lg);
+    line-height: var(--leading-relaxed);
+    color: var(--color-text-primary);
+  }
+  
+  /* Display Text */
+  .display-sm {
+    font-family: var(--font-display);
+    font-size: var(--text-3xl);
+    line-height: var(--leading-tight);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+  
+  .display-md {
+    font-family: var(--font-display);
+    font-size: var(--text-4xl);
+    line-height: var(--leading-tight);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+  }
+  
+  .display-lg {
+    font-family: var(--font-display);
+    font-size: var(--text-5xl);
+    line-height: var(--leading-none);
+    font-weight: 900;
+    letter-spacing: -0.025em;
+  }
+  
+  /* Text Colors */
+  .text-primary { color: var(--color-text-primary); }
+  .text-secondary { color: var(--color-text-secondary); }
+  .text-tertiary { color: var(--color-text-tertiary); }
+  .text-inverse { color: var(--color-text-inverse); }
+  .text-disabled { color: var(--color-text-disabled); }
+  .text-success { color: var(--color-success); }
+  .text-warning { color: var(--color-warning); }
+  .text-error { color: var(--color-error); }
+  .text-info { color: var(--color-info); }
+  
+  /* Responsive Grid System */
+  .responsive-grid {
+    display: grid;
+    gap: var(--space-md);
+    grid-template-columns: 1fr;
+  }
+  
+  /* Container with responsive padding */
+  .container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+  
+  /* Mobile-first responsive classes */
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+  
+  .stack-sm {
+    gap: var(--space-sm);
+  }
+  
+  .stack-lg {
+    gap: var(--space-lg);
+  }
+  
+  /* Focus management */
+  .focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+  
+  /* Screen reader only */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
 }
 
-/* Nordic Dark Theme (Nord palette inspired) */
-/* Apply by adding class .nord-dark on <html> */
-:root.nord-dark {
-  /* Nord colors */
-  --nord0: #2e3440; /* polar night */
-  --nord1: #3b4252;
-  --nord2: #434c5e;
-  --nord3: #4c566a;
-  --nord4: #d8dee9; /* snow storm */
-  --nord5: #e5e9f0;
-  --nord6: #eceff4;
-  --nord7: #8fbcbb; /* frost */
-  --nord8: #88c0d0;
-  --nord9: #81a1c1;
-  --nord10: #5e81ac;
-  --nord11: #bf616a; /* aurora */
-  --nord12: #d08770;
-  --nord13: #ebcb8b;
-  --nord14: #a3be8c;
-  --nord15: #b48ead;
-
-  /* Map to app tokens */
-  --color-background: var(--nord0);
-  --color-foreground: var(--nord6);
-  --color-card: var(--nord1);
-  --color-card-foreground: var(--nord6);
-  --color-popover: var(--nord1);
-  --color-popover-foreground: var(--nord6);
-  --color-primary: var(--nord8);
-  --color-primary-foreground: #0b1220; /* dark text on light primary */
-  --color-secondary: var(--nord10);
-  --color-secondary-foreground: #0b1220;
-  --color-muted: var(--nord2);
-  --color-muted-foreground: var(--nord5);
-  --color-accent: var(--nord7);
-  --color-accent-foreground: #0b1220;
-  --color-destructive: var(--nord11);
-  --color-destructive-foreground: #0b1220;
-  --color-border: var(--nord3);
-  --color-input: var(--nord3);
-  --color-ring: var(--nord8);
-
-  /* Base palette remap */
-  --color-terracotta-suave: var(--nord8);
-  --color-ocre-africano: var(--nord10);
-  --color-verde-oliva-tenue: var(--nord7);
-  --color-arena-calida: var(--nord1);
-  --color-marfil: var(--nord0);
-  --color-marron-cacao: var(--nord6);
-  --color-carbon-suave: var(--nord4);
-
-  /* Compat classes */
-  --color-primary-100: color-mix(
-    in oklab,
-    var(--color-terracotta-suave) 24%,
-    black
-  );
-  --color-primary-500: var(--color-terracotta-suave);
-  --color-primary-600: color-mix(
-    in oklab,
-    var(--color-terracotta-suave) 90%,
-    white
-  );
-  --color-primary-700: color-mix(
-    in oklab,
-    var(--color-terracotta-suave) 70%,
-    white
-  );
-  --color-secondary-100: color-mix(
-    in oklab,
-    var(--color-ocre-africano) 24%,
-    black
-  );
-  --color-secondary-500: var(--color-ocre-africano);
-  --color-secondary-600: color-mix(
-    in oklab,
-    var(--color-ocre-africano) 90%,
-    white
-  );
-  --color-secondary-700: color-mix(
-    in oklab,
-    var(--color-ocre-africano) 70%,
-    white
-  );
-  --color-accent-100: color-mix(
-    in oklab,
-    var(--color-verde-oliva-tenue) 24%,
-    black
-  );
-  --color-accent-500: var(--color-verde-oliva-tenue);
-  --color-accent-600: color-mix(
-    in oklab,
-    var(--color-verde-oliva-tenue) 90%,
-    white
-  );
-  --color-accent-700: color-mix(
-    in oklab,
-    var(--color-verde-oliva-tenue) 70%,
-    white
-  );
+/* Responsive Breakpoints */
+@media (min-width: 640px) {
+  .responsive-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-lg);
+  }
+  
+  .container {
+    max-width: var(--container-sm);
+    padding-left: var(--space-lg);
+    padding-right: var(--space-lg);
+  }
+  
+  .stack-sm-horizontal {
+    flex-direction: row;
+    align-items: center;
+  }
 }
 
-/* Prefer system dark as default when no explicit theme is stored */
+@media (min-width: 768px) {
+  .container {
+    max-width: var(--container-md);
+  }
+  
+  .stack-md-horizontal {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-xl);
+  }
+  
+  .container {
+    max-width: var(--container-lg);
+  }
+  
+  .stack-lg-horizontal {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+@media (min-width: 1280px) {
+  .responsive-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .container {
+    max-width: var(--container-xl);
+  }
+}
+
+@media (min-width: 1536px) {
+  .container {
+    max-width: var(--container-2xl);
+  }
+}
+
+/* Dark Theme - Modern Dark Mode */
+:root.dark {
+  /* Dark Mode Surface Colors */
+  --color-surface-primary: #0f172a;
+  --color-surface-secondary: #1e293b;
+  --color-surface-tertiary: #334155;
+  --color-surface-inverse: #ffffff;
+  
+  /* Dark Mode Text Colors */
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #cbd5e1;
+  --color-text-tertiary: #94a3b8;
+  --color-text-inverse: #0f172a;
+  --color-text-disabled: #64748b;
+  
+  /* Dark Mode Borders */
+  --color-border-primary: #334155;
+  --color-border-secondary: #475569;
+  
+  /* Brand colors remain the same for consistency */
+  --color-brand-primary: #00a67e;
+  --color-brand-secondary: #0f766e;
+  --color-brand-accent: #0ea5a5;
+  
+  /* shadcn/ui dark mode mapping */
+  --color-background: var(--color-surface-primary);
+  --color-foreground: var(--color-text-primary);
+  --color-card: var(--color-surface-secondary);
+  --color-card-foreground: var(--color-text-primary);
+  --color-popover: var(--color-surface-secondary);
+  --color-popover-foreground: var(--color-text-primary);
+  --color-primary: var(--color-brand-primary);
+  --color-primary-foreground: var(--color-text-inverse);
+  --color-secondary: var(--color-surface-tertiary);
+  --color-secondary-foreground: var(--color-text-primary);
+  --color-muted: var(--color-surface-tertiary);
+  --color-muted-foreground: var(--color-text-secondary);
+  --color-accent: var(--color-surface-tertiary);
+  --color-accent-foreground: var(--color-text-primary);
+  --color-destructive: var(--color-error);
+  --color-destructive-foreground: var(--color-text-inverse);
+  --color-border: var(--color-border-primary);
+  --color-input: var(--color-border-primary);
+  --color-ring: var(--color-border-focus);
+
+  /* Legacy compatibility for dark mode */
+  --color-terracotta-suave: var(--color-brand-primary);
+  --color-ocre-africano: var(--color-brand-secondary);
+  --color-verde-oliva-tenue: var(--color-brand-accent);
+  --color-arena-calida: var(--color-surface-secondary);
+  --color-marfil: var(--color-surface-primary);
+  --color-marron-cacao: var(--color-text-primary);
+  --color-carbon-suave: var(--color-text-secondary);
+
+  /* Dark mode color scales */
+  --color-primary-50: color-mix(in oklab, var(--color-brand-primary) 8%, var(--color-surface-primary));
+  --color-primary-100: color-mix(in oklab, var(--color-brand-primary) 12%, var(--color-surface-primary));
+  --color-primary-500: var(--color-brand-primary);
+  --color-primary-600: color-mix(in oklab, var(--color-brand-primary) 90%, white);
+  --color-primary-700: color-mix(in oklab, var(--color-brand-primary) 70%, white);
+  --color-secondary-50: color-mix(in oklab, var(--color-brand-secondary) 8%, var(--color-surface-primary));
+  --color-secondary-100: color-mix(in oklab, var(--color-brand-secondary) 12%, var(--color-surface-primary));
+  --color-secondary-500: var(--color-brand-secondary);
+  --color-secondary-600: color-mix(in oklab, var(--color-brand-secondary) 90%,
+    white
+  );
+  --color-secondary-700: color-mix(in oklab, var(--color-brand-secondary) 70%, white);
+  --color-accent-50: color-mix(in oklab, var(--color-brand-accent) 8%, var(--color-surface-primary));
+  --color-accent-100: color-mix(in oklab, var(--color-brand-accent) 12%, var(--color-surface-primary));
+  --color-accent-500: var(--color-brand-accent);
+  --color-accent-600: color-mix(in oklab, var(--color-brand-accent) 90%, white);
+  --color-accent-700: color-mix(in oklab, var(--color-brand-accent) 70%, white);
+}
+
+/* Prefer system dark mode when no explicit theme is set */
 @media (prefers-color-scheme: dark) {
-  :root:not(.nord-light):not(.nord-dark) body {
-    background-color: var(--color-marfil);
-    color: var(--color-marron-cacao);
+  :root:not(.light):not(.dark) {
+    /* Apply dark theme tokens when system prefers dark */
+    --color-surface-primary: #0f172a;
+    --color-surface-secondary: #1e293b;
+    --color-text-primary: #f8fafc;
+    --color-text-secondary: #cbd5e1;
+    --color-background: var(--color-surface-primary);
+    --color-foreground: var(--color-text-primary);
   }
 }
 
