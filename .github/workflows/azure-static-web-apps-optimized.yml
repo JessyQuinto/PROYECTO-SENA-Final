@@ -1,0 +1,290 @@
+name: Azure Static Web Apps CI/CD - Optimized
+
+on:
+  push:
+    branches: [main]
+    paths: ['Frontend/**', 'package.json', '.github/workflows/**']
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches: [main]
+    paths: ['Frontend/**', 'package.json', '.github/workflows/**']
+
+env:
+  NODE_VERSION: '20.19.0'
+  CACHE_VERSION: 'v1'
+
+jobs:
+  build_and_deploy_job:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    runs-on: ubuntu-latest
+    name: Build and Deploy Job
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          lfs: false
+          # Shallow clone for faster checkout
+          fetch-depth: 1
+
+      # Setup Bun for faster package management
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      # Enhanced caching strategy
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        id: cache-deps
+        with:
+          path: |
+            ~/.bun/install/cache
+            Frontend/node_modules
+            node_modules
+            ~/.cache/ms-playwright
+          key: ${{ runner.os }}-deps-${{ env.CACHE_VERSION }}-${{ hashFiles('**/bun.lockb', '**/package-lock.json', 'Frontend/package.json', 'package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-deps-${{ env.CACHE_VERSION }}-
+            ${{ runner.os }}-deps-
+
+      # Cache Vite build cache
+      - name: Cache Vite
+        uses: actions/cache@v4
+        with:
+          path: |
+            Frontend/node_modules/.vite
+            Frontend/dist
+          key: ${{ runner.os }}-vite-${{ env.CACHE_VERSION }}-${{ hashFiles('Frontend/src/**/*', 'Frontend/vite.config.ts', 'Frontend/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-vite-${{ env.CACHE_VERSION }}-
+
+      # Install dependencies with Bun (faster than npm)
+      - name: Install dependencies
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: |
+          echo "Installing with Bun for better performance..."
+          bun install --frozen-lockfile --production=false
+          
+          echo "Installing Frontend dependencies..."
+          cd Frontend
+          bun install --frozen-lockfile --production=false
+
+      # Verify dependencies if cache was hit
+      - name: Verify dependencies
+        if: steps.cache-deps.outputs.cache-hit == 'true'
+        run: |
+          echo "Verifying cached dependencies..."
+          if [ ! -d "Frontend/node_modules" ]; then
+            echo "Cache miss detected, installing..."
+            cd Frontend && bun install --frozen-lockfile --production=false
+          fi
+
+      # Lint and type check in parallel (optional, can be disabled for faster builds)
+      - name: Code Quality Checks
+        if: github.event_name == 'pull_request'
+        working-directory: Frontend
+        run: |
+          echo "Running type check..."
+          bun run type-check &
+          
+          echo "Running linter..."
+          bun run lint &
+          
+          # Wait for both to complete
+          wait
+          echo "Code quality checks completed"
+
+      # Build Frontend with optimizations
+      - name: Build Frontend
+        working-directory: Frontend
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
+          # Optimize Node.js memory usage
+          NODE_OPTIONS: '--max-old-space-size=6144 --optimize-for-size'
+          # Production environment
+          NODE_ENV: 'production'
+          # Disable source maps for smaller bundle
+          GENERATE_SOURCEMAP: 'false'
+        run: |
+          echo "Starting optimized build process..."
+          echo "Node version: $(node --version)"
+          echo "Memory available: $(free -h)"
+          
+          # Use Bun for faster build
+          bun run build
+          
+          echo "Build completed successfully"
+          echo "Dist size: $(du -sh dist)"
+          
+          # Verify build output
+          if [ ! -d "dist" ] || [ ! -f "dist/index.html" ]; then
+            echo "❌ Build failed - dist directory or index.html not found"
+            exit 1
+          fi
+          
+          echo "✅ Build verification passed"
+
+      # Optimize build output
+      - name: Optimize Build Output
+        working-directory: Frontend/dist
+        run: |
+          echo "Optimizing build output..."
+          
+          # Remove development artifacts
+          find . -name "*.map" -delete
+          find . -name "*.test.*" -delete
+          
+          # Verify critical files exist
+          if [ ! -f "index.html" ]; then
+            echo "❌ Critical file missing: index.html"
+            exit 1
+          fi
+          
+          echo "Build optimization completed"
+          echo "Final bundle size:"
+          du -sh .
+          
+          # List largest files for monitoring
+          echo "Largest files in bundle:"
+          find . -type f -exec du -h {} + | sort -rh | head -10
+
+      # Deploy to Azure Static Web Apps
+      - name: Build And Deploy
+        id: builddeploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_AMBITIOUS_GROUND_03B86CF10 }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          # Point directly to pre-built dist
+          app_location: "Frontend/dist"
+          # No API for static web app
+          api_location: ""
+          output_location: ""
+          # Skip build since we already built
+          skip_app_build: true
+          # Enable routing for SPA
+          config_file_location: "Frontend"
+
+      # Performance reporting (optional)
+      - name: Bundle Analysis
+        if: github.event_name == 'pull_request'
+        working-directory: Frontend
+        run: |
+          # Generate bundle analysis if analyzer is available
+          if bun list | grep -q "webpack-bundle-analyzer"; then
+            echo "Generating bundle analysis..."
+            bun run analyze || echo "Bundle analysis skipped"
+          else
+            echo "Bundle analyzer not available, skipping analysis"
+          fi
+
+      # Upload build artifacts for debugging (only on failure)
+      - name: Upload Build Artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-${{ github.run_id }}
+          path: |
+            Frontend/dist/
+            Frontend/package.json
+            Frontend/vite.config.ts
+          retention-days: 7
+
+  close_pull_request_job:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    name: Close Pull Request Job
+    timeout-minutes: 5
+    
+    steps:
+      - name: Close Pull Request
+        id: closepullrequest
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_AMBITIOUS_GROUND_03B86CF10 }}
+          action: "close"
+
+  # Performance monitoring job (runs after deployment)
+  performance_check:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build_and_deploy_job
+    runs-on: ubuntu-latest
+    name: Performance Check
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Lighthouse CLI
+        run: npm install -g lighthouse
+
+      - name: Wait for deployment
+        run: |
+          echo "Waiting for deployment to be available..."
+          sleep 60
+
+      - name: Run Lighthouse Performance Audit
+        run: |
+          # Replace with your actual Azure Static Web App URL
+          SITE_URL="https://ambitious-ground-03b86cf10.azurestaticapps.net"
+          
+          echo "Running Lighthouse audit on: $SITE_URL"
+          
+          lighthouse $SITE_URL \
+            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
+            --output=json \
+            --output-path=./lighthouse-report.json \
+            --quiet \
+            --only-categories=performance,accessibility,best-practices \
+            --throttling-method=simulate \
+            --throttling.cpuSlowdownMultiplier=1 \
+            --throttling.requestLatencyMs=40 \
+            --throttling.downloadThroughputKbps=10000 \
+            --throttling.uploadThroughputKbps=10000
+
+      - name: Parse Lighthouse Results
+        run: |
+          if [ -f "./lighthouse-report.json" ]; then
+            echo "Lighthouse Performance Results:"
+            
+            PERFORMANCE=$(cat lighthouse-report.json | jq -r '.categories.performance.score * 100')
+            ACCESSIBILITY=$(cat lighthouse-report.json | jq -r '.categories.accessibility.score * 100')
+            BEST_PRACTICES=$(cat lighthouse-report.json | jq -r '.categories."best-practices".score * 100')
+            
+            echo "📊 Performance Score: ${PERFORMANCE}%"
+            echo "♿ Accessibility Score: ${ACCESSIBILITY}%"
+            echo "✅ Best Practices Score: ${BEST_PRACTICES}%"
+            
+            # Check for performance thresholds
+            if (( $(echo "$PERFORMANCE < 80" | bc -l) )); then
+              echo "⚠️ Performance score below 80%. Consider optimization."
+            fi
+            
+            if (( $(echo "$ACCESSIBILITY < 90" | bc -l) )); then
+              echo "⚠️ Accessibility score below 90%. Consider improvements."
+            fi
+          else
+            echo "Lighthouse report not generated"
+          fi
+
+      - name: Upload Lighthouse Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report-${{ github.run_id }}
+          path: lighthouse-report.json
+          retention-days: 14

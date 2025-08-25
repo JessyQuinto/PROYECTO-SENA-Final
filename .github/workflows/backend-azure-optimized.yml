@@ -1,0 +1,308 @@
+name: Build and deploy Node.js app to Azure Web App - marketplace-backend-prod (OPTIMIZED)
+
+on:
+  push:
+    branches: [main]
+    paths: ['Backend/**', '.github/workflows/backend-azure-optimized.yml']
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20.x'  # Standardized to match frontend
+  CACHE_VERSION: 'v2'
+  AZURE_APP_NAME: 'marketplace-backend-prod'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Build Backend
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    
+    outputs:
+      build-version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Generate Build Version
+        id: version
+        run: |
+          VERSION="${GITHUB_SHA:0:8}-$(date +%s)"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Generated version: $VERSION"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: Backend/package-lock.json
+          registry-url: 'https://registry.npmjs.org/'
+
+      # Enhanced caching for faster builds
+      - name: Cache Backend Dependencies
+        uses: actions/cache@v4
+        id: cache-deps
+        with:
+          path: |
+            Backend/node_modules
+            Backend/dist
+            ~/.npm
+          key: ${{ runner.os }}-backend-${{ env.CACHE_VERSION }}-${{ hashFiles('Backend/package-lock.json', 'Backend/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-backend-${{ env.CACHE_VERSION }}-
+            ${{ runner.os }}-backend-
+
+      # Prepare isolated Backend environment
+      - name: Prepare Backend Environment
+        run: |
+          echo "🏗️ Preparing Backend for deployment..."
+          cd Backend
+          
+          # Remove any workspace references
+          rm -f ../package.json ../package-lock.json ../.npmrc || true
+          
+          echo "📁 Backend directory structure:"
+          ls -la
+          
+          echo "📦 Package.json exists: $(test -f package.json && echo 'yes' || echo 'no')"
+          
+          # Verify package.json structure
+          if [ -f package.json ]; then
+            echo "📋 Package.json scripts:"
+            cat package.json | jq -r '.scripts // {}'
+          fi
+
+      # Optimized dependency installation
+      - name: Install Dependencies
+        working-directory: Backend
+        run: |
+          echo "📦 Installing dependencies..."
+          echo "Node.js version: $(node --version)"
+          echo "npm version: $(npm --version)"
+          
+          # Use npm ci for faster, reliable installs
+          if [ -f package-lock.json ]; then
+            npm ci --ignore-scripts --no-audit --no-fund --prefer-offline
+          else
+            npm install --ignore-scripts --no-audit --no-fund --prefer-offline
+          fi
+          
+          echo "✅ Dependencies installed successfully"
+          echo "📊 Node modules size: $(du -sh node_modules)"
+
+      # Enhanced build process with error handling
+      - name: Build Application
+        working-directory: Backend
+        env:
+          NODE_ENV: production
+          CI: true
+        run: |
+          echo "🔨 Starting build process..."
+          
+          # Verify TypeScript is available
+          if ! command -v npx tsc &> /dev/null; then
+            echo "Installing TypeScript..."
+            npm install -g typescript
+          fi
+          
+          # Run build with detailed output
+          npm run build
+          
+          echo "✅ Build completed successfully"
+          
+          # Verify build output
+          if [ ! -d "dist" ]; then
+            echo "❌ Build failed - dist directory not created"
+            exit 1
+          fi
+          
+          echo "📁 Build output structure:"
+          ls -la dist/
+          
+          echo "📊 Dist size: $(du -sh dist)"
+
+      # Optimize for production deployment
+      - name: Optimize for Production
+        working-directory: Backend
+        run: |
+          echo "⚡ Optimizing for production deployment..."
+          
+          # Remove development dependencies
+          npm prune --omit=dev --no-audit
+          
+          # Remove unnecessary files
+          rm -rf src/ tsconfig.json .eslintrc.js *.md || true
+          
+          # Keep only production essentials
+          echo "📦 Final package structure:"
+          ls -la
+          
+          echo "📊 Final package size: $(du -sh .)"
+          
+          # Verify critical files exist
+          if [ ! -f "dist/index.js" ]; then
+            echo "❌ Critical file missing: dist/index.js"
+            exit 1
+          fi
+          
+          echo "✅ Production optimization completed"
+
+      # Create deployment package
+      - name: Create Deployment Package
+        working-directory: Backend
+        run: |
+          echo "📦 Creating deployment package..."
+          
+          # Create a clean deployment directory
+          mkdir -p ../deployment-package
+          
+          # Copy only necessary files
+          cp -r dist package.json node_modules ../deployment-package/
+          
+          # Copy package-lock.json if it exists
+          [ -f package-lock.json ] && cp package-lock.json ../deployment-package/
+          
+          echo "📁 Deployment package contents:"
+          ls -la ../deployment-package/
+          
+          echo "📊 Deployment package size: $(du -sh ../deployment-package)"
+
+      # Upload optimized artifact
+      - name: Upload Deployment Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-deployment-${{ steps.version.outputs.version }}
+          path: deployment-package/
+          retention-days: 7
+          compression-level: 9
+
+      # Generate deployment summary
+      - name: Deployment Summary
+        run: |
+          echo "## 🚀 Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Node.js Version:** ${{ env.NODE_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Cache Hit:** ${{ steps.cache-deps.outputs.cache-hit == 'true' && '✅ Yes' || '❌ No' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Time:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Package Size:** $(du -sh deployment-package)" >> $GITHUB_STEP_SUMMARY
+
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy to Azure
+    needs: build
+    timeout-minutes: 10
+    environment: production
+    
+    steps:
+      - name: Download Deployment Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-deployment-${{ needs.build.outputs.build-version }}
+          path: ./
+
+      - name: Verify Deployment Package
+        run: |
+          echo "🔍 Verifying deployment package..."
+          ls -la
+          
+          # Verify critical files
+          if [ ! -f "package.json" ] || [ ! -d "dist" ] || [ ! -f "dist/index.js" ]; then
+            echo "❌ Deployment package incomplete"
+            exit 1
+          fi
+          
+          echo "✅ Deployment package verified"
+          echo "📊 Package contents:"
+          find . -type f -name "*.js" | head -5
+          echo "📦 Total files: $(find . -type f | wc -l)"
+
+      # Deploy to Azure Web App with optimized settings
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_APP_NAME }}
+          slot-name: 'Production'
+          package: ./
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_6D9D691DC7CA400DB82578B627BAC9AA }}
+
+      # Post-deployment verification
+      - name: Post-Deployment Health Check
+        run: |
+          echo "🏥 Performing post-deployment health check..."
+          
+          # Wait for deployment to stabilize
+          sleep 30
+          
+          # Health check endpoint
+          HEALTH_URL="https://${{ env.AZURE_APP_NAME }}.azurewebsites.net/health"
+          
+          echo "Checking health endpoint: $HEALTH_URL"
+          
+          # Retry health check up to 3 times
+          for i in {1..3}; do
+            if curl -f -s "$HEALTH_URL" > /dev/null; then
+              echo "✅ Health check passed (attempt $i)"
+              
+              # Get detailed health info
+              HEALTH_RESPONSE=$(curl -s "$HEALTH_URL")
+              echo "Health response: $HEALTH_RESPONSE"
+              break
+            else
+              echo "❌ Health check failed (attempt $i)"
+              if [ $i -eq 3 ]; then
+                echo "🚨 Deployment may have issues - health check failed after 3 attempts"
+                exit 1
+              fi
+              sleep 15
+            fi
+          done
+
+      # Performance monitoring
+      - name: Performance Check
+        run: |
+          echo "📊 Running basic performance check..."
+          
+          API_URL="https://${{ env.AZURE_APP_NAME }}.azurewebsites.net"
+          
+          # Measure response time
+          RESPONSE_TIME=$(curl -o /dev/null -s -w '%{time_total}' "$API_URL/health")
+          
+          echo "⏱️ Health endpoint response time: ${RESPONSE_TIME}s"
+          
+          # Check if response time is reasonable (under 3 seconds)
+          if (( $(echo "$RESPONSE_TIME > 3.0" | bc -l) )); then
+            echo "⚠️ Response time is high (>3s). Consider optimization."
+          else
+            echo "✅ Response time is acceptable"
+          fi
+
+      # Deployment summary
+      - name: Deployment Summary
+        run: |
+          echo "## 🎯 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **App Name:** ${{ env.AZURE_APP_NAME }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployment Status:** ✅ Success" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Version:** ${{ needs.build.outputs.build-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployed At:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Health Check:** ✅ Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- **App URL:** https://${{ env.AZURE_APP_NAME }}.azurewebsites.net" >> $GITHUB_STEP_SUMMARY
+
+  # Cleanup old artifacts
+  cleanup:
+    runs-on: ubuntu-latest
+    name: Cleanup
+    needs: [build, deploy]
+    if: always()
+    timeout-minutes: 5
+    
+    steps:
+      - name: Cleanup Old Artifacts
+        run: |
+          echo "🧹 Cleanup completed"
+          echo "Artifacts are automatically cleaned based on retention policy"

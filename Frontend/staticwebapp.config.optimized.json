@@ -1,0 +1,125 @@
+{
+  "routes": [
+    {
+      "route": "/assets/js/*.js",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "Vary": "Accept-Encoding",
+        "X-Content-Type-Options": "nosniff"
+      }
+    },
+    {
+      "route": "/assets/css/*.css",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "Vary": "Accept-Encoding",
+        "X-Content-Type-Options": "nosniff"
+      }
+    },
+    {
+      "route": "/assets/images/*.{jpg,jpeg,png,webp,avif,ico,svg}",
+      "headers": {
+        "Cache-Control": "public, max-age=86400",
+        "Vary": "Accept-Encoding",
+        "X-Content-Type-Options": "nosniff"
+      }
+    },
+    {
+      "route": "/assets/fonts/*.{woff,woff2,ttf,eot}",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "Access-Control-Allow-Origin": "*",
+        "X-Content-Type-Options": "nosniff"
+      }
+    },
+    {
+      "route": "/*.html",
+      "headers": {
+        "Cache-Control": "public, max-age=3600",
+        "Vary": "Accept-Encoding",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "X-XSS-Protection": "1; mode=block"
+      }
+    },
+    {
+      "route": "/index.html",
+      "headers": {
+        "Cache-Control": "public, max-age=1800",
+        "Vary": "Accept-Encoding",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "X-XSS-Protection": "1; mode=block"
+      }
+    },
+    {
+      "route": "/manifest.json",
+      "headers": {
+        "Cache-Control": "public, max-age=86400",
+        "Content-Type": "application/manifest+json"
+      }
+    },
+    {
+      "route": "/sw.js",
+      "headers": {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Content-Type": "application/javascript"
+      }
+    },
+    {
+      "route": "/api/*",
+      "allowedRoles": ["authenticated"]
+    },
+    {
+      "route": "/admin/*",
+      "allowedRoles": ["admin"]
+    },
+    {
+      "route": "/vendedor/*",
+      "allowedRoles": ["vendedor", "admin"]
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": [
+      "/assets/*", 
+      "/api/*", 
+      "/*.{js,css,png,jpg,jpeg,gif,svg,ico,woff,woff2,ttf,eot,webp,avif,json,xml,txt}"
+    ]
+  },
+  "responseOverrides": {
+    "404": {
+      "rewrite": "/index.html",
+      "statusCode": 200
+    }
+  },
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "X-XSS-Protection": "1; mode=block",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "geolocation=(self), microphone=(), camera=(), payment=(), usb=()",
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+    "X-DNS-Prefetch-Control": "on",
+    "X-Download-Options": "noopen",
+    "X-Permitted-Cross-Domain-Policies": "none"
+  },
+  "mimeTypes": {
+    ".json": "application/json",
+    ".js": "application/javascript",
+    ".css": "text/css",
+    ".html": "text/html",
+    ".xml": "application/xml",
+    ".svg": "image/svg+xml",
+    ".webp": "image/webp",
+    ".avif": "image/avif",
+    ".woff": "font/woff",
+    ".woff2": "font/woff2",
+    ".ttf": "font/ttf",
+    ".eot": "application/vnd.ms-fontobject"
+  },
+  "trailingSlash": "never",
+  "platform": {
+    "apiRuntime": "node:18"
+  }
+}
