@@ -1,4 +1,4 @@
-# Tesoros Chocó - Marketplace de Artesanías
+# Proyecto - SENA - Tesoros Chocó - Marketplace de Artesanías
 
 ## 📋 Descripción General
 
