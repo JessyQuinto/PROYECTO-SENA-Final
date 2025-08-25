@@ -57,11 +57,11 @@ const AdminDashboard: React.FC = () => {
 
       if (vendedoresResult.data && productosResult.data && pedidosResult.data) {
         const vendedoresPendientes = vendedoresResult.data.filter(
-          v => v.vendedor_estado === 'pendiente'
+          (v: any) => v.vendedor_estado === 'pendiente'
         );
 
         const ventasDelMes = (pedidosMesResult.data || []).reduce(
-          (acc, o: any) => acc + Number(o.total || 0),
+          (acc: number, o: any) => acc + Number(o.total || 0),
           0
         );
 
@@ -155,16 +155,10 @@ const AdminDashboard: React.FC = () => {
           : null
       );
 
-      toastSuccess('Vendedor aprobado exitosamente', {
-        role: 'admin',
-        action: 'approve',
-      });
+      toastSuccess('Vendedor aprobado exitosamente');
     } catch (error) {
       console.error('Error approving vendor:', error);
-      toastError('Error al aprobar vendedor', {
-        role: 'admin',
-        action: 'approve',
-      });
+      toastError('Error al aprobar vendedor');
     }
   };
 
@@ -238,13 +232,10 @@ const AdminDashboard: React.FC = () => {
           : null
       );
 
-      toastSuccess('Vendedor rechazado', { role: 'admin', action: 'reject' });
+      toastSuccess('Vendedor rechazado');
     } catch (error) {
       console.error('Error rejecting vendor:', error);
-      toastError('Error al rechazar vendedor', {
-        role: 'admin',
-        action: 'reject',
-      });
+      toastError('Error al rechazar vendedor');
     }
   };
 

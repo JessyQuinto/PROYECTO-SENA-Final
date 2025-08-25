@@ -94,9 +94,7 @@ export const RegisterPage: React.FC = () => {
     onSubmit: async values => {
       // Check rate limit before attempting registration
       if (!rateLimit.checkLimit()) {
-        toast.error('Demasiados intentos de registro. Intenta más tarde.', {
-          action: 'register',
-        });
+        toast.error('Demasiados intentos de registro. Intenta más tarde.');
         return;
       }
 
@@ -109,7 +107,7 @@ export const RegisterPage: React.FC = () => {
       });
 
       if (res.error) {
-        toast.error(res.error, { action: 'register' });
+        toast.error(res.error);
         return;
       }
 

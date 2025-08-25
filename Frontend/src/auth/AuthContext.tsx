@@ -151,7 +151,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (!isEmailConfirmed(session)) {
           await supabase.auth.signOut();
           updateAuthState({ user: null, loading: false });
-          toast.error('Confirma tu correo para iniciar sesión', { action: 'login' });
+          toast.error('Confirma tu correo para iniciar sesión');
           return;
         }
         await loadProfile(session.user.id);
@@ -183,7 +183,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           await supabase.auth.signOut();
           updateAuthState({ user: null, loading: false });
           window.history.replaceState({}, document.title, window.location.pathname);
-          toast.success('Correo confirmado. Inicia sesión.', { action: 'login' });
+          toast.success('Correo confirmado. Inicia sesión.');
           window.location.replace('/login');
           return;
         }

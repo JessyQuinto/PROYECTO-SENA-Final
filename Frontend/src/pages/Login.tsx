@@ -61,9 +61,7 @@ const LoginPage: React.FC = () => {
 
       // Limpiar rate limit en login exitoso
       rateLimit.clearLimit();
-      toast.success('Inicio de sesión exitoso', {
-        action: 'login',
-      });
+      toast.success('Inicio de sesión exitoso');
     },
   });
 

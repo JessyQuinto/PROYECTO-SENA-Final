@@ -47,9 +47,7 @@ const ResetPasswordPage: React.FC = () => {
       );
 
       if (result !== null) {
-        toast.success('Contraseña actualizada', {
-          action: 'update',
-        });
+        toast.success('Contraseña actualizada');
         setTimeout(() => navigate('/login', { replace: true }), 1500);
       }
     },

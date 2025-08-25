@@ -365,13 +365,11 @@ const VendorDashboard: React.FC = () => {
         prev.filter(p => (archivado ? p.id !== productId : true))
       );
       (window as any).toast?.success(
-        archivado ? 'Producto archivado' : 'Producto restaurado',
-        { role: 'vendedor', action: 'update' }
+        archivado ? 'Producto archivado' : 'Producto restaurado'
       );
     } catch (e: any) {
       (window as any).toast?.error(
-        e?.message || 'No se pudo archivar/restaurar',
-        { role: 'vendedor', action: 'update' }
+        e?.message || 'No se pudo archivar/restaurar'
       );
     }
   };
@@ -451,10 +449,7 @@ const VendorDashboard: React.FC = () => {
             cuidados: (story.cuidados || '').trim() || null,
           },
         });
-        (window as any).toast?.success('Producto actualizado', {
-          role: 'vendedor',
-          action: 'update',
-        });
+        (window as any).toast?.success('Producto actualizado');
       } else {
         const { error: insErr } = await supabase.from('productos').insert({
           vendedor_id: user.id,
@@ -467,10 +462,7 @@ const VendorDashboard: React.FC = () => {
           estado: 'activo',
         });
         if (insErr) throw insErr;
-        (window as any).toast?.success('Producto creado', {
-          role: 'vendedor',
-          action: 'sale',
-        });
+        (window as any).toast?.success('Producto creado');
       }
       await loadVendorData();
       resetForm();
@@ -478,8 +470,7 @@ const VendorDashboard: React.FC = () => {
     } catch (e: any) {
       setError(e?.message || 'No se pudo guardar el producto');
       (window as any).toast?.error(
-        e?.message || 'No se pudo guardar el producto',
-        { role: 'vendedor', action: 'update' }
+        e?.message || 'No se pudo guardar el producto'
       );
     } finally {
       setSaving(false);
@@ -571,10 +562,7 @@ const VendorDashboard: React.FC = () => {
         }
       } catch {}
     } catch (e: any) {
-      (window as any).toast?.error(e?.message || 'No se pudo marcar enviado', {
-        role: 'vendedor',
-        action: 'ship',
-      });
+      (window as any).toast?.error(e?.message || 'No se pudo marcar enviado');
     }
   };
 
@@ -1438,16 +1426,13 @@ const VendorDashboard: React.FC = () => {
                       const j = await resp.json();
                       if (!resp.ok)
                         throw new Error(j?.error || 'No se pudo eliminar');
-                      (window as any).toast?.success('Cuenta eliminada', {
-                        action: 'delete',
-                      });
+                      (window as any).toast?.success('Cuenta eliminada');
                       await supabase.auth.signOut();
                       window.location.href = '/';
                     }
                   } catch (e: any) {
                     (window as any).toast?.error(
-                      e?.message || 'No se pudo eliminar la cuenta',
-                      { action: 'delete' }
+                      e?.message || 'No se pudo eliminar la cuenta'
                     );
                   }
                 }}
