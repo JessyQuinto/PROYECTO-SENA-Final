@@ -8,17 +8,7 @@ import { useForm } from '@/hooks/useForm';
 import { useToastWithAuth } from '@/hooks/useToast';
 import { useRateLimit } from '@/hooks/useSecurity';
 
-const loginSchema = {
-  email: (value: string) => {
-    if (!value) return 'El correo electrónico es obligatorio';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Email inválido';
-    return null;
-  },
-  password: (value: string) => {
-    if (!value) return 'La contraseña es obligatoria';
-    return null;
-  },
-};
+// validation handled inline in submit handler
 
 interface FormData {
   email: string;
@@ -37,7 +27,7 @@ const LoginPage: React.FC = () => {
       password: '',
     },
     onSubmit: async values => {
-      console.log('Form submitted with values:', values);
+      // removed debug logging
 
       // Validación manual simple
       if (!values.email) {
@@ -61,13 +51,8 @@ const LoginPage: React.FC = () => {
         return;
       }
 
-      console.log('Attempting to sign in...');
       const result = await signIn(values.email, values.password);
-      console.log('Sign in result:', result);
-      console.log('Sign in result.error:', result.error);
-
       if (result.error) {
-        console.error('Login failed:', result.error);
         toast.error(result.error, {
           action: 'login',
         });
@@ -231,13 +216,6 @@ const LoginPage: React.FC = () => {
                     type='submit'
                     className='w-full py-3 text-base'
                     disabled={form.isSubmitting || loading}
-                    onClick={() =>
-                      console.log('Button clicked, form state:', {
-                        isSubmitting: form.isSubmitting,
-                        loading,
-                        values: form.values,
-                      })
-                    }
                   >
                     {form.isSubmitting || loading ? (
                       <div className='flex items-center gap-2'>

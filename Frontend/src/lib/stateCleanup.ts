@@ -5,6 +5,7 @@
  * particularly useful during logout operations to prevent state persistence issues.
  */
 import React from 'react';
+import logger from './logger';
 
 export interface CleanupOptions {
   /** Whether to clear session storage */
@@ -78,7 +79,7 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
   };
 
   if (verbose) {
-    console.log('[StateCleanup] Starting user state cleanup', {
+    logger.debug('[StateCleanup] Starting user state cleanup', {
       clearSessionStorage,
       dispatchEvents,
       preserveKeys,
@@ -88,14 +89,14 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
 
   try {
     if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-      console.warn('[StateCleanup] Browser storage not available');
+      logger.warn('[StateCleanup] Browser storage not available');
       return { ...result, success: false };
     }
 
     // Get all current localStorage keys
     const allKeys = Object.keys(localStorage);
     if (verbose) {
-      console.log('[StateCleanup] Found localStorage keys:', allKeys);
+      logger.debug('[StateCleanup] Found localStorage keys:', allKeys);
     }
 
     // Determine which keys to remove
@@ -134,8 +135,8 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
     });
 
     if (verbose) {
-      console.log('[StateCleanup] Keys to remove:', keysToRemove);
-      console.log('[StateCleanup] Keys to preserve:', preserveKeys);
+      logger.debug('[StateCleanup] Keys to remove:', keysToRemove);
+      logger.debug('[StateCleanup] Keys to preserve:', preserveKeys);
     }
 
     // Remove identified keys
@@ -144,15 +145,12 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
         localStorage.removeItem(key);
         result.removedKeys.push(key);
         if (verbose) {
-          console.log(`[StateCleanup] ✅ Removed key: ${key}`);
+          logger.debug(`[StateCleanup] ✅ Removed key: ${key}`);
         }
       } catch (error) {
         result.errors.push({ key, error: error as Error });
         if (verbose) {
-          console.error(
-            `[StateCleanup] ❌ Failed to remove key ${key}:`,
-            error
-          );
+          logger.error(`[StateCleanup] ❌ Failed to remove key ${key}:`, error);
         }
       }
     });
@@ -165,12 +163,12 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
       try {
         sessionStorage.clear();
         if (verbose) {
-          console.log('[StateCleanup] ✅ SessionStorage cleared');
+          logger.debug('[StateCleanup] ✅ SessionStorage cleared');
         }
       } catch (error) {
         result.errors.push({ key: 'sessionStorage', error: error as Error });
         if (verbose) {
-          console.error(
+          logger.error(
             '[StateCleanup] ❌ Failed to clear sessionStorage:',
             error
           );
@@ -197,12 +195,12 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
         );
 
         if (verbose) {
-          console.log('[StateCleanup] ✅ Events dispatched');
+          logger.debug('[StateCleanup] ✅ Events dispatched');
         }
       } catch (error) {
         result.errors.push({ key: 'events', error: error as Error });
         if (verbose) {
-          console.error('[StateCleanup] ❌ Failed to dispatch events:', error);
+          logger.error('[StateCleanup] ❌ Failed to dispatch events:', error);
         }
       }
     }
@@ -216,14 +214,14 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
     );
 
     if (unexpectedUserKeys.length > 0) {
-      console.warn(
+      logger.warn(
         '[StateCleanup] ⚠️ Unexpected user keys remain:',
         unexpectedUserKeys
       );
     }
 
     if (verbose) {
-      console.log('[StateCleanup] Cleanup completed', {
+      logger.debug('[StateCleanup] Cleanup completed', {
         removedCount: result.removedKeys.length,
         preservedCount: result.preservedKeys.length,
         errorCount: result.errors.length,
@@ -231,7 +229,7 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
       });
     }
   } catch (error) {
-    console.error('[StateCleanup] Fatal error during cleanup:', error);
+    logger.error('[StateCleanup] Fatal error during cleanup:', error);
     result.success = false;
     result.errors.push({ key: 'fatal', error: error as Error });
   }
@@ -243,7 +241,7 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
  * Emergency cleanup - removes ALL user-related data aggressively
  */
 export function emergencyCleanup(): CleanupResult {
-  console.log('[StateCleanup] 🚨 EMERGENCY CLEANUP INITIATED');
+  logger.warn('[StateCleanup] 🚨 EMERGENCY CLEANUP INITIATED');
 
   return cleanupUserState({
     emergency: true,
@@ -286,7 +284,7 @@ export function validateCleanup(): { clean: boolean; issues: string[] } {
       key =>
         ALWAYS_REMOVE_KEYS.some(pattern => key.includes(pattern)) ||
         (KEY_PATTERNS.USER_DATA.some(pattern => key.startsWith(pattern)) &&
-          !DEFAULT_PRESERVE_KEYS.includes(key))
+          !(DEFAULT_PRESERVE_KEYS as readonly string[]).includes(key))
     );
 
     if (problematicKeys.length > 0) {
@@ -300,13 +298,13 @@ export function validateCleanup(): { clean: boolean; issues: string[] } {
       issues.push('SessionStorage is not empty');
     }
 
-    console.log('[StateCleanup] Validation result:', {
+    logger.debug('[StateCleanup] Validation result:', {
       clean: issues.length === 0,
       totalKeys: allKeys.length,
       issues: issues.length,
     });
   } catch (error) {
-    issues.push(`Validation error: ${error.message}`);
+    issues.push(`Validation error: ${(error as Error).message}`);
   }
 
   return {
@@ -322,7 +320,7 @@ export function setupCleanupListeners(
   callback: (detail: any) => void
 ): () => void {
   const handleCleanup = (e: CustomEvent) => {
-    console.log('[StateCleanup] Component received cleanup event:', e.detail);
+    logger.debug('[StateCleanup] Component received cleanup event:', e.detail);
     callback(e.detail);
   };
 

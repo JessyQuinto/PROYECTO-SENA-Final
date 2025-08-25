@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { Button } from './shadcn/button';
+import logger from '@/lib/logger';
 
 const LOCAL_STORAGE_KEY = 'cookie_consent';
 
@@ -13,17 +14,17 @@ export const CookieConsent: React.FC = () => {
     // Verificar si ya se dio consentimiento
     const checkConsent = () => {
       try {
-        console.log('[CookieConsent] Checking consent...');
+        logger.debug('[CookieConsent] Checking consent...');
 
         // Test localStorage availability first
         if (typeof Storage === 'undefined') {
-          console.warn('[CookieConsent] localStorage not available');
+          logger.warn('[CookieConsent] localStorage not available');
           setVisible(false);
           return;
         }
 
         const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-        console.log('[CookieConsent] Saved consent raw:', saved);
+        logger.debug('[CookieConsent] Saved consent raw:', saved);
 
         if (!saved || saved === 'null' || saved === 'undefined') {
           console.log(
@@ -35,34 +36,34 @@ export const CookieConsent: React.FC = () => {
 
         try {
           const consent = JSON.parse(saved);
-          console.log('[CookieConsent] Parsed consent:', consent);
+          logger.debug('[CookieConsent] Parsed consent:', consent);
 
           if (
             consent &&
             consent.value &&
             (consent.value === 'accepted' || consent.value === 'rejected')
           ) {
-            console.log(
+            logger.debug(
               '[CookieConsent] Valid consent found, hiding component'
             );
             setVisible(false);
           } else {
-            console.log(
+            logger.debug(
               '[CookieConsent] Invalid consent format, showing component'
             );
             setVisible(true);
           }
         } catch (parseError) {
-          console.error(
+          logger.error(
             '[CookieConsent] Error parsing consent JSON:',
             parseError
           );
-          console.log('[CookieConsent] Removing invalid consent data');
+          logger.debug('[CookieConsent] Removing invalid consent data');
           localStorage.removeItem(LOCAL_STORAGE_KEY);
           setVisible(true);
         }
       } catch (error) {
-        console.error('[CookieConsent] Error checking consent:', error);
+        logger.error('[CookieConsent] Error checking consent:', error);
         setVisible(true);
       }
     };
@@ -72,7 +73,7 @@ export const CookieConsent: React.FC = () => {
     // Listen for storage changes (e.g., from other tabs or logout)
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === LOCAL_STORAGE_KEY || e.key === null) {
-        console.log(
+        logger.debug(
           '[CookieConsent] Storage change detected, rechecking consent'
         );
         checkConsent();
@@ -81,7 +82,7 @@ export const CookieConsent: React.FC = () => {
 
     // Listen for custom logout event
     const handleLogout = () => {
-      console.log('[CookieConsent] Logout detected, resetting consent');
+      logger.debug('[CookieConsent] Logout detected, resetting consent');
       checkConsent();
     };
 
@@ -96,7 +97,7 @@ export const CookieConsent: React.FC = () => {
 
   const setConsent = useCallback((value: ConsentValue) => {
     try {
-      console.log('[CookieConsent] Setting consent:', value);
+      logger.debug('[CookieConsent] Setting consent:', value);
       setLoading(true);
 
       const consentData = {
@@ -106,7 +107,7 @@ export const CookieConsent: React.FC = () => {
         userAgent: navigator.userAgent.substring(0, 100), // Truncated for privacy
       };
 
-      console.log('[CookieConsent] Consent data to save:', consentData);
+      logger.debug('[CookieConsent] Consent data to save:', consentData);
 
       // Test localStorage write
       const testKey = `${LOCAL_STORAGE_KEY}_test`;
@@ -117,37 +118,37 @@ export const CookieConsent: React.FC = () => {
 
       // Verify the save
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-      console.log('[CookieConsent] Verification - saved data:', saved);
+      logger.debug('[CookieConsent] Verification - saved data:', saved);
 
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
           if (parsed.value === value) {
-            console.log(
+            logger.debug(
               '[CookieConsent] Consent saved and verified successfully'
             );
           } else {
-            console.error(
+            logger.error(
               '[CookieConsent] Consent verification failed - value mismatch'
             );
           }
         } catch (e) {
-          console.error(
+          logger.error(
             '[CookieConsent] Consent verification failed - parse error:',
             e
           );
         }
       } else {
-        console.error(
+        logger.error(
           '[CookieConsent] Consent verification failed - no saved data'
         );
       }
 
       setVisible(false);
-      console.log('[CookieConsent] Component hidden after consent');
+      logger.debug('[CookieConsent] Component hidden after consent');
     } catch (error) {
-      console.error('[CookieConsent] Error saving consent:', error);
-      console.error('[CookieConsent] Error details:', {
+      logger.error('[CookieConsent] Error saving consent:', error);
+      logger.error('[CookieConsent] Error details:', {
         name: (error as any).name,
         message: (error as any).message,
         stack: (error as any).stack,
@@ -162,7 +163,7 @@ export const CookieConsent: React.FC = () => {
 
   const handleAccept = useCallback(
     (e: React.MouseEvent) => {
-      console.log('[CookieConsent] Accept button clicked - event details:', {
+      logger.debug('[CookieConsent] Accept button clicked - event details:', {
         type: e.type,
         button: e.button,
         target: e.target,
@@ -170,7 +171,7 @@ export const CookieConsent: React.FC = () => {
       });
 
       if (loading) {
-        console.log('[CookieConsent] Already processing, ignoring click');
+        logger.debug('[CookieConsent] Already processing, ignoring click');
         return;
       }
 
@@ -181,7 +182,7 @@ export const CookieConsent: React.FC = () => {
 
   const handleReject = useCallback(
     (e: React.MouseEvent) => {
-      console.log('[CookieConsent] Reject button clicked - event details:', {
+      logger.debug('[CookieConsent] Reject button clicked - event details:', {
         type: e.type,
         button: e.button,
         target: e.target,
@@ -199,11 +200,10 @@ export const CookieConsent: React.FC = () => {
   );
 
   if (!visible) {
-    console.log('[CookieConsent] Component not visible, returning null');
+    logger.debug('[CookieConsent] Component not visible, returning null');
     return null;
   }
-
-  console.log('[CookieConsent] Rendering component, loading:', loading);
+  logger.debug('[CookieConsent] Rendering component, loading:', loading);
 
   return (
     <div

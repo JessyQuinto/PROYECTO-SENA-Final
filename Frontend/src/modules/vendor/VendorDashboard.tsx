@@ -111,13 +111,7 @@ const VendorDashboard: React.FC = () => {
   const [cfgNotifNewOrder, setCfgNotifNewOrder] = useState(true);
   const [cfgNotifItemShipped, setCfgNotifItemShipped] = useState(true);
   const [cfgLogoUploading, setCfgLogoUploading] = useState(false);
-  const [productQuery, setProductQuery] = useState('');
-  const [productStatus, setProductStatus] = useState<
-    'all' | 'activo' | 'inactivo'
-  >('all');
-  const [orderStatus, setOrderStatus] = useState<
-    'all' | 'pendiente' | 'procesando' | 'enviado' | 'entregado' | 'cancelado'
-  >('all');
+  // productQuery/productStatus/orderStatus are currently unused; remove to avoid lint warnings
 
   useEffect(() => {
     if (user?.id) {
@@ -266,7 +260,7 @@ const VendorDashboard: React.FC = () => {
       if (productosData) {
         setProducts(productosData);
         const productosActivos = productosData.filter(
-          p => p.estado === 'activo'
+          (p: Product) => p.estado === 'activo'
         );
 
         setStats({
@@ -293,7 +287,7 @@ const VendorDashboard: React.FC = () => {
             }
             return acc;
           },
-          []
+          [] as Order[]
         );
 
         setOrders(processedOrders);
@@ -313,8 +307,10 @@ const VendorDashboard: React.FC = () => {
 
         // KPIs ya aplicados por RPC arriba
       }
-    } catch (error) {
-      console.error('Error loading vendor data:', error);
+    } catch (error: any) {
+      const toast = (window as any).toast;
+      if (toast?.error) toast.error(error?.message || 'Error cargando datos');
+      setError(error?.message || 'Error cargando datos');
     } finally {
       setLoading(false);
     }
@@ -348,9 +344,13 @@ const VendorDashboard: React.FC = () => {
           productosActivos: prev.productosActivos + activeChange,
         };
       });
-    } catch (error) {
-      console.error('Error updating product status:', error);
-      alert('Error al actualizar el estado del producto');
+    } catch (error: any) {
+      const toast = (window as any).toast;
+      if (toast?.error)
+        toast.error(
+          error?.message || 'Error al actualizar el estado del producto'
+        );
+      setError(error?.message || 'Error al actualizar el estado del producto');
     }
   };
 
@@ -418,7 +418,7 @@ const VendorDashboard: React.FC = () => {
         descripcion: form.descripcion || undefined,
         precio: form.precio,
         stock: form.stock,
-        categoria_id: parsed.data.categoria_id || undefined,
+        categoria_id: form.categoria_id || undefined,
         imagen_url: imageUrl,
       });
       if (!parsed.success) {

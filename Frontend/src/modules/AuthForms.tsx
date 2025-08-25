@@ -4,7 +4,6 @@ import { useAuth } from '@/auth/AuthContext';
 import { useForm } from '@/hooks/useForm';
 import { useToast } from '@/hooks/useToast';
 import { useNavigate } from 'react-router-dom';
-import Icon from '@/components/ui/Icon';
 import { Input } from '@/components/ui/shadcn/input';
 import { Label } from '@/components/ui/shadcn/label';
 import { Button } from '@/components/ui/shadcn/button';
@@ -42,25 +41,19 @@ export const AuthForms: React.FC<AuthFormsProps> = ({
     initialValues: { email: '', password: '' },
     validationSchema: loginSchema,
     onSubmit: async values => {
-      console.log('🔍 Login form submitted:', values);
       try {
-        console.log('🔍 Calling signIn...');
         const result = await signIn(values.email, values.password);
-        console.log('🔍 SignIn result:', result);
         if (result.error) {
-          console.error('🔍 Login error:', result.error);
           toast.error('Error en el inicio de sesión', {
             action: 'login',
           });
         } else {
-          console.log('🔍 Login successful');
           toast.success('Inicio de sesión exitoso', {
             action: 'login',
           });
           navigate('/dashboard');
         }
       } catch (error: any) {
-        console.error('🔍 Unexpected error:', error);
         toast.error('Error inesperado', {
           action: 'login',
         });
@@ -120,10 +113,7 @@ export const AuthForms: React.FC<AuthFormsProps> = ({
 
           {mode === 'login' ? (
             <form
-              onSubmit={e => {
-                console.log('🔍 Form submit event triggered');
-                loginForm.handleSubmit(e);
-              }}
+              onSubmit={e => loginForm.handleSubmit(e)}
               className='space-y-4'
             >
               <div className='space-y-2'>
@@ -164,7 +154,6 @@ export const AuthForms: React.FC<AuthFormsProps> = ({
                 type='submit'
                 className='w-full'
                 disabled={loginForm.isSubmitting}
-                onClick={() => console.log('🔍 Login button clicked')}
               >
                 {loginForm.isSubmitting
                   ? 'Iniciando sesión…'

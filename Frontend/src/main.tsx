@@ -2,7 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './modules/App';
 import { initPerformanceMonitoring } from './lib/performance';
-import { errorHandler } from './lib/errorHandler';
+import './lib/errorHandler';
 import { initializeSecurity } from './lib/csp';
 import './lib/serviceWorker'; // Initialize service worker
 import './styles.css';
@@ -13,9 +13,7 @@ initPerformanceMonitoring();
 // Initialize security configuration
 initializeSecurity();
 
-// Initialize error handler
-// Initialize error handler
-errorHandler();
+// Error handler singleton is initialized on import (constructor sets up global handlers)
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
