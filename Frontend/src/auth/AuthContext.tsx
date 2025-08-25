@@ -4,6 +4,7 @@ import {
   useEffect,
   useState,
   ReactNode,
+  useRef,
 } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
@@ -47,6 +48,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSigningOut, setIsSigningOut] = useState(false); // Nuevo estado para transición
+  const signingOutRef = useRef(false);
+  useEffect(() => {
+    signingOutRef.current = isSigningOut;
+  }, [isSigningOut]);
   const toast = useToast(); // Usar la versión simple que no depende de useAuth
   const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL as
     | string
@@ -193,6 +198,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     })();
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event: AuthChangeEvent, session: Session | null) => {
+        // Ignorar cambios durante cierre de sesión para evitar renders intermedios
+        if (signingOutRef.current) {
+          return;
+        }
         if (session?.user) {
           // Seguridad: si email no confirmado, cerrar sesión y avisar
           if (!isEmailConfirmed(session)) {
@@ -218,10 +227,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     );
 
     // Initial session check - but avoid duplicate calls
+    // Evitar trabajo extra si ya estamos cerrando sesión
+    if (signingOutRef.current) {
+      setLoading(false);
+      return () => {
+        listener.subscription.unsubscribe();
+      };
+    }
+
     supabase.auth
       .getSession()
       .then(async ({ data }: { data: { session: Session | null } }) => {
         const session = data.session as Session | null;
+        if (signingOutRef.current) {
+          setLoading(false);
+          return;
+        }
         if (session?.user) {
           if (!isEmailConfirmed(session)) {
             await supabase.auth.signOut();
@@ -395,8 +416,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       setIsSigningOut(true);
-      setLoading(true);
-      
+      // No activar loading global para evitar re-render completo
+
       // Limpiar estado de React inmediatamente para evitar parpadeo
       setUser(null);
       setProfileLoading('');
@@ -407,7 +428,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       // Usar el sistema centralizado de limpieza de estado
-      const cleanupResult = cleanupUserState({
+      cleanupUserState({
         clearSessionStorage: true,
         dispatchEvents: true,
         preserveKeys: [
@@ -422,12 +443,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Validar que la limpieza fue exitosa
       const validation = validateCleanup();
       if (!validation.clean) {
-        // Intentar limpieza de emergencia si la validación falla
         const { emergencyCleanup } = await import('@/lib/stateCleanup');
         emergencyCleanup();
       }
 
-      // Dispatch events to notify other components
+      // Notificar a la UI y navegar sin recargar
       window.dispatchEvent(new Event('storage'));
       window.dispatchEvent(
         new CustomEvent('userLoggedOut', {
@@ -438,24 +458,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         })
       );
 
-      // Recargar página inmediatamente para evitar parpadeo
-      window.location.reload();
-
+      try {
+        const target = '/';
+        if (window.location.pathname !== target) {
+          window.history.replaceState({}, document.title, target);
+        }
+      } finally {
+        // Mantener loading en false; cerrar transición
+        setIsSigningOut(false);
+      }
     } catch (error) {
       console.error('[AuthContext] Error during signOut:', error);
 
-      // Asegurar que el estado se limpie incluso si hay error
+      // Asegurar limpieza y desbloqueo de transición
       setUser(null);
-      setLoading(false);
       setProfileLoading('');
       setIsSigningOut(false);
 
-      // Intentar limpieza de emergencia
       try {
         const { emergencyCleanup } = await import('@/lib/stateCleanup');
         emergencyCleanup();
-
-        // Still try to trigger UI refresh
         window.dispatchEvent(new Event('storage'));
         window.dispatchEvent(
           new CustomEvent('userLoggedOut', {
@@ -466,41 +488,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             },
           })
         );
-
-        // Force page reload to ensure clean state
-        setTimeout(() => {
-          window.location.reload();
-        }, 500);
       } catch (cleanupError) {
         console.error('[AuthContext] Emergency cleanup failed:', cleanupError);
-
-        // Fallback manual cleanup
-        try {
-          if (typeof window !== 'undefined') {
-            Object.keys(localStorage).forEach(key => {
-              if (
-                key.includes('user_') ||
-                key.includes('cart_') ||
-                key.includes('sb-')
-              ) {
-                localStorage.removeItem(key);
-              }
-            });
-            sessionStorage.clear();
-            window.dispatchEvent(new Event('storage'));
-            window.dispatchEvent(
-              new CustomEvent('userLoggedOut', {
-                detail: {
-                  timestamp: Date.now(),
-                  emergency: true,
-                  source: 'authContext-fallback',
-                },
-              })
-            );
-          }
-        } catch (fallbackError) {
-          console.error('[AuthContext] Fallback cleanup failed:', fallbackError);
-        }
       }
     }
   };

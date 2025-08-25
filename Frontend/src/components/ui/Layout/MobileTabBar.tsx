@@ -6,21 +6,23 @@ import Icon from '@/components/ui/Icon';
 
 const MobileTabBar: React.FC = () => {
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, isSigningOut } = useAuth();
   const { items } = useCart();
   const cartCount = items.reduce((sum, i) => sum + (i.cantidad || 0), 0);
 
   const isActive = (path: string) => location.pathname === path;
 
-  const isBuyer = user?.role === 'comprador';
+  // Durante el cierre de sesión, comportarse como visitante para evitar parpadeos
+  const effectiveUser = isSigningOut ? null : user;
+  const isBuyer = effectiveUser?.role === 'comprador';
   const vendorState = (user as any)?.vendedor_estado as
     | 'aprobado'
     | 'pendiente'
     | 'rechazado'
     | undefined;
   const isVendorApproved =
-    user?.role === 'vendedor' && vendorState === 'aprobado';
-  const isAdmin = user?.role === 'admin';
+    effectiveUser?.role === 'vendedor' && vendorState === 'aprobado';
+  const isAdmin = effectiveUser?.role === 'admin';
 
   // Construcción dinámica de tabs según estado/auth/rol
   const tabs: Array<{
@@ -44,7 +46,7 @@ const MobileTabBar: React.FC = () => {
   });
 
   // Tercera pestaña: solo si hay usuario; si no hay sesión, dejamos 2 tabs (Inicio, Productos)
-  if (user) {
+  if (effectiveUser) {
     if (isBuyer) {
       // Comprador: Perfil
       tabs.push({
@@ -52,7 +54,7 @@ const MobileTabBar: React.FC = () => {
         label: 'Perfil',
         icon: { category: 'Usuario', name: 'IconamoonProfileFill' },
       });
-    } else if (user.role === 'vendedor') {
+    } else if (effectiveUser.role === 'vendedor') {
       // Vendedor: Mostrar acción relevante
       if (isVendorApproved) {
         // Aprobado -> Vender (dashboard)

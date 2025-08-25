@@ -142,16 +142,16 @@ const Navbar: React.FC = () => {
           {/* Right side items - Reorganized order */}
           <div className='flex items-center space-x-4'>
             {/* 1. User Avatar (Logo with animation + Name) */}
-            {user && <UserAvatar user={user} />}
+            {user && !isSigningOut && <UserAvatar user={user} />}
 
             {/* 2. Cart dropdown */}
-            {user?.role === 'comprador' && <CartDropdown />}
+            {user?.role === 'comprador' && !isSigningOut && <CartDropdown />}
 
             {/* 3. Theme toggle */}
             <ThemeToggle />
 
             {/* 4. Sign out button */}
-            {user && <SignOutButton />}
+            {user && !isSigningOut && <SignOutButton />}
 
             {/* Auth buttons for non-authenticated users */}
             {!user && (

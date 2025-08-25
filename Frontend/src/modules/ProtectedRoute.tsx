@@ -8,7 +8,10 @@ interface Props {
 }
 
 export const ProtectedRoute: React.FC<Props> = ({ children, roles }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, isSigningOut } = useAuth();
+
+  // Durante el cierre de sesión, evitar renderizar contenido protegido
+  if (isSigningOut) return <Navigate to='/' replace />;
 
   if (loading) return <p>Cargando sesión...</p>;
   if (!user) return <Navigate to='/' replace />;
