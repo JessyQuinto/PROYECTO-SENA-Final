@@ -417,8 +417,8 @@ describe('Validation Schemas', () => {
 
 describe('Security Constants', () => {
   it('should have proper security constants', () => {
-    expect(SECURITY_CONSTANTS.MAX_LOGIN_ATTEMPTS).toBe(5);
-    expect(SECURITY_CONSTANTS.LOGIN_LOCKOUT_DURATION).toBe(15 * 60 * 1000);
+    expect(SECURITY_CONSTANTS.MAX_LOGIN_ATTEMPTS).toBe(10); // Actualizado de 5 a 10
+    expect(SECURITY_CONSTANTS.LOGIN_LOCKOUT_DURATION).toBe(5 * 60 * 1000); // Actualizado a 5 minutos
     expect(SECURITY_CONSTANTS.PASSWORD_MIN_LENGTH).toBe(8);
     expect(SECURITY_CONSTANTS.MAX_FILE_SIZE_MB).toBe(5);
     expect(SECURITY_CONSTANTS.SESSION_TIMEOUT).toBe(24 * 60 * 60 * 1000);

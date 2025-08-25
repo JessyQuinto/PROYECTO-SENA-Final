@@ -19,7 +19,7 @@ const LoginPage: React.FC = () => {
   const { signIn, loading, user } = useAuth();
   const navigate = useNavigate();
   const toast = useToastWithAuth();
-  const rateLimit = useRateLimit('login', 5, 15 * 60 * 1000); // 5 intentos por 15 minutos
+  const rateLimit = useRateLimit('login', 10, 5 * 60 * 1000); // 10 intentos por 5 minutos
 
   const form = useForm<FormData>({
     initialValues: {

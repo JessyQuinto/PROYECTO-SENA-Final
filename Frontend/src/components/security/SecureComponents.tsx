@@ -270,8 +270,8 @@ export const SecureButton = forwardRef<HTMLButtonElement, SecureButtonProps>(
   (
     {
       rateLimitKey,
-      maxAttempts = 5,
-      lockoutDuration = 15 * 60 * 1000,
+      maxAttempts = 10, // Aumentado de 5 a 10 intentos
+      lockoutDuration = 5 * 60 * 1000, // 5 minutos (300,000 ms)
       showRemainingAttempts = false,
       children,
       onClick,
