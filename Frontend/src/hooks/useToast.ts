@@ -50,12 +50,12 @@ function getDefaultTitle(
   action?: ToastAction,
   type?: ToastType
 ): string {
-  const actionText = action ? ACTION_TEXT_MAP[action] : 'Notificación';
-  const roleText = role ? ROLE_TEXT_MAP[role] : 'Usuario';
+  const actionText = action ? ACTION_TEXT_MAP[action] : '';
+  const roleText = role ? ROLE_TEXT_MAP[role] : '';
 
-  if (type === 'error') return `${actionText} (${roleText}) - Error`;
-  if (type === 'success') return `${actionText} (${roleText}) - Éxito`;
-  return `${actionText} (${roleText})`;
+  if (type === 'error') return 'Error';
+  if (type === 'success') return '';
+  return '';
 }
 
 export const useToast = () => {
