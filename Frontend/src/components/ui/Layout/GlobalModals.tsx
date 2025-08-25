@@ -1,5 +1,4 @@
 import React from 'react';
-import CookieConsent from '@/components/ui/CookieConsent';
 
 interface GlobalModalsProps {
   className?: string;
@@ -12,9 +11,6 @@ interface GlobalModalsProps {
 const GlobalModals: React.FC<GlobalModalsProps> = ({ className = '' }) => {
   return (
     <div className={`fixed inset-0 pointer-events-none z-[9999] ${className}`}>
-      {/* Cookie Consent Modal */}
-      <CookieConsent />
-
       {/* Future global modals can be added here:
           - Global error dialogs
           - Network status indicators  

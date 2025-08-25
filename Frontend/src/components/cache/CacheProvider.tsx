@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useCacheWarming, useCacheManager } from '@/hooks/useCache';
 import { cache } from '@/lib/cache';
 
@@ -8,7 +8,10 @@ interface CacheContextValue {
   actions: {
     refresh: () => void;
     warmCache: () => Promise<void>;
+    warmProductCache: (productId: string) => Promise<void>;
     invalidateProductCache: () => void;
+    invalidateProductCacheById: (productId: string) => void;
+    invalidateAllProductDetails: () => void;
     invalidateUserCache: (userId?: string) => void;
     invalidateConfigCache: () => void;
     clearAllCache: () => void;
@@ -79,7 +82,10 @@ export const CacheProvider: React.FC<CacheProviderProps> = ({
     actions: {
       refresh: cacheManager.refreshStats,
       warmCache: cacheWarming.warmEssentialData,
+      warmProductCache: cacheManager.warmProductCache,
       invalidateProductCache: cacheManager.invalidateProductCache,
+      invalidateProductCacheById: cacheManager.invalidateProductCacheById,
+      invalidateAllProductDetails: cacheManager.invalidateAllProductDetails,
       invalidateUserCache: cacheManager.invalidateUserCache,
       invalidateConfigCache: cacheManager.invalidateConfigCache,
       clearAllCache: cacheManager.clearAllCache,
@@ -99,34 +105,6 @@ export const useCache = (): CacheContextValue => {
     throw new Error('useCache must be used within a CacheProvider');
   }
   return context;
-};
-
-/**
- * Cache status indicator component for development
- */
-export const CacheStatusIndicator: React.FC = () => {
-  const { isReady, stats } = useCache();
-
-  if (process.env.NODE_ENV !== 'development') {
-    return null;
-  }
-
-  return (
-    <div className='fixed bottom-4 right-4 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-xs shadow-lg'>
-      <div className='flex items-center gap-2'>
-        <div
-          className={`w-2 h-2 rounded-full ${
-            isReady ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'
-          }`}
-        />
-        <span className='font-medium'>Cache</span>
-      </div>
-      <div className='text-gray-600 dark:text-gray-400 mt-1'>
-        <div>Memory: {stats.memoryItems}</div>
-        <div>Storage: {stats.localStorageItems}</div>
-      </div>
-    </div>
-  );
 };
 
 /**
@@ -173,9 +151,9 @@ export const CacheManagementPanel: React.FC = () => {
         <button
           onClick={handleWarmCache}
           disabled={isLoading}
-          className='w-full btn btn-primary disabled:opacity-50'
+          className='btn btn-primary w-full'
         >
-          {isLoading ? 'Precargando...' : 'Precargar Caché'}
+          {isLoading ? 'Calentando...' : 'Calentar Caché'}
         </button>
 
         <div className='grid grid-cols-2 gap-2'>
@@ -186,29 +164,27 @@ export const CacheManagementPanel: React.FC = () => {
             Limpiar Productos
           </button>
           <button
+            onClick={actions.invalidateAllProductDetails}
+            className='btn btn-secondary text-xs'
+          >
+            Limpiar Detalles
+          </button>
+        </div>
+
+        <div className='grid grid-cols-2 gap-2'>
+          <button
             onClick={actions.invalidateConfigCache}
             className='btn btn-secondary text-xs'
           >
             Limpiar Config
           </button>
+          <button
+            onClick={actions.clearAllCache}
+            className='btn btn-destructive text-xs'
+          >
+            Limpiar Todo
+          </button>
         </div>
-
-        <button
-          onClick={actions.clearAllCache}
-          className='w-full btn btn-danger text-xs'
-        >
-          Limpiar Todo
-        </button>
-      </div>
-
-      {/* Configuration */}
-      <div className='mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded text-xs'>
-        <div className='font-medium mb-1'>Configuración</div>
-        <div>
-          TTL por defecto: {Math.round(stats.config.defaultTtl / 1000 / 60)}m
-        </div>
-        <div>Máximo en memoria: {stats.config.maxMemoryItems}</div>
-        <div>Versión: {stats.config.version}</div>
       </div>
     </div>
   );

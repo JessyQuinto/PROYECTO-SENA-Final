@@ -1,67 +1,42 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabaseClient';
 import { useCart } from './CartContext';
 import { Card, CardContent } from '@/components/ui/shadcn/card';
 import { Button } from '@/components/ui/shadcn/button';
 import { Input } from '@/components/ui/shadcn/input';
 import Icon from '@/components/ui/Icon';
+import { 
+  useCachedProduct, 
+  useCachedProductAverageRating, 
+  useCachedProductStory 
+} from '@/hooks/useCache';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { add } = useCart();
-  const [p, setP] = useState<any>(null);
-  const [avg, setAvg] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
-  const [story, setStory] = useState<{
-    historia?: string;
-    materiales?: string;
-    tecnica?: string;
-    origen?: string;
-    cuidados?: string;
-  } | null>(null);
 
-  useEffect(() => {
-    (async () => {
-      const [{ data: prod }, { data: avgRow }, storyLoad] = await Promise.all([
-        supabase
-          .from('productos')
-          .select(
-            'id,nombre,descripcion,precio,stock,imagen_url,estado,categorias(nombre)'
-          )
-          .eq('id', id)
-          .maybeSingle(),
-        supabase
-          .from('mv_promedio_calificaciones')
-          .select('promedio')
-          .eq('producto_id', id)
-          .maybeSingle(),
-        (async () => {
-          try {
-            const key = `product_story:${id}`;
-            const { data } = await supabase
-              .from('app_config')
-              .select('value')
-              .eq('key', key)
-              .maybeSingle();
-            return (data?.value as any) || null;
-          } catch {
-            return null;
-          }
-        })(),
-      ]);
-      setP(prod);
-      setAvg(
-        typeof avgRow?.promedio === 'number' ? Number(avgRow.promedio) : null
-      );
-      setStory(storyLoad);
-      setLoading(false);
-    })();
-  }, [id]);
+  // Use cached data hooks
+  const { 
+    data: product, 
+    loading: productLoading, 
+    error: productError 
+  } = useCachedProduct(id!, { enabled: !!id });
+  
+  const { 
+    data: avg, 
+    loading: avgLoading 
+  } = useCachedProductAverageRating(id!, { enabled: !!id });
+  
+  const { 
+    data: story, 
+    loading: storyLoading 
+  } = useCachedProductStory(id!, { enabled: !!id });
 
-  if (loading)
+  const loading = productLoading || avgLoading || storyLoading;
+
+  if (loading) {
     return (
       <div className='container py-8'>
         <div className='flex items-center justify-center'>
@@ -73,16 +48,36 @@ const ProductDetail: React.FC = () => {
         </div>
       </div>
     );
-  if (!p) return <div className='container py-8'>Producto no encontrado</div>;
+  }
+
+  if (productError || !product) {
+    return (
+      <div className='container py-8'>
+        <div className='text-center'>
+          <Icon
+            category='Estados y Feedback'
+            name='BxErrorCircle'
+            className='w-16 h-16 mx-auto text-red-500 mb-4'
+          />
+          <h2 className='text-xl font-semibold text-gray-700 mb-2'>
+            Error al cargar el producto
+          </h2>
+          <p className='text-gray-500'>
+            {productError?.message || 'Producto no encontrado'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const addToCart = () => {
     add({
-      productoId: p.id,
-      nombre: p.nombre,
-      precio: p.precio,
+      productoId: product.id,
+      nombre: product.nombre,
+      precio: product.precio,
       cantidad: qty,
-      imagenUrl: p.imagen_url,
-      stock: p.stock,
+      imagenUrl: product.imagen_url,
+      stock: product.stock,
     });
     navigate('/carrito');
   };
@@ -93,10 +88,10 @@ const ProductDetail: React.FC = () => {
         <Card className='overflow-hidden'>
           <CardContent className='p-0'>
             <div className='relative bg-gray-100' style={{ paddingTop: '66%' }}>
-              {p.imagen_url ? (
+              {product.imagen_url ? (
                 <img
-                  src={p.imagen_url}
-                  alt={p.nombre}
+                  src={product.imagen_url}
+                  alt={product.nombre}
                   className='absolute inset-0 w-full h-full object-cover'
                 />
               ) : (
@@ -119,7 +114,7 @@ const ProductDetail: React.FC = () => {
                 name='BxsPackage'
                 className='w-8 h-8'
               />
-              {p.nombre}
+              {product.nombre}
             </h1>
             {avg !== null && (
               <div className='text-sm text-yellow-600 flex items-center gap-1'>
@@ -132,12 +127,12 @@ const ProductDetail: React.FC = () => {
               </div>
             )}
             {/* Descripción */}
-            {p.descripcion && (
+            {product.descripcion && (
               <div>
                 <h2 className='text-sm font-semibold uppercase tracking-wide text-gray-500 mb-1'>
                   Descripción
                 </h2>
-                <p className='text-gray-700 leading-relaxed'>{p.descripcion}</p>
+                <p className='text-gray-700 leading-relaxed'>{product.descripcion}</p>
               </div>
             )}
             <div className='text-3xl font-bold text-(--color-terracotta-suave) flex items-center gap-2'>
@@ -146,7 +141,7 @@ const ProductDetail: React.FC = () => {
                 name='VaadinWallet'
                 className='w-6 h-6'
               />
-              ${p.precio?.toLocaleString()}
+              ${product.precio?.toLocaleString()}
             </div>
             <div className='flex items-center gap-3'>
               <label className='form-label flex items-center gap-2'>
@@ -160,11 +155,11 @@ const ProductDetail: React.FC = () => {
               <Input
                 type='number'
                 min={1}
-                max={p.stock}
+                max={product.stock}
                 value={qty}
                 onChange={e =>
                   setQty(
-                    Math.max(1, Math.min(Number(e.target.value || 1), p.stock))
+                    Math.max(1, Math.min(Number(e.target.value || 1), product.stock))
                   )
                 }
                 className='w-24'
@@ -184,7 +179,7 @@ const ProductDetail: React.FC = () => {
                 name='SiInventoryFill'
                 className='w-4 h-4'
               />
-              Stock disponible: {p.stock}
+              Stock disponible: {product.stock}
             </div>
 
             {/* Historia y origen */}
@@ -194,7 +189,7 @@ const ProductDetail: React.FC = () => {
               </h2>
               <p className='text-gray-700 leading-relaxed'>
                 {story?.historia?.trim() ||
-                  `Producido y fabricado a mano por campesinos de la región. ${p.categorias?.nombre ? `${p.categorias.nombre} elaborada con dedicación, respetando técnicas locales y cuidando cada detalle.` : 'Pieza elaborada con dedicación, respetando técnicas locales y cuidando cada detalle.'}`}
+                  `Producido y fabricado a mano por campesinos de la región. ${product.categorias?.nombre ? `${product.categorias.nombre} elaborada con dedicación, respetando técnicas locales y cuidando cada detalle.` : 'Pieza elaborada con dedicación, respetando técnicas locales y cuidando cada detalle.'}`}
               </p>
               <div className='flex flex-wrap gap-2 text-sm'>
                 {story?.materiales && (

@@ -23,6 +23,7 @@ interface SessionUser {
 interface AuthContextValue {
   user: SessionUser | null;
   loading: boolean;
+  isSigningOut: boolean; // Nuevo estado para transición
   signIn(email: string, password: string): Promise<{ error?: string }>;
   signUp(
     email: string,
@@ -45,6 +46,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSigningOut, setIsSigningOut] = useState(false); // Nuevo estado para transición
   const toast = useToast(); // Usar la versión simple que no depende de useAuth
   const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL as
     | string
@@ -387,32 +389,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
+    if (isSigningOut) {
+      return;
+    }
+
     try {
-      console.log('[AuthContext] Sign out initiated');
-      console.log('[AuthContext] Current user before logout:', user);
-      console.log(
-        '[AuthContext] Current localStorage keys:',
-        Object.keys(localStorage)
-      );
-
-      // Limpiar estado local inmediatamente
-      console.log('[AuthContext] Clearing React state...');
-      setUser(null);
+      setIsSigningOut(true);
       setLoading(true);
+      
+      // Limpiar estado de React inmediatamente para evitar parpadeo
+      setUser(null);
       setProfileLoading('');
-      console.log('[AuthContext] React state cleared');
 
-      // Cerrar sesión en Supabase (esto limpia automáticamente la sesión)
+      // Cerrar sesión en Supabase
       if (supabase) {
-        console.log('[AuthContext] Signing out from Supabase...');
         await supabase.auth.signOut();
-        console.log('[AuthContext] Supabase sign out completed');
-      } else {
-        console.warn('[AuthContext] Supabase client not available');
       }
 
       // Usar el sistema centralizado de limpieza de estado
-      console.log('[AuthContext] Starting centralized state cleanup...');
       const cleanupResult = cleanupUserState({
         clearSessionStorage: true,
         dispatchEvents: true,
@@ -422,88 +416,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           'accessibility_settings',
         ],
         emergency: false,
-        verbose: true,
+        verbose: false,
       });
-
-      if (cleanupResult.success) {
-        console.log('[AuthContext] State cleanup completed successfully:', {
-          removedKeys: cleanupResult.removedKeys.length,
-          preservedKeys: cleanupResult.preservedKeys.length,
-          errors: cleanupResult.errors.length,
-        });
-      } else {
-        console.warn(
-          '[AuthContext] State cleanup had issues:',
-          cleanupResult.errors
-        );
-      }
 
       // Validar que la limpieza fue exitosa
       const validation = validateCleanup();
       if (!validation.clean) {
-        console.warn(
-          '[AuthContext] Cleanup validation failed:',
-          validation.issues
-        );
-
         // Intentar limpieza de emergencia si la validación falla
-        console.log('[AuthContext] Attempting emergency cleanup...');
         const { emergencyCleanup } = await import('@/lib/stateCleanup');
-        const emergencyResult = emergencyCleanup();
-        console.log('[AuthContext] Emergency cleanup result:', emergencyResult);
+        emergencyCleanup();
       }
 
-      // Force a complete UI refresh by triggering a custom event
-      console.log('[AuthContext] Triggering UI refresh event...');
-      try {
-        // Dispatch multiple events to ensure all components update
-        window.dispatchEvent(new Event('storage'));
-        window.dispatchEvent(
-          new CustomEvent('userLoggedOut', {
-            detail: {
-              timestamp: Date.now(),
-              emergency: false,
-              source: 'authContext',
-            },
-          })
-        );
-        window.dispatchEvent(
-          new CustomEvent('userStateCleanup', {
-            detail: {
-              timestamp: Date.now(),
-              source: 'authContext',
-            },
-          })
-        );
+      // Dispatch events to notify other components
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(
+        new CustomEvent('userLoggedOut', {
+          detail: {
+            timestamp: Date.now(),
+            source: 'authContext-signout',
+          },
+        })
+      );
 
-        // Small delay to allow event processing before releasing loading state
-        setTimeout(() => {
-          setLoading(false);
-          console.log('[AuthContext] Sign out completed successfully');
-          console.log('[AuthContext] Final user state:', null);
-        }, 100);
-      } catch (eventError) {
-        console.error(
-          '[AuthContext] Error dispatching refresh events:',
-          eventError
-        );
-        setLoading(false);
-      }
+      // Recargar página inmediatamente para evitar parpadeo
+      window.location.reload();
+
     } catch (error) {
       console.error('[AuthContext] Error during signOut:', error);
-      console.error('[AuthContext] Error stack:', (error as Error).stack);
 
       // Asegurar que el estado se limpie incluso si hay error
-      console.log('[AuthContext] Emergency cleanup due to error...');
       setUser(null);
       setLoading(false);
       setProfileLoading('');
+      setIsSigningOut(false);
 
       // Intentar limpieza de emergencia
       try {
         const { emergencyCleanup } = await import('@/lib/stateCleanup');
-        const emergencyResult = emergencyCleanup();
-        console.log('[AuthContext] Emergency cleanup result:', emergencyResult);
+        emergencyCleanup();
 
         // Still try to trigger UI refresh
         window.dispatchEvent(new Event('storage'));
@@ -516,11 +466,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             },
           })
         );
+
+        // Force page reload to ensure clean state
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
       } catch (cleanupError) {
-        console.error(
-          '[AuthContext] Emergency cleanup also failed:',
-          cleanupError
-        );
+        console.error('[AuthContext] Emergency cleanup failed:', cleanupError);
 
         // Fallback manual cleanup
         try {
@@ -547,10 +499,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             );
           }
         } catch (fallbackError) {
-          console.error(
-            '[AuthContext] Even fallback cleanup failed:',
-            fallbackError
-          );
+          console.error('[AuthContext] Fallback cleanup failed:', fallbackError);
         }
       }
     }
@@ -566,7 +515,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, signIn, signUp, signOut, refreshProfile }}
+      value={{ user, loading, isSigningOut, signIn, signUp, signOut, refreshProfile }}
     >
       {children}
     </AuthContext.Provider>

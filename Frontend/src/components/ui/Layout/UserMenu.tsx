@@ -16,7 +16,7 @@ interface UserMenuProps {
 }
 
 export const UserMenu: React.FC<UserMenuProps> = ({ user, className }) => {
-  const { signOut, loading } = useAuth();
+  const { signOut, loading, isSigningOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
   const userInitial = useMemo(() => {
@@ -29,14 +29,19 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, className }) => {
     console.log('[UserMenu] Sign out initiated');
     setIsOpen(false);
 
+    // No mostrar delay si ya está en proceso de cerrar sesión
+    if (isSigningOut) {
+      return;
+    }
+
     // Add a small delay to ensure menu closes before signing out
     setTimeout(async () => {
       await signOut();
     }, 100);
   };
 
-  // No mostrar el menú si está cargando
-  if (loading) {
+  // No mostrar el menú si está cargando o cerrando sesión
+  if (loading || isSigningOut) {
     return (
       <div className={cn('relative', className)}>
         <div className='flex items-center space-x-2'>

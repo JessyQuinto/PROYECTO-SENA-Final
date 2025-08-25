@@ -102,6 +102,20 @@ const applyTheme = (
     root.classList.remove('reduce-motion');
   }
 
+  // Clear any cached theme-related data to prevent conflicts
+  try {
+    // Clear theme-related cache keys if cache is available
+    if (typeof window !== 'undefined' && (window as any).__CACHE_MANAGER__) {
+      const cache = (window as any).__CACHE_MANAGER__;
+      if (cache.deletePattern) {
+        cache.deletePattern('^theme_');
+        cache.deletePattern('^ui_');
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to clear theme cache:', error);
+  }
+
   // Remove transition class after animation
   if (isTransitioning) {
     setTimeout(() => {

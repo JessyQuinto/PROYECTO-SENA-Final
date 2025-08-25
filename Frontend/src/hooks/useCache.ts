@@ -224,6 +224,63 @@ export function useCachedProductStory(
 }
 
 /**
+ * Hook for cached individual product details
+ */
+export function useCachedProduct(
+  productId: string,
+  options: UseCachedDataOptions = {}
+) {
+  return useCachedData(
+    CACHE_KEYS.PRODUCT_DETAIL(productId),
+    async () => {
+      const { data, error } = await supabase
+        .from('productos')
+        .select(`
+          id,
+          nombre,
+          descripcion,
+          precio,
+          stock,
+          imagen_url,
+          estado,
+          created_at,
+          categorias(nombre)
+        `)
+        .eq('id', productId)
+        .eq('estado', 'activo')
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    { ttl: CACHE_TTL.MEDIUM, ...options }
+  );
+}
+
+/**
+ * Hook for cached individual product average rating
+ */
+export function useCachedProductAverageRating(
+  productId: string,
+  options: UseCachedDataOptions = {}
+) {
+  return useCachedData(
+    CACHE_KEYS.PRODUCT_AVERAGE_RATING(productId),
+    async () => {
+      const { data, error } = await supabase
+        .from('mv_promedio_calificaciones')
+        .select('promedio')
+        .eq('producto_id', productId)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data?.promedio ? Number(data.promedio) : null;
+    },
+    { ttl: CACHE_TTL.MEDIUM, ...options }
+  );
+}
+
+/**
  * Hook for bulk cache operations and utilities
  */
 export function useCacheManager() {
@@ -235,6 +292,16 @@ export function useCacheManager() {
 
   const invalidateProductCache = useCallback(() => {
     cacheUtils.invalidateProductCache();
+    refreshStats();
+  }, [refreshStats]);
+
+  const invalidateProductCacheById = useCallback((productId: string) => {
+    cacheUtils.invalidateProductCacheById(productId);
+    refreshStats();
+  }, [refreshStats]);
+
+  const invalidateAllProductDetails = useCallback(() => {
+    cacheUtils.invalidateAllProductDetails();
     refreshStats();
   }, [refreshStats]);
 
@@ -256,14 +323,12 @@ export function useCacheManager() {
     refreshStats();
   }, [refreshStats]);
 
-  useEffect(() => {
-    refreshStats();
-  }, [refreshStats]);
-
   return {
     stats,
     refreshStats,
     invalidateProductCache,
+    invalidateProductCacheById,
+    invalidateAllProductDetails,
     invalidateUserCache,
     invalidateConfigCache,
     clearAllCache,
@@ -325,10 +390,55 @@ export function useCacheWarming() {
     await Promise.allSettled([warmCategories(), warmFeaturedProducts()]);
   }, [warmCategories, warmFeaturedProducts]);
 
+  const warmProductData = useCallback(async (productId: string) => {
+    try {
+      await Promise.allSettled([
+        cache.getOrSet(
+          CACHE_KEYS.PRODUCT_DETAIL(productId),
+          async () => {
+            const { data } = await supabase
+              .from('productos')
+              .select(`
+                id,
+                nombre,
+                descripcion,
+                precio,
+                stock,
+                imagen_url,
+                estado,
+                created_at,
+                categorias(nombre)
+              `)
+              .eq('id', productId)
+              .eq('estado', 'activo')
+              .maybeSingle();
+            return data;
+          },
+          CACHE_TTL.MEDIUM
+        ),
+        cache.getOrSet(
+          CACHE_KEYS.PRODUCT_AVERAGE_RATING(productId),
+          async () => {
+            const { data } = await supabase
+              .from('mv_promedio_calificaciones')
+              .select('promedio')
+              .eq('producto_id', productId)
+              .maybeSingle();
+            return data?.promedio ? Number(data.promedio) : null;
+          },
+          CACHE_TTL.MEDIUM
+        ),
+      ]);
+    } catch (error) {
+      console.warn('Failed to warm product data cache:', error);
+    }
+  }, []);
+
   return {
     warmCategories,
     warmFeaturedProducts,
     warmEssentialData,
+    warmProductData,
   };
 }
 

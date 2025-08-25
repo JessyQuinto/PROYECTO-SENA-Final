@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Button } from './shadcn/button';
 import logger from '@/lib/logger';
 
@@ -7,58 +7,38 @@ const LOCAL_STORAGE_KEY = 'cookie_consent';
 type ConsentValue = 'accepted' | 'rejected';
 
 export const CookieConsent: React.FC = () => {
-  const [visible, setVisible] = React.useState(false);
-  const [loading, setLoading] = React.useState(false);
+  const [visible, setVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Verificar si ya se dio consentimiento
     const checkConsent = () => {
       try {
-        logger.debug('[CookieConsent] Checking consent...');
-
-        // Test localStorage availability first
         if (typeof Storage === 'undefined') {
-          logger.warn('[CookieConsent] localStorage not available');
           setVisible(false);
           return;
         }
 
         const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-        logger.debug('[CookieConsent] Saved consent raw:', saved);
-
+        
         if (!saved || saved === 'null' || saved === 'undefined') {
-          console.log(
-            '[CookieConsent] No valid saved consent, showing component'
-          );
           setVisible(true);
           return;
         }
 
         try {
           const consent = JSON.parse(saved);
-          logger.debug('[CookieConsent] Parsed consent:', consent);
-
+          
           if (
             consent &&
             consent.value &&
             (consent.value === 'accepted' || consent.value === 'rejected')
           ) {
-            logger.debug(
-              '[CookieConsent] Valid consent found, hiding component'
-            );
             setVisible(false);
           } else {
-            logger.debug(
-              '[CookieConsent] Invalid consent format, showing component'
-            );
             setVisible(true);
           }
         } catch (parseError) {
-          logger.error(
-            '[CookieConsent] Error parsing consent JSON:',
-            parseError
-          );
-          logger.debug('[CookieConsent] Removing invalid consent data');
           localStorage.removeItem(LOCAL_STORAGE_KEY);
           setVisible(true);
         }
@@ -70,19 +50,15 @@ export const CookieConsent: React.FC = () => {
 
     checkConsent();
 
-    // Listen for storage changes (e.g., from other tabs or logout)
+    // Listen for storage changes
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === LOCAL_STORAGE_KEY || e.key === null) {
-        logger.debug(
-          '[CookieConsent] Storage change detected, rechecking consent'
-        );
         checkConsent();
       }
     };
 
     // Listen for custom logout event
     const handleLogout = () => {
-      logger.debug('[CookieConsent] Logout detected, resetting consent');
       checkConsent();
     };
 
@@ -95,119 +71,46 @@ export const CookieConsent: React.FC = () => {
     };
   }, []);
 
-  const setConsent = useCallback((value: ConsentValue) => {
+  const setConsent = useCallback(async (value: ConsentValue) => {
     try {
-      logger.debug('[CookieConsent] Setting consent:', value);
       setLoading(true);
-
+      
       const consentData = {
         value,
         at: new Date().toISOString(),
         timestamp: Date.now(),
-        userAgent: navigator.userAgent.substring(0, 100), // Truncated for privacy
+        userAgent: navigator.userAgent.substring(0, 100),
       };
 
-      logger.debug('[CookieConsent] Consent data to save:', consentData);
-
-      // Test localStorage write
-      const testKey = `${LOCAL_STORAGE_KEY}_test`;
-      localStorage.setItem(testKey, 'test');
-      localStorage.removeItem(testKey);
-
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(consentData));
-
-      // Verify the save
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-      logger.debug('[CookieConsent] Verification - saved data:', saved);
-
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (parsed.value === value) {
-            logger.debug(
-              '[CookieConsent] Consent saved and verified successfully'
-            );
-          } else {
-            logger.error(
-              '[CookieConsent] Consent verification failed - value mismatch'
-            );
-          }
-        } catch (e) {
-          logger.error(
-            '[CookieConsent] Consent verification failed - parse error:',
-            e
-          );
-        }
-      } else {
-        logger.error(
-          '[CookieConsent] Consent verification failed - no saved data'
-        );
-      }
-
       setVisible(false);
-      logger.debug('[CookieConsent] Component hidden after consent');
+      
+      logger.debug('[CookieConsent] Consent saved successfully:', value);
     } catch (error) {
       logger.error('[CookieConsent] Error saving consent:', error);
-      logger.error('[CookieConsent] Error details:', {
-        name: (error as any).name,
-        message: (error as any).message,
-        stack: (error as any).stack,
-      });
-
-      // Still hide the component to prevent it from blocking the UI
       setVisible(false);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const handleAccept = useCallback(
-    (e: React.MouseEvent) => {
-      logger.debug('[CookieConsent] Accept button clicked - event details:', {
-        type: e.type,
-        button: e.button,
-        target: e.target,
-        currentTarget: e.currentTarget,
-      });
+  const handleAccept = useCallback(() => {
+    if (loading) return;
+    setConsent('accepted');
+  }, [loading, setConsent]);
 
-      if (loading) {
-        logger.debug('[CookieConsent] Already processing, ignoring click');
-        return;
-      }
-
-      setConsent('accepted');
-    },
-    [loading, setConsent]
-  );
-
-  const handleReject = useCallback(
-    (e: React.MouseEvent) => {
-      logger.debug('[CookieConsent] Reject button clicked - event details:', {
-        type: e.type,
-        button: e.button,
-        target: e.target,
-        currentTarget: e.currentTarget,
-      });
-
-      if (loading) {
-        console.log('[CookieConsent] Already processing, ignoring click');
-        return;
-      }
-
-      setConsent('rejected');
-    },
-    [loading, setConsent]
-  );
+  const handleReject = useCallback(() => {
+    if (loading) return;
+    setConsent('rejected');
+  }, [loading, setConsent]);
 
   if (!visible) {
-    logger.debug('[CookieConsent] Component not visible, returning null');
     return null;
   }
-  logger.debug('[CookieConsent] Rendering component, loading:', loading);
 
   return (
     <div
-      className='fixed inset-x-4 bottom-4 z-50 md:inset-x-auto md:right-6 md:left-auto md:max-w-md'
+      className='fixed inset-x-4 bottom-4 z-[99999] md:inset-x-auto md:right-6 md:left-auto md:max-w-md'
       role='dialog'
       aria-labelledby='cookie-consent-title'
       aria-describedby='cookie-consent-description'
@@ -219,7 +122,7 @@ export const CookieConsent: React.FC = () => {
           className='absolute inset-0 opacity-5 pointer-events-none'
           style={{
             backgroundImage:
-              "url('/assert/motif-de-fond-sans-couture-tribal-dessin-geometrique-noir-et-blanc-vecteur/v1045-03.jpg')",
+              "url('/assert/motif-de-fond-sans-couture-tribal-dessin-geometrico-noir-et-blanc-vecteur/v1045-03.jpg')",
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}
@@ -263,7 +166,7 @@ export const CookieConsent: React.FC = () => {
                   size='sm'
                   onClick={handleReject}
                   disabled={loading}
-                  className='text-xs h-8 px-3 cursor-pointer'
+                  className='text-xs h-8 px-3'
                   type='button'
                   data-testid='cookie-reject'
                   aria-label='Rechazar cookies no esenciales'
@@ -274,7 +177,7 @@ export const CookieConsent: React.FC = () => {
                   size='sm'
                   onClick={handleAccept}
                   disabled={loading}
-                  className='text-xs h-8 px-3 cursor-pointer'
+                  className='text-xs h-8 px-3'
                   type='button'
                   data-testid='cookie-accept'
                   aria-label='Aceptar todas las cookies'

@@ -6,9 +6,58 @@ import { getSupabaseAdmin } from './lib/supabaseAdmin.js';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 const app = express();
-app.use(cors());
+// CORS: permitir orígenes del frontend configurados por env FRONTEND_ORIGINS (separados por coma)
+// Ej: FRONTEND_ORIGINS="https://<swa>.azurestaticapps.net,https://www.tudominio.com"
+const allowedOrigins = (process.env.FRONTEND_ORIGINS || '*')
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+// Soporte simple de comodines: usar '*' en host o subdominio (p.ej., https://miapp-*.azurestaticapps.net)
+const originMatchers = allowedOrigins.map((o) => {
+    if (o === '*')
+        return { type: 'any' };
+    if (o.includes('*')) {
+        // Escape regex y reemplazar '*' por '.*'
+        const pattern = o
+            .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+            .replace(/\\\*/g, '.*');
+        return { type: 'regex', re: new RegExp(`^${pattern}$`, 'i') };
+    }
+    return { type: 'exact', value: o.toLowerCase() };
+});
+const corsOptions = {
+    origin: (origin, callback) => {
+        // Permitir llamadas sin origin (p.ej., health checks internos)
+        if (!origin)
+            return callback(null, true);
+        const o = origin.toLowerCase();
+        for (const m of originMatchers) {
+            if (m.type === 'any')
+                return callback(null, true);
+            if (m.type === 'exact' && m.value === o)
+                return callback(null, true);
+            if (m.type === 'regex' && m.re.test(o))
+                return callback(null, true);
+        }
+        return callback(new Error('Not allowed by CORS'));
+    },
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    maxAge: 600,
+};
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(morgan('dev'));
 app.use(express.json());
+// Security headers
+app.use((_req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    // Prevent caching of API responses
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
+});
 // Ruta raíz amigable
 app.get('/', (_req, res) => {
     res.redirect('/health');

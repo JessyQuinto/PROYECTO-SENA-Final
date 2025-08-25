@@ -293,6 +293,8 @@ export const CACHE_KEYS = {
   APP_CONFIG: 'app_config',
   PRODUCT_STORY: (id: string) => `product_story:${id}`,
   USER_PROFILE: (id: string) => `user_profile:${id}`,
+  PRODUCT_DETAIL: (id: string) => `product_detail:${id}`,
+  PRODUCT_AVERAGE_RATING: (id: string) => `product_avg_rating:${id}`,
 } as const;
 
 // Cache TTL constants (in milliseconds)
@@ -312,6 +314,11 @@ export const cache = new CacheManager({
   version: '1.0.0',
 });
 
+// Expose cache manager globally for theme and other components
+if (typeof window !== 'undefined') {
+  (window as any).__CACHE_MANAGER__ = cache;
+}
+
 // Utility functions for common cache operations
 export const cacheUtils = {
   /**
@@ -321,6 +328,24 @@ export const cacheUtils = {
     cache.delete(CACHE_KEYS.FEATURED_PRODUCTS);
     cache.delete(CACHE_KEYS.PRODUCT_RATINGS);
     cache.delete(CACHE_KEYS.CATEGORIES);
+  },
+
+  /**
+   * Clear cache for a specific product
+   */
+  invalidateProductCacheById(productId: string): void {
+    cache.delete(CACHE_KEYS.PRODUCT_DETAIL(productId));
+    cache.delete(CACHE_KEYS.PRODUCT_AVERAGE_RATING(productId));
+    cache.delete(CACHE_KEYS.PRODUCT_STORY(productId));
+  },
+
+  /**
+   * Clear all product detail caches
+   */
+  invalidateAllProductDetails(): void {
+    cache.deletePattern('^product_detail:');
+    cache.deletePattern('^product_avg_rating:');
+    cache.deletePattern('^product_story:');
   },
 
   /**

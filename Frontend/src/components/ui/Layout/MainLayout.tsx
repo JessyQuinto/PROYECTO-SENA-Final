@@ -1,8 +1,9 @@
 import React from 'react';
-import Header from '@/components/ui/Layout/Header';
-import Footer from '@/components/ui/Layout/Footer';
-import MobileTabBar from '@/components/ui/Layout/MobileTabBar';
-import GlobalModals from '@/components/ui/Layout/GlobalModals';
+import Header from './Header';
+import Footer from './Footer';
+import MobileTabBar from './MobileTabBar';
+import GlobalModals from './GlobalModals';
+import CookieConsent from '@/components/ui/CookieConsent';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -22,6 +23,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
       <Footer />
       <MobileTabBar />
       <GlobalModals />
+      <CookieConsent />
     </div>
   );
 };
