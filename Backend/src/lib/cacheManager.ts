@@ -218,7 +218,9 @@ class SupabaseConnectionPool {
           persistSession: false,
         },
         realtime: {
-          enabled: false,
+          params: {
+            eventsPerSecond: 10,
+          },
         },
       });
       this.pool.push(client);
@@ -235,7 +237,11 @@ class SupabaseConnectionPool {
       return createClient(this.supabaseUrl, this.supabaseKey, {
         db: { schema: 'public' },
         auth: { autoRefreshToken: false, persistSession: false },
-        realtime: { enabled: false },
+        realtime: {
+          params: {
+            eventsPerSecond: 10,
+          },
+        },
       });
     }
 
@@ -429,8 +435,8 @@ export class CachedDataAccess {
     // Clear all product list caches
     const stats = this.cache.getStats();
     const keys = Array.from((this.cache as any).cache.keys());
-    keys.forEach(key => {
-      if (key.startsWith('products:')) {
+    keys.forEach((key: unknown) => {
+      if (typeof key === 'string' && key.startsWith('products:')) {
         this.cache.delete(key);
       }
     });
