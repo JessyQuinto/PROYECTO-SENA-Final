@@ -8,6 +8,7 @@ interface CacheItem<T> {
   timestamp: number;
   ttl: number; // Time to live in milliseconds
   version: string;
+  appVersion: string; // Add app version tracking
 }
 
 interface CacheConfig {
@@ -16,6 +17,7 @@ interface CacheConfig {
   enableLocalStorage: boolean;
   storagePrefix: string;
   version: string;
+  appVersion: string; // Add app version
 }
 
 class CacheManager {
@@ -28,77 +30,134 @@ class CacheManager {
       defaultTtl: 5 * 60 * 1000, // 5 minutes default
       maxMemoryItems: 100,
       enableLocalStorage: true,
-      storagePrefix: 'app_cache_',
+      storagePrefix: 'tesoros_choco_',
       version: '1.0.0',
+      appVersion: this.getAppVersion(), // Get current app version
       ...config,
     };
 
     this.startCleanupInterval();
     this.loadFromLocalStorage();
+    this.validateAppVersion(); // Validate and clean old versions
+  }
+
+  /**
+   * Get current app version from package.json or use timestamp
+   */
+  private getAppVersion(): string {
+    try {
+      // Try to get version from package.json
+      if (typeof window !== 'undefined' && (window as any).__APP_VERSION__) {
+        return (window as any).__APP_VERSION__;
+      }
+      // Fallback to timestamp-based version
+      return `v${Date.now()}`;
+    } catch {
+      return `v${Date.now()}`;
+    }
+  }
+
+  /**
+   * Validate app version and clean old cache entries
+   */
+  private validateAppVersion(): void {
+    if (this.config.enableLocalStorage) {
+      try {
+        const versionKey = `${this.config.storagePrefix}app_version`;
+        const storedVersion = localStorage.getItem(versionKey);
+        
+        if (storedVersion !== this.config.appVersion) {
+          console.log(`[Cache] App version changed: ${storedVersion} → ${this.config.appVersion}`);
+          this.clear(); // Clear all cache on version change
+          localStorage.setItem(versionKey, this.config.appVersion);
+        }
+      } catch (error) {
+        console.warn('[Cache] Error validating app version:', error);
+      }
+    }
   }
 
   /**
    * Get item from cache with automatic fallback and validation
    */
   get<T>(key: string): T | null {
-    // Try memory cache first
-    const memoryItem = this.memoryCache.get(key);
-    if (memoryItem && this.isValid(memoryItem)) {
-      return memoryItem.data;
-    }
-
-    // Try localStorage as fallback
-    if (this.config.enableLocalStorage) {
-      const storageItem = this.getFromLocalStorage<T>(key);
-      if (storageItem && this.isValid(storageItem)) {
-        // Restore to memory cache
-        this.memoryCache.set(key, storageItem);
-        return storageItem.data;
+    try {
+      // Try memory cache first
+      const memoryItem = this.memoryCache.get(key);
+      if (memoryItem && this.isValid(memoryItem)) {
+        return memoryItem.data;
       }
-    }
 
-    return null;
+      // Try localStorage as fallback
+      if (this.config.enableLocalStorage) {
+        const storageItem = this.getFromLocalStorage<T>(key);
+        if (storageItem && this.isValid(storageItem)) {
+          // Restore to memory cache
+          this.memoryCache.set(key, storageItem);
+          return storageItem.data;
+        }
+      }
+
+      return null;
+    } catch (error) {
+      console.warn(`[Cache] Error getting item ${key}:`, error);
+      return null;
+    }
   }
 
   /**
    * Set item in cache with TTL
    */
   set<T>(key: string, data: T, ttl?: number): void {
-    const cacheItem: CacheItem<T> = {
-      data,
-      timestamp: Date.now(),
-      ttl: ttl || this.config.defaultTtl,
-      version: this.config.version,
-    };
+    try {
+      const cacheItem: CacheItem<T> = {
+        data,
+        timestamp: Date.now(),
+        ttl: ttl || this.config.defaultTtl,
+        version: this.config.version,
+        appVersion: this.config.appVersion,
+      };
 
-    // Store in memory
-    this.memoryCache.set(key, cacheItem);
+      // Store in memory
+      this.memoryCache.set(key, cacheItem);
 
-    // Store in localStorage if enabled
-    if (this.config.enableLocalStorage) {
-      this.setInLocalStorage(key, cacheItem);
+      // Store in localStorage if enabled
+      if (this.config.enableLocalStorage) {
+        this.setInLocalStorage(key, cacheItem);
+      }
+
+      // Cleanup if memory cache is too large
+      this.enforceMemoryLimit();
+    } catch (error) {
+      console.warn(`[Cache] Error setting item ${key}:`, error);
     }
-
-    // Cleanup if memory cache is too large
-    this.enforceMemoryLimit();
   }
 
   /**
    * Check if cache item is valid (not expired and correct version)
    */
   private isValid<T>(item: CacheItem<T>): boolean {
-    const isNotExpired = Date.now() - item.timestamp < item.ttl;
-    const isCorrectVersion = item.version === this.config.version;
-    return isNotExpired && isCorrectVersion;
+    try {
+      const isNotExpired = Date.now() - item.timestamp < item.ttl;
+      const isCorrectVersion = item.version === this.config.version;
+      const isCorrectAppVersion = item.appVersion === this.config.appVersion;
+      return isNotExpired && isCorrectVersion && isCorrectAppVersion;
+    } catch {
+      return false;
+    }
   }
 
   /**
    * Clear specific cache key
    */
   delete(key: string): void {
-    this.memoryCache.delete(key);
-    if (this.config.enableLocalStorage) {
-      localStorage.removeItem(this.config.storagePrefix + key);
+    try {
+      this.memoryCache.delete(key);
+      if (this.config.enableLocalStorage) {
+        localStorage.removeItem(this.config.storagePrefix + key);
+      }
+    } catch (error) {
+      console.warn(`[Cache] Error deleting key ${key}:`, error);
     }
   }
 
@@ -106,26 +165,30 @@ class CacheManager {
    * Clear cache by pattern
    */
   deletePattern(pattern: string): void {
-    const regex = new RegExp(pattern);
+    try {
+      const regex = new RegExp(pattern);
 
-    // Clear from memory
-    for (const key of this.memoryCache.keys()) {
-      if (regex.test(key)) {
-        this.memoryCache.delete(key);
+      // Clear from memory
+      for (const key of this.memoryCache.keys()) {
+        if (regex.test(key)) {
+          this.memoryCache.delete(key);
+        }
       }
-    }
 
-    // Clear from localStorage
-    if (this.config.enableLocalStorage) {
-      for (let i = localStorage.length - 1; i >= 0; i--) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith(this.config.storagePrefix)) {
-          const cacheKey = key.replace(this.config.storagePrefix, '');
-          if (regex.test(cacheKey)) {
-            localStorage.removeItem(key);
+      // Clear from localStorage
+      if (this.config.enableLocalStorage) {
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith(this.config.storagePrefix)) {
+            const cacheKey = key.replace(this.config.storagePrefix, '');
+            if (regex.test(cacheKey)) {
+              localStorage.removeItem(key);
+            }
           }
         }
       }
+    } catch (error) {
+      console.warn(`[Cache] Error deleting pattern ${pattern}:`, error);
     }
   }
 
@@ -133,14 +196,19 @@ class CacheManager {
    * Clear all cache
    */
   clear(): void {
-    this.memoryCache.clear();
-    if (this.config.enableLocalStorage) {
-      for (let i = localStorage.length - 1; i >= 0; i--) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith(this.config.storagePrefix)) {
-          localStorage.removeItem(key);
+    try {
+      this.memoryCache.clear();
+      if (this.config.enableLocalStorage) {
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith(this.config.storagePrefix)) {
+            localStorage.removeItem(key);
+          }
         }
       }
+      console.log('[Cache] All cache cleared');
+    } catch (error) {
+      console.warn('[Cache] Error clearing cache:', error);
     }
   }
 
@@ -148,14 +216,19 @@ class CacheManager {
    * Get cache statistics
    */
   getStats() {
-    const memorySize = this.memoryCache.size;
-    const localStorageSize = this.getLocalStorageSize();
+    try {
+      const memorySize = this.memoryCache.size;
+      const localStorageSize = this.getLocalStorageSize();
 
-    return {
-      memoryItems: memorySize,
-      localStorageItems: localStorageSize,
-      config: this.config,
-    };
+      return {
+        memoryItems: memorySize,
+        localStorageItems: localStorageSize,
+        config: this.config,
+      };
+    } catch (error) {
+      console.warn('[Cache] Error getting stats:', error);
+      return { memoryItems: 0, localStorageItems: 0, config: this.config };
+    }
   }
 
   /**
@@ -166,14 +239,20 @@ class CacheManager {
     fetcher: () => Promise<T>,
     ttl?: number
   ): Promise<T> {
-    const cached = this.get<T>(key);
-    if (cached !== null) {
-      return cached;
-    }
+    try {
+      const cached = this.get<T>(key);
+      if (cached !== null) {
+        return cached;
+      }
 
-    const data = await fetcher();
-    this.set(key, data, ttl);
-    return data;
+      const data = await fetcher();
+      this.set(key, data, ttl);
+      return data;
+    } catch (error) {
+      console.warn(`[Cache] Error in getOrSet for ${key}:`, error);
+      // Try to fetch without caching on error
+      return await fetcher();
+    }
   }
 
   /**
@@ -184,8 +263,13 @@ class CacheManager {
     fetcher: () => Promise<T>,
     ttl?: number
   ): Promise<T> {
-    this.delete(key);
-    return this.getOrSet(key, fetcher, ttl);
+    try {
+      this.delete(key);
+      return this.getOrSet(key, fetcher, ttl);
+    } catch (error) {
+      console.warn(`[Cache] Error in refresh for ${key}:`, error);
+      return await fetcher();
+    }
   }
 
   // Private methods
@@ -194,7 +278,12 @@ class CacheManager {
     try {
       const item = localStorage.getItem(this.config.storagePrefix + key);
       return item ? JSON.parse(item) : null;
-    } catch {
+    } catch (error) {
+      console.warn(`[Cache] Error reading from localStorage for ${key}:`, error);
+      // Remove corrupted item
+      try {
+        localStorage.removeItem(this.config.storagePrefix + key);
+      } catch {}
       return null;
     }
   }
@@ -207,7 +296,27 @@ class CacheManager {
       );
     } catch (error) {
       // Handle localStorage quota exceeded
-      console.warn('Cache: localStorage quota exceeded', error);
+      console.warn('[Cache] localStorage quota exceeded, clearing old items:', error);
+      this.handleStorageQuotaExceeded();
+    }
+  }
+
+  /**
+   * Handle localStorage quota exceeded by removing old items
+   */
+  private handleStorageQuotaExceeded(): void {
+    try {
+      const items = Array.from(this.memoryCache.entries())
+        .map(([key, item]) => ({ key, timestamp: item.timestamp }))
+        .sort((a, b) => a.timestamp - b.timestamp);
+
+      // Remove oldest 20% of items
+      const itemsToRemove = Math.ceil(items.length * 0.2);
+      for (let i = 0; i < itemsToRemove; i++) {
+        this.delete(items[i].key);
+      }
+    } catch (error) {
+      console.warn('[Cache] Error handling storage quota:', error);
     }
   }
 
@@ -230,32 +339,40 @@ class CacheManager {
         }
       }
     } catch (error) {
-      console.warn('Cache: Error loading from localStorage', error);
+      console.warn('[Cache] Error loading from localStorage:', error);
     }
   }
 
   private getLocalStorageSize(): number {
-    let count = 0;
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith(this.config.storagePrefix)) {
-        count++;
+    try {
+      let count = 0;
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(this.config.storagePrefix)) {
+          count++;
+        }
       }
+      return count;
+    } catch {
+      return 0;
     }
-    return count;
   }
 
   private enforceMemoryLimit(): void {
     if (this.memoryCache.size <= this.config.maxMemoryItems) return;
 
-    // Remove oldest items
-    const entries = Array.from(this.memoryCache.entries()).sort(
-      (a, b) => a[1].timestamp - b[1].timestamp
-    );
+    try {
+      // Remove oldest items
+      const entries = Array.from(this.memoryCache.entries()).sort(
+        (a, b) => a[1].timestamp - b[1].timestamp
+      );
 
-    const itemsToRemove = this.memoryCache.size - this.config.maxMemoryItems;
-    for (let i = 0; i < itemsToRemove; i++) {
-      this.memoryCache.delete(entries[i][0]);
+      const itemsToRemove = this.memoryCache.size - this.config.maxMemoryItems;
+      for (let i = 0; i < itemsToRemove; i++) {
+        this.memoryCache.delete(entries[i][0]);
+      }
+    } catch (error) {
+      console.warn('[Cache] Error enforcing memory limit:', error);
     }
   }
 
@@ -263,10 +380,14 @@ class CacheManager {
     // Clean up expired items every 5 minutes
     this.cleanupInterval = setInterval(
       () => {
-        for (const [key, item] of this.memoryCache.entries()) {
-          if (!this.isValid(item)) {
-            this.memoryCache.delete(key);
+        try {
+          for (const [key, item] of this.memoryCache.entries()) {
+            if (!this.isValid(item)) {
+              this.memoryCache.delete(key);
+            }
           }
+        } catch (error) {
+          console.warn('[Cache] Error in cleanup interval:', error);
         }
       },
       5 * 60 * 1000
@@ -378,6 +499,25 @@ export const cacheUtils = {
    */
   clearAll(): void {
     cache.clear();
+  },
+
+  /**
+   * Force cache invalidation for development
+   */
+  forceInvalidate(): void {
+    console.log('[Cache] Force invalidating all cache...');
+    cache.clear();
+    
+    // Also clear service worker cache if available
+    if ('caches' in window) {
+      caches.keys().then(cacheNames => {
+        cacheNames.forEach(cacheName => {
+          if (cacheName.startsWith('tesoros-choco-')) {
+            caches.delete(cacheName);
+          }
+        });
+      });
+    }
   },
 };
 

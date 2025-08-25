@@ -52,6 +52,7 @@ class ServiceWorkerManager {
 
       this.registration = await navigator.serviceWorker.register('/sw.js', {
         scope: '/',
+        updateViaCache: 'none', // Always check for updates
       });
 
       // Listen for updates
@@ -69,6 +70,16 @@ class ServiceWorkerManager {
               this.notifyUpdate();
             }
           });
+        }
+      });
+
+      // Listen for controller change
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        console.log('🎮 Service worker controller changed');
+        // Force reload to ensure fresh state
+        if (import.meta.env.DEV) {
+          console.log('🔄 Development mode: forcing reload after controller change');
+          window.location.reload();
         }
       });
 
@@ -219,6 +230,30 @@ class ServiceWorkerManager {
     }
     return false;
   }
+
+  /**
+   * Force reload and clear all caches (emergency function)
+   */
+  async emergencyReload(): Promise<void> {
+    console.log('🚨 Emergency reload initiated');
+    
+    try {
+      // Clear all caches
+      await this.clearAllCaches();
+      
+      // Clear localStorage cache
+      if (typeof window !== 'undefined' && window.__CACHE_MANAGER__) {
+        window.__CACHE_MANAGER__.clear();
+      }
+      
+      // Force reload
+      window.location.reload();
+    } catch (error) {
+      console.error('Emergency reload failed:', error);
+      // Force reload anyway
+      window.location.reload();
+    }
+  }
 }
 
 // Global service worker manager instance
@@ -234,6 +269,7 @@ interface UseServiceWorkerReturn {
   clearAllCaches: () => Promise<boolean>;
   clearCache: (type: 'static' | 'api' | 'images') => Promise<boolean>;
   refreshStats: () => Promise<void>;
+  emergencyReload: () => Promise<void>;
 }
 
 export const useServiceWorker = (): UseServiceWorkerReturn => {
@@ -264,6 +300,10 @@ export const useServiceWorker = (): UseServiceWorkerReturn => {
     [refreshStats]
   );
 
+  const emergencyReload = useCallback(async () => {
+    await serviceWorkerManager.emergencyReload();
+  }, []);
+
   useEffect(() => {
     // Check if service worker is active
     const checkActive = () => {
@@ -289,6 +329,7 @@ export const useServiceWorker = (): UseServiceWorkerReturn => {
     clearAllCaches,
     clearCache,
     refreshStats,
+    emergencyReload,
   };
 };
 
