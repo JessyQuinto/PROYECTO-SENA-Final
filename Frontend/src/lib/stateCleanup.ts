@@ -1,6 +1,6 @@
 /**
  * Centralized State Cleanup Utilities
- * 
+ *
  * This module provides utilities for cleaning up application state,
  * particularly useful during logout operations to prevent state persistence issues.
  */
@@ -34,7 +34,7 @@ export const KEY_PATTERNS = {
   CART_DATA: ['cart_'],
   AUTH_DATA: ['sb-', 'supabase', 'auth_'],
   SESSION_DATA: ['session_', 'temp_'],
-  SYSTEM_DATA: ['theme', 'language', 'locale']
+  SYSTEM_DATA: ['theme', 'language', 'locale'],
 } as const;
 
 /**
@@ -42,9 +42,9 @@ export const KEY_PATTERNS = {
  */
 export const DEFAULT_PRESERVE_KEYS = [
   'theme_preference',
-  'language_preference', 
+  'language_preference',
   'accessibility_settings',
-  'cookie_consent'
+  'cookie_consent',
 ] as const;
 
 /**
@@ -55,7 +55,7 @@ export const ALWAYS_REMOVE_KEYS = [
   'cart_data',
   'user_session',
   'last_visited',
-  'user_profile'
+  'user_profile',
 ] as const;
 
 /**
@@ -67,14 +67,14 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
     dispatchEvents = true,
     preserveKeys = [...DEFAULT_PRESERVE_KEYS],
     emergency = false,
-    verbose = true
+    verbose = true,
   } = options;
 
   const result: CleanupResult = {
     success: true,
     removedKeys: [],
     preservedKeys: [],
-    errors: []
+    errors: [],
   };
 
   if (verbose) {
@@ -82,7 +82,7 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
       clearSessionStorage,
       dispatchEvents,
       preserveKeys,
-      emergency
+      emergency,
     });
   }
 
@@ -108,15 +108,19 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
       // In emergency mode, be more aggressive
       if (emergency) {
         // Remove anything that looks user-related
-        if (KEY_PATTERNS.USER_DATA.some(pattern => key.startsWith(pattern)) ||
-            KEY_PATTERNS.CART_DATA.some(pattern => key.startsWith(pattern)) ||
-            KEY_PATTERNS.AUTH_DATA.some(pattern => key.includes(pattern))) {
+        if (
+          KEY_PATTERNS.USER_DATA.some(pattern => key.startsWith(pattern)) ||
+          KEY_PATTERNS.CART_DATA.some(pattern => key.startsWith(pattern)) ||
+          KEY_PATTERNS.AUTH_DATA.some(pattern => key.includes(pattern))
+        ) {
           return !preserveKeys.includes(key);
         }
       } else {
         // Normal mode - be more selective
-        if (KEY_PATTERNS.USER_DATA.some(pattern => key.startsWith(pattern)) ||
-            KEY_PATTERNS.CART_DATA.some(pattern => key.startsWith(pattern))) {
+        if (
+          KEY_PATTERNS.USER_DATA.some(pattern => key.startsWith(pattern)) ||
+          KEY_PATTERNS.CART_DATA.some(pattern => key.startsWith(pattern))
+        ) {
           return !preserveKeys.includes(key);
         }
 
@@ -145,7 +149,10 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
       } catch (error) {
         result.errors.push({ key, error: error as Error });
         if (verbose) {
-          console.error(`[StateCleanup] ❌ Failed to remove key ${key}:`, error);
+          console.error(
+            `[StateCleanup] ❌ Failed to remove key ${key}:`,
+            error
+          );
         }
       }
     });
@@ -163,7 +170,10 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
       } catch (error) {
         result.errors.push({ key: 'sessionStorage', error: error as Error });
         if (verbose) {
-          console.error('[StateCleanup] ❌ Failed to clear sessionStorage:', error);
+          console.error(
+            '[StateCleanup] ❌ Failed to clear sessionStorage:',
+            error
+          );
         }
       }
     }
@@ -173,16 +183,18 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
       try {
         // Standard storage event
         window.dispatchEvent(new Event('storage'));
-        
+
         // Custom cleanup event with details
-        window.dispatchEvent(new CustomEvent('userStateCleanup', {
-          detail: {
-            timestamp: Date.now(),
-            removedKeys: result.removedKeys,
-            preservedKeys: result.preservedKeys,
-            emergency
-          }
-        }));
+        window.dispatchEvent(
+          new CustomEvent('userStateCleanup', {
+            detail: {
+              timestamp: Date.now(),
+              removedKeys: result.removedKeys,
+              preservedKeys: result.preservedKeys,
+              emergency,
+            },
+          })
+        );
 
         if (verbose) {
           console.log('[StateCleanup] ✅ Events dispatched');
@@ -197,13 +209,17 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
 
     // Final verification
     const remainingKeys = Object.keys(localStorage);
-    const unexpectedUserKeys = remainingKeys.filter(key =>
-      KEY_PATTERNS.USER_DATA.some(pattern => key.startsWith(pattern)) &&
-      !preserveKeys.includes(key)
+    const unexpectedUserKeys = remainingKeys.filter(
+      key =>
+        KEY_PATTERNS.USER_DATA.some(pattern => key.startsWith(pattern)) &&
+        !preserveKeys.includes(key)
     );
 
     if (unexpectedUserKeys.length > 0) {
-      console.warn('[StateCleanup] ⚠️ Unexpected user keys remain:', unexpectedUserKeys);
+      console.warn(
+        '[StateCleanup] ⚠️ Unexpected user keys remain:',
+        unexpectedUserKeys
+      );
     }
 
     if (verbose) {
@@ -211,10 +227,9 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
         removedCount: result.removedKeys.length,
         preservedCount: result.preservedKeys.length,
         errorCount: result.errors.length,
-        remainingKeys: remainingKeys.length
+        remainingKeys: remainingKeys.length,
       });
     }
-
   } catch (error) {
     console.error('[StateCleanup] Fatal error during cleanup:', error);
     result.success = false;
@@ -229,13 +244,13 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
  */
 export function emergencyCleanup(): CleanupResult {
   console.log('[StateCleanup] 🚨 EMERGENCY CLEANUP INITIATED');
-  
+
   return cleanupUserState({
     emergency: true,
     clearSessionStorage: true,
     dispatchEvents: true,
     preserveKeys: ['cookie_consent'], // Only preserve cookie consent
-    verbose: true
+    verbose: true,
   });
 }
 
@@ -251,9 +266,9 @@ export function gentleCleanup(): CleanupResult {
       ...DEFAULT_PRESERVE_KEYS,
       'user_display_preferences',
       'accessibility_settings',
-      'notification_preferences'
+      'notification_preferences',
     ],
-    verbose: true
+    verbose: true,
   });
 }
 
@@ -262,19 +277,22 @@ export function gentleCleanup(): CleanupResult {
  */
 export function validateCleanup(): { clean: boolean; issues: string[] } {
   const issues: string[] = [];
-  
+
   try {
     const allKeys = Object.keys(localStorage);
-    
+
     // Check for problematic keys that should have been removed
-    const problematicKeys = allKeys.filter(key =>
-      ALWAYS_REMOVE_KEYS.some(pattern => key.includes(pattern)) ||
-      (KEY_PATTERNS.USER_DATA.some(pattern => key.startsWith(pattern)) &&
-       !DEFAULT_PRESERVE_KEYS.includes(key))
+    const problematicKeys = allKeys.filter(
+      key =>
+        ALWAYS_REMOVE_KEYS.some(pattern => key.includes(pattern)) ||
+        (KEY_PATTERNS.USER_DATA.some(pattern => key.startsWith(pattern)) &&
+          !DEFAULT_PRESERVE_KEYS.includes(key))
     );
 
     if (problematicKeys.length > 0) {
-      issues.push(`Found user data that should have been cleaned: ${problematicKeys.join(', ')}`);
+      issues.push(
+        `Found user data that should have been cleaned: ${problematicKeys.join(', ')}`
+      );
     }
 
     // Check session storage
@@ -285,23 +303,24 @@ export function validateCleanup(): { clean: boolean; issues: string[] } {
     console.log('[StateCleanup] Validation result:', {
       clean: issues.length === 0,
       totalKeys: allKeys.length,
-      issues: issues.length
+      issues: issues.length,
     });
-
   } catch (error) {
     issues.push(`Validation error: ${error.message}`);
   }
 
   return {
     clean: issues.length === 0,
-    issues
+    issues,
   };
 }
 
 /**
  * Setup cleanup event listeners for components
  */
-export function setupCleanupListeners(callback: (detail: any) => void): () => void {
+export function setupCleanupListeners(
+  callback: (detail: any) => void
+): () => void {
   const handleCleanup = (e: CustomEvent) => {
     console.log('[StateCleanup] Component received cleanup event:', e.detail);
     callback(e.detail);
@@ -312,7 +331,10 @@ export function setupCleanupListeners(callback: (detail: any) => void): () => vo
 
   // Return cleanup function
   return () => {
-    window.removeEventListener('userStateCleanup', handleCleanup as EventListener);
+    window.removeEventListener(
+      'userStateCleanup',
+      handleCleanup as EventListener
+    );
     window.removeEventListener('userLoggedOut', handleCleanup as EventListener);
   };
 }

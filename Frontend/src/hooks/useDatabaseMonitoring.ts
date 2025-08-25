@@ -55,12 +55,8 @@ export const useDatabaseMonitoring = (): UseDatabaseMonitoringReturn => {
   const trackQuery = useCallback(
     async (queryName: string, executionPromise: Promise<any>) => {
       // Database monitoring disabled - just execute the query without tracking
-      try {
-        const result = await executionPromise;
-        return result;
-      } catch (err) {
-        throw err;
-      }
+      const result = await executionPromise;
+      return result;
     },
     []
   );

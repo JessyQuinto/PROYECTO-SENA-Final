@@ -99,7 +99,7 @@ const ProductCardBase: React.FC<ProductCardProps> = ({
           <span className='text-lg font-bold text-(--color-terracotta-suave)'>
             ${Number(product.precio).toLocaleString()}
           </span>
-          
+
           <button
             className='btn btn-primary btn-sm'
             onClick={handleAddToCart}

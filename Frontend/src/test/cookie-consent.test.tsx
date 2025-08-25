@@ -16,7 +16,7 @@ describe('Cookie Consent Component Tests', () => {
       removeItem: vi.fn(),
       clear: vi.fn(),
       key: vi.fn(),
-      length: 0
+      length: 0,
     };
     global.localStorage = localStorageMock;
 
@@ -27,7 +27,7 @@ describe('Cookie Consent Component Tests', () => {
 
     // Mock navigator
     global.navigator = {
-      userAgent: 'Test Browser/1.0'
+      userAgent: 'Test Browser/1.0',
     };
 
     // Spy on console
@@ -53,7 +53,9 @@ describe('Cookie Consent Component Tests', () => {
     expect(screen.getByTestId('cookie-reject')).toBeInTheDocument();
 
     // Should log that it's showing the component
-    expect(consoleSpy).toHaveBeenCalledWith('[CookieConsent] No valid saved consent, showing component');
+    expect(consoleSpy).toHaveBeenCalledWith(
+      '[CookieConsent] No valid saved consent, showing component'
+    );
   });
 
   it('should hide banner when valid consent exists', () => {
@@ -61,7 +63,7 @@ describe('Cookie Consent Component Tests', () => {
     const mockConsent = JSON.stringify({
       value: 'accepted',
       at: new Date().toISOString(),
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
     localStorageMock.getItem.mockReturnValue(mockConsent);
 
@@ -69,7 +71,9 @@ describe('Cookie Consent Component Tests', () => {
 
     // Should not render the banner
     expect(screen.queryByText('Aviso de cookies')).not.toBeInTheDocument();
-    expect(consoleSpy).toHaveBeenCalledWith('[CookieConsent] Valid consent found, hiding component');
+    expect(consoleSpy).toHaveBeenCalledWith(
+      '[CookieConsent] Valid consent found, hiding component'
+    );
   });
 
   it('should save consent when accept button is clicked', async () => {
@@ -93,14 +97,16 @@ describe('Cookie Consent Component Tests', () => {
       value: 'accepted',
       at: expect.any(String),
       timestamp: expect.any(Number),
-      userAgent: expect.any(String)
+      userAgent: expect.any(String),
     });
 
     // Should log the click and save process
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining('[CookieConsent] Accept button clicked')
     );
-    expect(consoleSpy).toHaveBeenCalledWith('[CookieConsent] Setting consent: accepted');
+    expect(consoleSpy).toHaveBeenCalledWith(
+      '[CookieConsent] Setting consent: accepted'
+    );
   });
 
   it('should save consent when reject button is clicked', async () => {
@@ -124,10 +130,12 @@ describe('Cookie Consent Component Tests', () => {
       value: 'rejected',
       at: expect.any(String),
       timestamp: expect.any(Number),
-      userAgent: expect.any(String)
+      userAgent: expect.any(String),
     });
 
-    expect(consoleSpy).toHaveBeenCalledWith('[CookieConsent] Setting consent: rejected');
+    expect(consoleSpy).toHaveBeenCalledWith(
+      '[CookieConsent] Setting consent: rejected'
+    );
   });
 
   it('should hide banner after consent is given', async () => {
@@ -203,19 +211,23 @@ describe('Cookie Consent Component Tests', () => {
       expect(localStorageMock.setItem).toHaveBeenCalledTimes(1);
     });
 
-    expect(consoleSpy).toHaveBeenCalledWith('[CookieConsent] Already processing, ignoring click');
+    expect(consoleSpy).toHaveBeenCalledWith(
+      '[CookieConsent] Already processing, ignoring click'
+    );
   });
 
   it('should verify consent data after saving', async () => {
     localStorageMock.getItem.mockReturnValueOnce(null); // Initial check
-    
+
     // Mock successful save and verification
     const mockConsentData = {
       value: 'accepted',
       at: new Date().toISOString(),
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
-    localStorageMock.getItem.mockReturnValueOnce(JSON.stringify(mockConsentData)); // Verification check
+    localStorageMock.getItem.mockReturnValueOnce(
+      JSON.stringify(mockConsentData)
+    ); // Verification check
 
     render(<CookieConsent />);
 
@@ -223,7 +235,9 @@ describe('Cookie Consent Component Tests', () => {
     fireEvent.click(acceptButton);
 
     await waitFor(() => {
-      expect(consoleSpy).toHaveBeenCalledWith('[CookieConsent] Consent saved and verified successfully');
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '[CookieConsent] Consent saved and verified successfully'
+      );
     });
   });
 
@@ -233,8 +247,14 @@ describe('Cookie Consent Component Tests', () => {
     render(<CookieConsent />);
 
     // Should add event listeners
-    expect(window.addEventListener).toHaveBeenCalledWith('storage', expect.any(Function));
-    expect(window.addEventListener).toHaveBeenCalledWith('userLoggedOut', expect.any(Function));
+    expect(window.addEventListener).toHaveBeenCalledWith(
+      'storage',
+      expect.any(Function)
+    );
+    expect(window.addEventListener).toHaveBeenCalledWith(
+      'userLoggedOut',
+      expect.any(Function)
+    );
   });
 
   it('should clean up event listeners on unmount', () => {
@@ -244,8 +264,14 @@ describe('Cookie Consent Component Tests', () => {
     unmount();
 
     // Should remove event listeners
-    expect(window.removeEventListener).toHaveBeenCalledWith('storage', expect.any(Function));
-    expect(window.removeEventListener).toHaveBeenCalledWith('userLoggedOut', expect.any(Function));
+    expect(window.removeEventListener).toHaveBeenCalledWith(
+      'storage',
+      expect.any(Function)
+    );
+    expect(window.removeEventListener).toHaveBeenCalledWith(
+      'userLoggedOut',
+      expect.any(Function)
+    );
   });
 
   it('should handle localStorage unavailability', () => {
@@ -257,7 +283,9 @@ describe('Cookie Consent Component Tests', () => {
 
     // Should not show banner if localStorage is unavailable
     expect(screen.queryByText('Aviso de cookies')).not.toBeInTheDocument();
-    expect(console.warn).toHaveBeenCalledWith('[CookieConsent] localStorage not available');
+    expect(console.warn).toHaveBeenCalledWith(
+      '[CookieConsent] localStorage not available'
+    );
   });
 
   it('should have proper accessibility attributes', () => {
@@ -267,14 +295,23 @@ describe('Cookie Consent Component Tests', () => {
 
     const banner = screen.getByRole('dialog');
     expect(banner).toHaveAttribute('aria-labelledby', 'cookie-consent-title');
-    expect(banner).toHaveAttribute('aria-describedby', 'cookie-consent-description');
+    expect(banner).toHaveAttribute(
+      'aria-describedby',
+      'cookie-consent-description'
+    );
 
     const acceptButton = screen.getByTestId('cookie-accept');
-    expect(acceptButton).toHaveAttribute('aria-label', 'Aceptar todas las cookies');
+    expect(acceptButton).toHaveAttribute(
+      'aria-label',
+      'Aceptar todas las cookies'
+    );
     expect(acceptButton).toHaveAttribute('type', 'button');
 
     const rejectButton = screen.getByTestId('cookie-reject');
-    expect(rejectButton).toHaveAttribute('aria-label', 'Rechazar cookies no esenciales');
+    expect(rejectButton).toHaveAttribute(
+      'aria-label',
+      'Rechazar cookies no esenciales'
+    );
     expect(rejectButton).toHaveAttribute('type', 'button');
   });
 
@@ -284,14 +321,14 @@ describe('Cookie Consent Component Tests', () => {
     render(<CookieConsent />);
 
     const acceptButton = screen.getByTestId('cookie-accept');
-    
+
     const mockEvent = {
       preventDefault: vi.fn(),
       stopPropagation: vi.fn(),
       type: 'click',
       button: 0,
       target: acceptButton,
-      currentTarget: acceptButton
+      currentTarget: acceptButton,
     };
 
     // Simulate click with event methods
@@ -312,8 +349,13 @@ describe('Cookie Consent Component Tests', () => {
 
     await waitFor(() => {
       // Should test localStorage with a test key first
-      expect(localStorageMock.setItem).toHaveBeenCalledWith('cookie_consent_test', 'test');
-      expect(localStorageMock.removeItem).toHaveBeenCalledWith('cookie_consent_test');
+      expect(localStorageMock.setItem).toHaveBeenCalledWith(
+        'cookie_consent_test',
+        'test'
+      );
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith(
+        'cookie_consent_test'
+      );
     });
   });
 });

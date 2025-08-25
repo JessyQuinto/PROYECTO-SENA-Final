@@ -201,20 +201,20 @@ const UsersAdmin: React.FC = () => {
       const from = sender?.value?.from as string | undefined;
       if (enabled && from && user?.email) {
         await fetch(
-        `https://${projectRef}.functions.supabase.co/notify-vendor-status`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            action: estado,
-            email: user.email,
-            nombre: user.nombre_completo,
-            from,
-          }),
-        }
+          `https://${projectRef}.functions.supabase.co/notify-vendor-status`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              action: estado,
+              email: user.email,
+              nombre: user.nombre_completo,
+              from,
+            }),
+          }
         ).catch(() => {});
       }
     } catch (e) {
@@ -243,52 +243,52 @@ const UsersAdmin: React.FC = () => {
       );
 
       // Notificar por correo si está habilitado en app_config
-    try {
-      const session = (await supabase.auth.getSession()).data.session;
-      const token = session?.access_token;
-      const supaUrl = (import.meta as any).env?.VITE_SUPABASE_URL as
-        | string
-        | undefined;
+      try {
+        const session = (await supabase.auth.getSession()).data.session;
+        const token = session?.access_token;
+        const supaUrl = (import.meta as any).env?.VITE_SUPABASE_URL as
+          | string
+          | undefined;
         if (!token || !supaUrl) return;
         const projectRef = new URL(supaUrl).host.split('.')[0];
-          const u = users.find(x => x.id === id);
-          if (u?.email) {
-            const [{ data: notif }, { data: sender }] = await Promise.all([
-              supabase
-                .from('app_config')
-                .select('value')
-                .eq('key', 'notify_vendor_email_enabled')
-                .maybeSingle(),
-              supabase
-                .from('app_config')
-                .select('value')
-                .eq('key', 'notify_from')
-                .maybeSingle(),
-            ]);
-            const enabled = (notif?.value?.enabled ?? true) as boolean;
-            const from = sender?.value?.from as string | undefined;
-            if (enabled) {
-              const action = blocked ? 'bloqueado' : 'reactivado';
-              await fetch(
-                `https://${projectRef}.functions.supabase.co/notify-vendor-status`,
-                {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                  },
-                  body: JSON.stringify({
-                    action,
-                    email: u.email,
-                    nombre: u.nombre_completo,
-                    from,
-                  }),
-                }
-              ).catch(() => {});
-            }
+        const u = users.find(x => x.id === id);
+        if (u?.email) {
+          const [{ data: notif }, { data: sender }] = await Promise.all([
+            supabase
+              .from('app_config')
+              .select('value')
+              .eq('key', 'notify_vendor_email_enabled')
+              .maybeSingle(),
+            supabase
+              .from('app_config')
+              .select('value')
+              .eq('key', 'notify_from')
+              .maybeSingle(),
+          ]);
+          const enabled = (notif?.value?.enabled ?? true) as boolean;
+          const from = sender?.value?.from as string | undefined;
+          if (enabled) {
+            const action = blocked ? 'bloqueado' : 'reactivado';
+            await fetch(
+              `https://${projectRef}.functions.supabase.co/notify-vendor-status`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                  action,
+                  email: u.email,
+                  nombre: u.nombre_completo,
+                  from,
+                }),
+              }
+            ).catch(() => {});
           }
-        } catch (e) {
-          console.warn('[notify-vendor-status] suspend warning', e);
+        }
+      } catch (e) {
+        console.warn('[notify-vendor-status] suspend warning', e);
       }
     } catch (e: any) {
       (window as any).toast?.error(e?.message || 'No se pudo suspender', {
@@ -377,24 +377,31 @@ const UsersAdmin: React.FC = () => {
   };
 
   // Función para cambiar el rol de un usuario (solo vendedor o comprador)
-  const changeUserRole = async (id: string, newRole: 'vendedor' | 'comprador') => {
+  const changeUserRole = async (
+    id: string,
+    newRole: 'vendedor' | 'comprador'
+  ) => {
     try {
       const { error } = await supabase
         .from('users')
-        .update({ 
+        .update({
           role: newRole,
-          vendedor_estado: newRole === 'vendedor' ? 'pendiente' : null
+          vendedor_estado: newRole === 'vendedor' ? 'pendiente' : null,
         })
         .eq('id', id);
-      
+
       if (error) throw error;
 
       setUsers(list =>
-        list.map(u => (u.id === id ? { 
-          ...u, 
-          role: newRole,
-          vendedor_estado: newRole === 'vendedor' ? 'pendiente' : null
-        } : u))
+        list.map(u =>
+          u.id === id
+            ? {
+                ...u,
+                role: newRole,
+                vendedor_estado: newRole === 'vendedor' ? 'pendiente' : null,
+              }
+            : u
+        )
       );
 
       (window as any).toast?.success(`Rol cambiado a ${newRole}`, {
@@ -411,7 +418,7 @@ const UsersAdmin: React.FC = () => {
 
   if (loading) {
     return (
-      <AdminLayout title="Cargando usuarios...">
+      <AdminLayout title='Cargando usuarios...'>
         <div className='flex items-center justify-center h-64'>
           <div className='loading loading-spinner loading-lg'></div>
         </div>
@@ -420,11 +427,13 @@ const UsersAdmin: React.FC = () => {
   }
 
   return (
-    <AdminLayout title="Gestión de Usuarios">
+    <AdminLayout title='Gestión de Usuarios'>
       <div className='space-y-6'>
         <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
           <div>
-            <h1 className='text-3xl font-bold tracking-tight'>Gestión de Usuarios</h1>
+            <h1 className='text-3xl font-bold tracking-tight'>
+              Gestión de Usuarios
+            </h1>
             <p className='text-muted-foreground'>
               Administra usuarios, roles y permisos del sistema
             </p>
@@ -435,13 +444,13 @@ const UsersAdmin: React.FC = () => {
           {/* Filtros y búsqueda */}
           <div className='flex flex-col sm:flex-row gap-4'>
             <div className='flex-1'>
-        <input
+              <input
                 type='text'
                 placeholder='Buscar usuarios por email o nombre...'
                 className='input input-bordered w-full'
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-        />
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+              />
             </div>
           </div>
 
@@ -449,40 +458,41 @@ const UsersAdmin: React.FC = () => {
           {filtered.length === 0 ? (
             <div className='text-center py-8 text-muted-foreground'>
               No se encontraron usuarios
-      </div>
+            </div>
           ) : (
             <div className='overflow-x-auto'>
               <table className='table table-zebra w-full'>
-              <thead>
+                <thead>
                   <tr>
                     <th>Usuario</th>
                     <th>Rol</th>
                     <th>Estado</th>
                     <th>Acciones</th>
                     <th>Gestión</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(u => (
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(u => (
                     <tr key={u.id}>
-                    <td className='py-2 pr-4'>
+                      <td className='py-2 pr-4'>
                         <div className='flex flex-col'>
                           <span className='font-medium'>
                             {u.nombre_completo || 'Sin nombre'}
                           </span>
                           <span className='text-sm text-muted-foreground'>
-                        {u.email}
+                            {u.email}
                           </span>
                           {u.created_at && (
                             <span className='text-xs text-muted-foreground'>
-                              Registrado: {new Date(u.created_at).toLocaleDateString()}
+                              Registrado:{' '}
+                              {new Date(u.created_at).toLocaleDateString()}
                             </span>
                           )}
-                      </div>
-                    </td>
-                    <td className='py-2 pr-4'>
+                        </div>
+                      </td>
+                      <td className='py-2 pr-4'>
                         {u.role === 'admin' ? (
-                        <div className='flex flex-col gap-1'>
+                          <div className='flex flex-col gap-1'>
                             <span className='badge badge-error flex items-center gap-1'>
                               <Icon
                                 category='Administrador'
@@ -501,214 +511,219 @@ const UsersAdmin: React.FC = () => {
                                 🔒 Solo super-admin puede modificar
                               </span>
                             )}
-                        </div>
-                      ) : (
-                        <div className='flex flex-col gap-1'>
-                          <span
+                          </div>
+                        ) : (
+                          <div className='flex flex-col gap-1'>
+                            <span
                               className={`badge ${u.role === 'vendedor' ? 'badge-warning' : 'badge-info'}`}
-                          >
-                            {u.role || 'comprador'}
-                          </span>
+                            >
+                              {u.role || 'comprador'}
+                            </span>
                             {/* Selector de rol solo para vendedores y compradores */}
                             {canShowButton(u, 'changeRole') && (
                               <select
                                 className='select select-sm select-bordered w-full'
                                 value={u.role || 'comprador'}
-                                onChange={(e) => changeUserRole(u.id, e.target.value as 'vendedor' | 'comprador')}
+                                onChange={e =>
+                                  changeUserRole(
+                                    u.id,
+                                    e.target.value as 'vendedor' | 'comprador'
+                                  )
+                                }
                               >
                                 <option value='comprador'>Comprador</option>
                                 <option value='vendedor'>Vendedor</option>
                               </select>
                             )}
-                        </div>
-                      )}
-                    </td>
-                    <td className='py-2 pr-4'>
-                      {u.role === 'vendedor' ? (
-                        // Para vendedores: mostrar estado de aprobación y botones
-                        <div className='flex items-center gap-2 flex-wrap'>
-                          <span
-                            className={`badge ${u.vendedor_estado === 'aprobado' ? 'badge-success' : u.vendedor_estado === 'pendiente' ? 'badge-warning' : 'badge-secondary'} flex items-center gap-1`}
-                            title={u.vendedor_estado || ''}
-                          >
-                            {u.vendedor_estado === 'aprobado' && (
+                          </div>
+                        )}
+                      </td>
+                      <td className='py-2 pr-4'>
+                        {u.role === 'vendedor' ? (
+                          // Para vendedores: mostrar estado de aprobación y botones
+                          <div className='flex items-center gap-2 flex-wrap'>
+                            <span
+                              className={`badge ${u.vendedor_estado === 'aprobado' ? 'badge-success' : u.vendedor_estado === 'pendiente' ? 'badge-warning' : 'badge-secondary'} flex items-center gap-1`}
+                              title={u.vendedor_estado || ''}
+                            >
+                              {u.vendedor_estado === 'aprobado' && (
+                                <Icon
+                                  category='Administrador'
+                                  name='MdiShieldCheck'
+                                  className='w-3 h-3'
+                                  alt=''
+                                />
+                              )}
+                              {u.vendedor_estado === 'pendiente' && (
+                                <Icon
+                                  category='Pedidos'
+                                  name='CarbonPendingFilled'
+                                  className='w-3 h-3'
+                                  alt=''
+                                />
+                              )}
+                              {u.vendedor_estado === 'rechazado' && (
+                                <Icon
+                                  category='Estados y Feedback'
+                                  name='IconoirWarningSquare'
+                                  className='w-3 h-3'
+                                  alt=''
+                                />
+                              )}
+                              {u.vendedor_estado || 'pendiente'}
+                            </span>
+                            {canShowButton(u, 'vendorActions') && (
+                              <>
+                                <button
+                                  className='btn btn-outline btn-sm flex items-center min-w-[100px] h-8'
+                                  onClick={() =>
+                                    setVendorStatus(u.id, 'aprobado')
+                                  }
+                                  title='Aprobar vendedor'
+                                  aria-label='Aprobar vendedor'
+                                >
+                                  <Icon
+                                    category='Administrador'
+                                    name='MdiShieldCheck'
+                                    className='w-4 h-4 md:mr-1'
+                                    alt=''
+                                  />
+                                  <span className='hidden md:inline'>
+                                    Aprobar
+                                  </span>
+                                </button>
+                                <button
+                                  className='btn btn-outline btn-sm flex items-center min-w-[100px] h-8'
+                                  onClick={() =>
+                                    setVendorStatus(u.id, 'rechazado')
+                                  }
+                                  title='Rechazar vendedor'
+                                  aria-label='Rechazar vendedor'
+                                >
+                                  <Icon
+                                    category='Vendedor'
+                                    name='LineMdTrash'
+                                    className='w-4 h-4 md:mr-1'
+                                    alt=''
+                                  />
+                                  <span className='hidden md:inline'>
+                                    Rechazar
+                                  </span>
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        ) : u.role === 'comprador' ? (
+                          // Para compradores: mostrar estado de cuenta
+                          <div className='flex items-center gap-2'>
+                            <span className='badge badge-info flex items-center gap-1'>
+                              <Icon
+                                category='Usuario'
+                                name='IconamoonProfileFill'
+                                className='w-3 h-3'
+                                alt=''
+                              />
+                              Activo
+                            </span>
+                          </div>
+                        ) : u.role === 'admin' ? (
+                          // Para admins: mostrar privilegios
+                          <div className='flex items-center gap-2'>
+                            <span className='badge badge-error flex items-center gap-1'>
                               <Icon
                                 category='Administrador'
                                 name='MdiShieldCheck'
                                 className='w-3 h-3'
                                 alt=''
                               />
-                            )}
-                            {u.vendedor_estado === 'pendiente' && (
+                              Admin
+                            </span>
+                          </div>
+                        ) : (
+                          // Fallback
+                          <span className='badge badge-secondary'>-</span>
+                        )}
+                      </td>
+                      <td className='py-2 pr-4'>
+                        {canShowButton(u, 'blockActions') ? (
+                          <div className='flex items-center gap-2'>
+                            <button
+                              className={`btn btn-outline btn-sm w-8 h-8 p-0 flex items-center justify-center ${u.bloqueado ? 'opacity-50 pointer-events-none' : ''}`}
+                              onClick={() => suspend(u.id, true)}
+                              title='Bloquear'
+                              aria-label='Bloquear'
+                            >
                               <Icon
-                                category='Pedidos'
-                                name='CarbonPendingFilled'
-                                className='w-3 h-3'
+                                category='Usuario'
+                                name='MdiShieldOff'
+                                className='w-4 h-4'
                                 alt=''
                               />
-                            )}
-                            {u.vendedor_estado === 'rechazado' && (
+                            </button>
+                            <button
+                              className={`btn btn-outline btn-sm w-8 h-8 p-0 flex items-center justify-center ${!u.bloqueado ? 'opacity-50 pointer-events-none' : ''}`}
+                              onClick={() => suspend(u.id, false)}
+                              title='Desbloquear'
+                              aria-label='Desbloquear'
+                            >
                               <Icon
-                                category='Estados y Feedback'
-                                name='IconoirWarningSquare'
-                                className='w-3 h-3'
+                                category='Administrador'
+                                name='FluentGavel32Filled'
+                                className='w-4 h-4'
                                 alt=''
                               />
-                            )}
-                            {u.vendedor_estado || 'pendiente'}
-                          </span>
-                          {canShowButton(u, 'vendorActions') && (
-                            <>
-                              <button
-                                className='btn btn-outline btn-sm flex items-center min-w-[100px] h-8'
-                                onClick={() =>
-                                  setVendorStatus(u.id, 'aprobado')
-                                }
-                                title='Aprobar vendedor'
-                                aria-label='Aprobar vendedor'
-                              >
-                                <Icon
-                                  category='Administrador'
-                                  name='MdiShieldCheck'
-                                  className='w-4 h-4 md:mr-1'
-                                  alt=''
-                                />
-                                <span className='hidden md:inline'>
-                                  Aprobar
-                                </span>
-                              </button>
-                              <button
-                                className='btn btn-outline btn-sm flex items-center min-w-[100px] h-8'
-                                onClick={() =>
-                                  setVendorStatus(u.id, 'rechazado')
-                                }
-                                title='Rechazar vendedor'
-                                aria-label='Rechazar vendedor'
-                              >
-                                <Icon
-                                    category='Vendedor'
-                                    name='LineMdTrash'
-                                  className='w-4 h-4 md:mr-1'
-                                  alt=''
-                                />
-                                <span className='hidden md:inline'>
-                                  Rechazar
-                                </span>
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      ) : u.role === 'comprador' ? (
-                        // Para compradores: mostrar estado de cuenta
-                        <div className='flex items-center gap-2'>
-                          <span className='badge badge-info flex items-center gap-1'>
-                            <Icon
-                              category='Usuario'
-                              name='IconamoonProfileFill'
-                              className='w-3 h-3'
-                              alt=''
-                            />
-                            Activo
-                          </span>
-                        </div>
-                      ) : u.role === 'admin' ? (
-                        // Para admins: mostrar privilegios
-                        <div className='flex items-center gap-2'>
-                          <span className='badge badge-error flex items-center gap-1'>
-                            <Icon
-                              category='Administrador'
-                              name='MdiShieldCheck'
-                              className='w-3 h-3'
-                              alt=''
-                            />
-                            Admin
-                          </span>
-                        </div>
-                      ) : (
-                        // Fallback
-                        <span className='badge badge-secondary'>-</span>
-                      )}
-                    </td>
-                    <td className='py-2 pr-4'>
-                      {canShowButton(u, 'blockActions') ? (
-                        <div className='flex items-center gap-2'>
-                          <button
-                            className={`btn btn-outline btn-sm w-8 h-8 p-0 flex items-center justify-center ${u.bloqueado ? 'opacity-50 pointer-events-none' : ''}`}
-                            onClick={() => suspend(u.id, true)}
-                            title='Bloquear'
-                            aria-label='Bloquear'
+                            </button>
+                          </div>
+                        ) : (
+                          <span
+                            className={`badge ${u.bloqueado ? 'badge-error' : 'badge-success'}`}
                           >
-                            <Icon
-                              category='Usuario'
-                              name='MdiShieldOff'
-                              className='w-4 h-4'
-                              alt=''
-                            />
-                          </button>
+                            {u.bloqueado ? 'Bloqueado' : 'Activo'}
+                          </span>
+                        )}
+                      </td>
+                      <td className='py-2'>
+                        <div className='flex gap-2'>
                           <button
-                            className={`btn btn-outline btn-sm w-8 h-8 p-0 flex items-center justify-center ${!u.bloqueado ? 'opacity-50 pointer-events-none' : ''}`}
-                            onClick={() => suspend(u.id, false)}
-                            title='Desbloquear'
-                            aria-label='Desbloquear'
+                            className='btn btn-outline btn-sm flex items-center min-w-[100px] h-8'
+                            onClick={() =>
+                              alert(
+                                'Historial y métricas del usuario próximamente'
+                              )
+                            }
+                            title='Detalles'
+                            aria-label='Detalles'
                           >
                             <Icon
                               category='Administrador'
-                              name='FluentGavel32Filled'
-                              className='w-4 h-4'
-                              alt=''
-                            />
-                          </button>
-                        </div>
-                      ) : (
-                        <span
-                          className={`badge ${u.bloqueado ? 'badge-error' : 'badge-success'}`}
-                        >
-                          {u.bloqueado ? 'Bloqueado' : 'Activo'}
-                        </span>
-                      )}
-                    </td>
-                    <td className='py-2'>
-                      <div className='flex gap-2'>
-                        <button
-                          className='btn btn-outline btn-sm flex items-center min-w-[100px] h-8'
-                          onClick={() =>
-                            alert(
-                              'Historial y métricas del usuario próximamente'
-                            )
-                          }
-                          title='Detalles'
-                          aria-label='Detalles'
-                        >
-                          <Icon
-                            category='Administrador'
-                            name='LucideFileClock'
-                            className='w-4 h-4 md:mr-1'
-                            alt=''
-                          />
-                          <span className='hidden md:inline'>Detalles</span>
-                        </button>
-                        {canShowButton(u, 'deleteUser') && (
-                          <button
-                            className='btn btn-danger btn-sm flex items-center min-w-[100px] h-8'
-                            onClick={() => removeUser(u.id)}
-                            title='Eliminar'
-                            aria-label='Eliminar'
-                          >
-                            <Icon
-                              category='Vendedor'
-                              name='LineMdTrash'
+                              name='LucideFileClock'
                               className='w-4 h-4 md:mr-1'
                               alt=''
                             />
-                            <span className='hidden md:inline'>Eliminar</span>
+                            <span className='hidden md:inline'>Detalles</span>
                           </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                          {canShowButton(u, 'deleteUser') && (
+                            <button
+                              className='btn btn-danger btn-sm flex items-center min-w-[100px] h-8'
+                              onClick={() => removeUser(u.id)}
+                              title='Eliminar'
+                              aria-label='Eliminar'
+                            >
+                              <Icon
+                                category='Vendedor'
+                                name='LineMdTrash'
+                                className='w-4 h-4 md:mr-1'
+                                alt=''
+                              />
+                              <span className='hidden md:inline'>Eliminar</span>
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>

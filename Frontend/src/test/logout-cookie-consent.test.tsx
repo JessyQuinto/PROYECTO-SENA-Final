@@ -84,34 +84,34 @@ describe('Logout and Cookie Consent Integration Tests', () => {
       // Test the key pattern matching logic directly
       const testKeys = [
         'user_profile',
-        'user_preferences', 
+        'user_preferences',
         'cart_data',
         'sb-access-token',
         'theme_preference',
-        'random_key'
+        'random_key',
       ];
-      
+
       // Import the key patterns to test them
       const userDataPatterns = ['user_', 'profile_', 'preferences_'];
       const cartDataPatterns = ['cart_'];
       const authDataPatterns = ['sb-', 'supabase', 'auth_'];
-      
+
       // Test user data pattern matching
-      const userKeys = testKeys.filter(key => 
+      const userKeys = testKeys.filter(key =>
         userDataPatterns.some(pattern => key.startsWith(pattern))
       );
       expect(userKeys).toContain('user_profile');
       expect(userKeys).toContain('user_preferences');
       expect(userKeys).not.toContain('theme_preference');
-      
+
       // Test cart data pattern matching
-      const cartKeys = testKeys.filter(key => 
+      const cartKeys = testKeys.filter(key =>
         cartDataPatterns.some(pattern => key.startsWith(pattern))
       );
       expect(cartKeys).toContain('cart_data');
-      
+
       // Test auth data pattern matching
-      const authKeys = testKeys.filter(key => 
+      const authKeys = testKeys.filter(key =>
         authDataPatterns.some(pattern => key.includes(pattern))
       );
       expect(authKeys).toContain('sb-access-token');

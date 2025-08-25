@@ -81,9 +81,12 @@ export const AuthForms: React.FC<AuthFormsProps> = ({
             action: 'register',
           });
         } else {
-          toast.success('Registro exitoso. Revisa tu correo para confirmar tu cuenta.', {
-            action: 'register',
-          });
+          toast.success(
+            'Registro exitoso. Revisa tu correo para confirmar tu cuenta.',
+            {
+              action: 'register',
+            }
+          );
           navigate('/verify-email', {
             state: { email: values.email },
           });
@@ -116,11 +119,11 @@ export const AuthForms: React.FC<AuthFormsProps> = ({
           </div>
 
           {mode === 'login' ? (
-            <form 
-              onSubmit={(e) => {
+            <form
+              onSubmit={e => {
                 console.log('🔍 Form submit event triggered');
                 loginForm.handleSubmit(e);
-              }} 
+              }}
               className='space-y-4'
             >
               <div className='space-y-2'>

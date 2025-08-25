@@ -93,7 +93,8 @@ const AdminSettings: React.FC = () => {
                 />
                 <p className='text-xs text-gray-500 mt-1'>
                   Configura un remitente verificado en Brevo, por ejemplo:
-                  "Tesoros Chocó &lt;notificaciones@tu-dominio.com&gt;".
+                  &quot;Tesoros Chocó
+                  &lt;notificaciones@tu-dominio.com&gt;&quot;.
                 </p>
               </div>
             </div>

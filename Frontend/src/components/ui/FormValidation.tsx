@@ -84,7 +84,8 @@ export const validationRules = {
   }),
 
   phone: (message = 'Ingresa un teléfono válido'): ValidationRule => ({
-    test: (value: string) => /^[\+]?[0-9\s\-\(\)]{7,}$/.test(value),
+    // simplified regex: + is not escaped and parentheses don't need escaping in char class
+    test: (value: string) => /^\+?[0-9\s\-()]{7,}$/.test(value),
     message,
   }),
 

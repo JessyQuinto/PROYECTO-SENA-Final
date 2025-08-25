@@ -86,7 +86,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         ? 'success'
         : variant || 'default';
 
-    const inputId = id || React.useId();
+    // Always call hooks in the same order: call React.useId() unconditionally
+    const generatedId = React.useId();
+    const inputId = id || generatedId;
     const helperId =
       helperText || errorMessage ? `${inputId}-helper` : undefined;
     const errorId = errorMessage ? `${inputId}-error` : undefined;

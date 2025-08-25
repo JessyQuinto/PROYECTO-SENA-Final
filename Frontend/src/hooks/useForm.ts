@@ -183,7 +183,11 @@ export const useForm = <T extends Record<string, any>>(
       setTouched(field, true);
       // Validar en blur solo si el campo tiene contenido
       const fieldValue = values[field];
-      if (fieldValue && typeof fieldValue === 'string' && fieldValue.trim() !== '') {
+      if (
+        fieldValue &&
+        typeof fieldValue === 'string' &&
+        fieldValue.trim() !== ''
+      ) {
         validateField(field);
       }
     },
@@ -245,7 +249,11 @@ export const useForm = <T extends Record<string, any>>(
   const hasError = useCallback(
     (field: keyof T): boolean => {
       const fieldState = formState[field];
-      return !!(fieldState && fieldState.error && (submitAttempted || fieldState.touched));
+      return !!(
+        fieldState &&
+        fieldState.error &&
+        (submitAttempted || fieldState.touched)
+      );
     },
     [formState, submitAttempted]
   );
@@ -259,20 +267,28 @@ export const useForm = <T extends Record<string, any>>(
   );
 
   // Helpers para props de formulario
-  const getFormProps = useCallback(() => ({
-    onSubmit: handleSubmit,
-    noValidate: true,
-  }), [handleSubmit]);
+  const getFormProps = useCallback(
+    () => ({
+      onSubmit: handleSubmit,
+      noValidate: true,
+    }),
+    [handleSubmit]
+  );
 
-  const getInputProps = useCallback((field: keyof T) => ({
-    value: (values && values[field]) || '',
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-      handleChange(field, e.target.value as T[keyof T]);
-    },
-    onBlur: () => handleBlur(field),
-    'aria-invalid': hasError(field),
-    'aria-describedby': hasError(field) ? `${String(field)}-error` : undefined,
-  }), [values, handleChange, handleBlur, hasError]);
+  const getInputProps = useCallback(
+    (field: keyof T) => ({
+      value: (values && values[field]) || '',
+      onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+        handleChange(field, e.target.value as T[keyof T]);
+      },
+      onBlur: () => handleBlur(field),
+      'aria-invalid': hasError(field),
+      'aria-describedby': hasError(field)
+        ? `${String(field)}-error`
+        : undefined,
+    }),
+    [values, handleChange, handleBlur, hasError]
+  );
 
   return {
     // Estado

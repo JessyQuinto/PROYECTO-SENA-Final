@@ -14,7 +14,8 @@ initPerformanceMonitoring();
 initializeSecurity();
 
 // Initialize error handler
-errorHandler;
+// Initialize error handler
+errorHandler();
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

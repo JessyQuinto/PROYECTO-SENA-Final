@@ -4,52 +4,52 @@
 
 @theme {
   /* Nordic Color Palette */
-  --nord0: #2e3440;   /* Polar Night - Darkest */
-  --nord1: #3b4252;   /* Polar Night - Dark */
-  --nord2: #434c5e;   /* Polar Night - Medium */
-  --nord3: #4c566a;   /* Polar Night - Light */
-  --nord4: #d8dee9;   /* Snow Storm - Dark */
-  --nord5: #e5e9f0;   /* Snow Storm - Medium */
-  --nord6: #eceff4;   /* Snow Storm - Light */
-  --nord7: #8fbcbb;   /* Frost - Teal */
-  --nord8: #88c0d0;   /* Frost - Light Blue */
-  --nord9: #81a1c1;   /* Frost - Blue */
-  --nord10: #5e81ac;  /* Frost - Dark Blue */
-  --nord11: #bf616a;  /* Aurora - Red */
-  --nord12: #d08770;  /* Aurora - Orange */
-  --nord13: #ebcb8b;  /* Aurora - Yellow */
-  --nord14: #a3be8c;  /* Aurora - Green */
-  --nord15: #b48ead;  /* Aurora - Purple */
+  --nord0: #2e3440; /* Polar Night - Darkest */
+  --nord1: #3b4252; /* Polar Night - Dark */
+  --nord2: #434c5e; /* Polar Night - Medium */
+  --nord3: #4c566a; /* Polar Night - Light */
+  --nord4: #d8dee9; /* Snow Storm - Dark */
+  --nord5: #e5e9f0; /* Snow Storm - Medium */
+  --nord6: #eceff4; /* Snow Storm - Light */
+  --nord7: #8fbcbb; /* Frost - Teal */
+  --nord8: #88c0d0; /* Frost - Light Blue */
+  --nord9: #81a1c1; /* Frost - Blue */
+  --nord10: #5e81ac; /* Frost - Dark Blue */
+  --nord11: #bf616a; /* Aurora - Red */
+  --nord12: #d08770; /* Aurora - Orange */
+  --nord13: #ebcb8b; /* Aurora - Yellow */
+  --nord14: #a3be8c; /* Aurora - Green */
+  --nord15: #b48ead; /* Aurora - Purple */
 
   /* Semantic Design Tokens - Brand Colors */
   --color-brand-primary: #00a67e;
   --color-brand-secondary: #0f766e;
   --color-brand-accent: #0ea5a5;
-  
+
   /* Surface Colors */
   --color-surface-primary: #ffffff;
   --color-surface-secondary: #f8fafc;
   --color-surface-tertiary: #f1f5f9;
   --color-surface-inverse: #0f172a;
-  
+
   /* Text Colors */
   --color-text-primary: #0f172a;
   --color-text-secondary: #475569;
   --color-text-tertiary: #64748b;
   --color-text-inverse: #ffffff;
   --color-text-disabled: #94a3b8;
-  
+
   /* Interactive States */
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --color-error: #ef4444;
   --color-info: #3b82f6;
-  
+
   /* Border & Divider Colors */
   --color-border-primary: #e2e8f0;
   --color-border-secondary: #cbd5e1;
   --color-border-focus: var(--color-brand-primary);
-  
+
   /* shadcn/ui compatibility mapping */
   --color-background: var(--color-surface-secondary);
   --color-foreground: var(--color-text-primary);
@@ -82,29 +82,105 @@
 
   /* Color Scale Tokens for Tailwind Compatibility */
   --color-primary-50: color-mix(in oklab, var(--color-brand-primary) 8%, white);
-  --color-primary-100: color-mix(in oklab, var(--color-brand-primary) 12%, white);
-  --color-primary-200: color-mix(in oklab, var(--color-brand-primary) 20%, white);
-  --color-primary-300: color-mix(in oklab, var(--color-brand-primary) 35%, white);
-  --color-primary-400: color-mix(in oklab, var(--color-brand-primary) 55%, white);
+  --color-primary-100: color-mix(
+    in oklab,
+    var(--color-brand-primary) 12%,
+    white
+  );
+  --color-primary-200: color-mix(
+    in oklab,
+    var(--color-brand-primary) 20%,
+    white
+  );
+  --color-primary-300: color-mix(
+    in oklab,
+    var(--color-brand-primary) 35%,
+    white
+  );
+  --color-primary-400: color-mix(
+    in oklab,
+    var(--color-brand-primary) 55%,
+    white
+  );
   --color-primary-500: var(--color-brand-primary);
-  --color-primary-600: color-mix(in oklab, var(--color-brand-primary) 85%, black);
-  --color-primary-700: color-mix(in oklab, var(--color-brand-primary) 70%, black);
-  --color-primary-800: color-mix(in oklab, var(--color-brand-primary) 55%, black);
-  --color-primary-900: color-mix(in oklab, var(--color-brand-primary) 40%, black);
-  --color-primary-950: color-mix(in oklab, var(--color-brand-primary) 25%, black);
-  
-  --color-secondary-50: color-mix(in oklab, var(--color-brand-secondary) 8%, white);
-  --color-secondary-100: color-mix(in oklab, var(--color-brand-secondary) 12%, white);
-  --color-secondary-200: color-mix(in oklab, var(--color-brand-secondary) 20%, white);
-  --color-secondary-300: color-mix(in oklab, var(--color-brand-secondary) 35%, white);
-  --color-secondary-400: color-mix(in oklab, var(--color-brand-secondary) 55%, white);
+  --color-primary-600: color-mix(
+    in oklab,
+    var(--color-brand-primary) 85%,
+    black
+  );
+  --color-primary-700: color-mix(
+    in oklab,
+    var(--color-brand-primary) 70%,
+    black
+  );
+  --color-primary-800: color-mix(
+    in oklab,
+    var(--color-brand-primary) 55%,
+    black
+  );
+  --color-primary-900: color-mix(
+    in oklab,
+    var(--color-brand-primary) 40%,
+    black
+  );
+  --color-primary-950: color-mix(
+    in oklab,
+    var(--color-brand-primary) 25%,
+    black
+  );
+
+  --color-secondary-50: color-mix(
+    in oklab,
+    var(--color-brand-secondary) 8%,
+    white
+  );
+  --color-secondary-100: color-mix(
+    in oklab,
+    var(--color-brand-secondary) 12%,
+    white
+  );
+  --color-secondary-200: color-mix(
+    in oklab,
+    var(--color-brand-secondary) 20%,
+    white
+  );
+  --color-secondary-300: color-mix(
+    in oklab,
+    var(--color-brand-secondary) 35%,
+    white
+  );
+  --color-secondary-400: color-mix(
+    in oklab,
+    var(--color-brand-secondary) 55%,
+    white
+  );
   --color-secondary-500: var(--color-brand-secondary);
-  --color-secondary-600: color-mix(in oklab, var(--color-brand-secondary) 85%, black);
-  --color-secondary-700: color-mix(in oklab, var(--color-brand-secondary) 70%, black);
-  --color-secondary-800: color-mix(in oklab, var(--color-brand-secondary) 55%, black);
-  --color-secondary-900: color-mix(in oklab, var(--color-brand-secondary) 40%, black);
-  --color-secondary-950: color-mix(in oklab, var(--color-brand-secondary) 25%, black);
-  
+  --color-secondary-600: color-mix(
+    in oklab,
+    var(--color-brand-secondary) 85%,
+    black
+  );
+  --color-secondary-700: color-mix(
+    in oklab,
+    var(--color-brand-secondary) 70%,
+    black
+  );
+  --color-secondary-800: color-mix(
+    in oklab,
+    var(--color-brand-secondary) 55%,
+    black
+  );
+  --color-secondary-900: color-mix(
+    in oklab,
+    var(--color-brand-secondary) 40%,
+    black
+  );
+  --color-secondary-950: color-mix(
+    in oklab,
+    var(--color-brand-secondary) 25%,
+    black
+  );
+
   --color-accent-50: color-mix(in oklab, var(--color-brand-accent) 8%, white);
   --color-accent-100: color-mix(in oklab, var(--color-brand-accent) 12%, white);
   --color-accent-200: color-mix(in oklab, var(--color-brand-accent) 20%, white);
@@ -121,7 +197,7 @@
   --font-sans: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-display: 'Manrope', Georgia, serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-  
+
   /* Typography Scale */
   --text-xs: 0.75rem; /* 12px */
   --text-sm: 0.875rem; /* 14px */
@@ -132,7 +208,7 @@
   --text-3xl: 1.875rem; /* 30px */
   --text-4xl: 2.25rem; /* 36px */
   --text-5xl: 3rem; /* 48px */
-  
+
   /* Line Heights */
   --leading-none: 1;
   --leading-tight: 1.25;
@@ -140,7 +216,7 @@
   --leading-normal: 1.5;
   --leading-relaxed: 1.625;
   --leading-loose: 2;
-  
+
   /* Border Radius */
   --radius-none: 0px;
   --radius-sm: 0.125rem;
@@ -149,15 +225,17 @@
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
   --radius-full: 9999px;
-  
+
   /* Elevation System (Shadows) */
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl:
+    0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
-  
+
   /* Spacing System */
   --space-xs: 0.25rem; /* 4px */
   --space-sm: 0.5rem; /* 8px */
@@ -166,14 +244,14 @@
   --space-xl: 2rem; /* 32px */
   --space-2xl: 3rem; /* 48px */
   --space-3xl: 4rem; /* 64px */
-  
+
   /* Responsive Breakpoints */
   --breakpoint-sm: 640px;
   --breakpoint-md: 768px;
   --breakpoint-lg: 1024px;
   --breakpoint-xl: 1280px;
   --breakpoint-2xl: 1536px;
-  
+
   /* Container Sizes */
   --container-sm: 640px;
   --container-md: 768px;
@@ -199,7 +277,7 @@
   * {
     @apply box-border;
   }
-  
+
   /* Typography Hierarchy */
   .heading-xs {
     font-size: var(--text-sm);
@@ -207,81 +285,81 @@
     font-weight: 600;
     letter-spacing: -0.025em;
   }
-  
+
   .heading-sm {
     font-size: var(--text-base);
     line-height: var(--leading-normal);
     font-weight: 600;
     letter-spacing: -0.025em;
   }
-  
+
   .heading-base {
     font-size: var(--text-lg);
     line-height: var(--leading-normal);
     font-weight: 600;
     letter-spacing: -0.025em;
   }
-  
+
   .heading-lg {
     font-size: var(--text-xl);
     line-height: var(--leading-tight);
     font-weight: 700;
     letter-spacing: -0.025em;
   }
-  
+
   .heading-xl {
     font-size: var(--text-2xl);
     line-height: var(--leading-tight);
     font-weight: 700;
     letter-spacing: -0.025em;
   }
-  
+
   .heading-2xl {
     font-size: var(--text-3xl);
     line-height: var(--leading-tight);
     font-weight: 800;
     letter-spacing: -0.025em;
   }
-  
+
   .heading-3xl {
     font-size: var(--text-4xl);
     line-height: var(--leading-none);
     font-weight: 800;
     letter-spacing: -0.025em;
   }
-  
+
   .heading-4xl {
     font-size: var(--text-5xl);
     line-height: var(--leading-none);
     font-weight: 900;
     letter-spacing: -0.025em;
   }
-  
+
   /* Body Text Variants */
   .body-xs {
     font-size: var(--text-xs);
     line-height: var(--leading-normal);
     color: var(--color-text-secondary);
   }
-  
+
   .body-sm {
     font-size: var(--text-sm);
     line-height: var(--leading-relaxed);
     color: var(--color-text-secondary);
   }
-  
+
   .body-base {
     font-size: var(--text-base);
     line-height: var(--leading-relaxed);
     color: var(--color-text-primary);
   }
-  
+
   .body-lg {
     font-size: var(--text-lg);
     line-height: var(--leading-relaxed);
     color: var(--color-text-primary);
   }
-  
+
   /* Display Text */
   .display-sm {
     font-family: var(--font-display);
@@ -290,7 +368,7 @@
     font-weight: 700;
     letter-spacing: -0.025em;
   }
-  
+
   .display-md {
     font-family: var(--font-display);
     font-size: var(--text-4xl);
@@ -298,7 +376,7 @@
     font-weight: 800;
     letter-spacing: -0.025em;
   }
-  
+
   .display-lg {
     font-family: var(--font-display);
     font-size: var(--text-5xl);
@@ -306,25 +384,43 @@
     font-weight: 900;
     letter-spacing: -0.025em;
   }
-  
+
   /* Text Colors */
-  .text-primary { color: var(--color-text-primary); }
-  .text-secondary { color: var(--color-text-secondary); }
-  .text-tertiary { color: var(--color-text-tertiary); }
-  .text-inverse { color: var(--color-text-inverse); }
-  .text-disabled { color: var(--color-text-disabled); }
-  .text-success { color: var(--color-success); }
-  .text-warning { color: var(--color-warning); }
-  .text-error { color: var(--color-error); }
-  .text-info { color: var(--color-info); }
-  
+  .text-primary {
+    color: var(--color-text-primary);
+  }
+  .text-secondary {
+    color: var(--color-text-secondary);
+  }
+  .text-tertiary {
+    color: var(--color-text-tertiary);
+  }
+  .text-inverse {
+    color: var(--color-text-inverse);
+  }
+  .text-disabled {
+    color: var(--color-text-disabled);
+  }
+  .text-success {
+    color: var(--color-success);
+  }
+  .text-warning {
+    color: var(--color-warning);
+  }
+  .text-error {
+    color: var(--color-error);
+  }
+  .text-info {
+    color: var(--color-info);
+  }
+
   /* Responsive Grid System */
   .responsive-grid {
     display: grid;
     gap: var(--space-md);
     grid-template-columns: 1fr;
   }
-  
+
   /* Container with responsive padding */
   .container {
     width: 100%;
@@ -333,28 +429,28 @@
     padding-left: var(--space-md);
     padding-right: var(--space-md);
   }
-  
+
   /* Mobile-first responsive classes */
   .stack {
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
   }
-  
+
   .stack-sm {
     gap: var(--space-sm);
   }
-  
+
   .stack-lg {
     gap: var(--space-lg);
   }
-  
+
   /* Focus management */
   .focus-visible {
     outline: 2px solid var(--color-ring);
     outline-offset: 2px;
   }
-  
+
   /* Screen reader only */
   .sr-only {
     position: absolute;
@@ -375,13 +471,13 @@
     grid-template-columns: repeat(2, 1fr);
     gap: var(--space-lg);
   }
-  
+
   .container {
     max-width: var(--container-sm);
     padding-left: var(--space-lg);
     padding-right: var(--space-lg);
   }
-  
+
   .stack-sm-horizontal {
     flex-direction: row;
     align-items: center;
@@ -392,7 +488,7 @@
   .container {
     max-width: var(--container-md);
   }
-  
+
   .stack-md-horizontal {
     flex-direction: row;
     align-items: center;
@@ -404,11 +500,11 @@
     grid-template-columns: repeat(3, 1fr);
     gap: var(--space-xl);
   }
-  
+
   .container {
     max-width: var(--container-lg);
   }
-  
+
   .stack-lg-horizontal {
     flex-direction: row;
     align-items: center;
@@ -419,7 +515,7 @@
   .responsive-grid {
     grid-template-columns: repeat(4, 1fr);
   }
-  
+
   .container {
     max-width: var(--container-xl);
   }
@@ -434,27 +530,27 @@
 /* Nordic Dark Theme */
 :root.dark {
   /* Nordic Dark Mode Surface Colors */
-  --color-surface-primary: var(--nord0);     /* Darkest polar night */
-  --color-surface-secondary: var(--nord1);   /* Dark polar night */
-  --color-surface-tertiary: var(--nord2);    /* Medium polar night */
-  --color-surface-inverse: var(--nord6);     /* Light snow storm */
-  
+  --color-surface-primary: var(--nord0); /* Darkest polar night */
+  --color-surface-secondary: var(--nord1); /* Dark polar night */
+  --color-surface-tertiary: var(--nord2); /* Medium polar night */
+  --color-surface-inverse: var(--nord6); /* Light snow storm */
+
   /* Nordic Dark Mode Text Colors */
-  --color-text-primary: var(--nord6);        /* Light snow storm */
-  --color-text-secondary: var(--nord5);      /* Medium snow storm */
-  --color-text-tertiary: var(--nord4);       /* Dark snow storm */
-  --color-text-inverse: var(--nord0);        /* Darkest polar night */
-  --color-text-disabled: var(--nord3);       /* Light polar night */
-  
+  --color-text-primary: var(--nord6); /* Light snow storm */
+  --color-text-secondary: var(--nord5); /* Medium snow storm */
+  --color-text-tertiary: var(--nord4); /* Dark snow storm */
+  --color-text-inverse: var(--nord0); /* Darkest polar night */
+  --color-text-disabled: var(--nord3); /* Light polar night */
+
   /* Nordic Dark Mode Borders */
-  --color-border-primary: var(--nord3);      /* Light polar night */
-  --color-border-secondary: var(--nord2);    /* Medium polar night */
-  
+  --color-border-primary: var(--nord3); /* Light polar night */
+  --color-border-secondary: var(--nord2); /* Medium polar night */
+
   /* Nordic brand colors with enhanced contrast for dark theme */
-  --color-brand-primary: var(--nord8);       /* Frost light blue */
-  --color-brand-secondary: var(--nord10);    /* Frost dark blue */
-  --color-brand-accent: var(--nord7);        /* Frost teal */
-  
+  --color-brand-primary: var(--nord8); /* Frost light blue */
+  --color-brand-secondary: var(--nord10); /* Frost dark blue */
+  --color-brand-accent: var(--nord7); /* Frost teal */
+
   /* shadcn/ui Nordic dark mode mapping */
   --color-background: var(--color-surface-primary);
   --color-foreground: var(--color-text-primary);
@@ -470,7 +566,7 @@
   --color-muted-foreground: var(--color-text-secondary);
   --color-accent: var(--color-surface-tertiary);
   --color-accent-foreground: var(--color-text-primary);
-  --color-destructive: var(--nord11);         /* Aurora red */
+  --color-destructive: var(--nord11); /* Aurora red */
   --color-destructive-foreground: var(--nord6);
   --color-border: var(--color-border-primary);
   --color-input: var(--color-border-primary);
@@ -486,18 +582,42 @@
   --color-carbon-suave: var(--color-text-secondary);
 
   /* Nordic dark mode color scales */
-  --color-primary-50: color-mix(in oklab, var(--nord8) 8%, var(--color-surface-primary));
-  --color-primary-100: color-mix(in oklab, var(--nord8) 12%, var(--color-surface-primary));
+  --color-primary-50: color-mix(
+    in oklab,
+    var(--nord8) 8%,
+    var(--color-surface-primary)
+  );
+  --color-primary-100: color-mix(
+    in oklab,
+    var(--nord8) 12%,
+    var(--color-surface-primary)
+  );
   --color-primary-500: var(--nord8);
   --color-primary-600: color-mix(in oklab, var(--nord8) 90%, var(--nord6));
   --color-primary-700: color-mix(in oklab, var(--nord8) 70%, var(--nord6));
-  --color-secondary-50: color-mix(in oklab, var(--nord10) 8%, var(--color-surface-primary));
-  --color-secondary-100: color-mix(in oklab, var(--nord10) 12%, var(--color-surface-primary));
+  --color-secondary-50: color-mix(
+    in oklab,
+    var(--nord10) 8%,
+    var(--color-surface-primary)
+  );
+  --color-secondary-100: color-mix(
+    in oklab,
+    var(--nord10) 12%,
+    var(--color-surface-primary)
+  );
   --color-secondary-500: var(--nord10);
   --color-secondary-600: color-mix(in oklab, var(--nord10) 90%, var(--nord6));
   --color-secondary-700: color-mix(in oklab, var(--nord10) 70%, var(--nord6));
-  --color-accent-50: color-mix(in oklab, var(--nord7) 8%, var(--color-surface-primary));
-  --color-accent-100: color-mix(in oklab, var(--nord7) 12%, var(--color-surface-primary));
+  --color-accent-50: color-mix(
+    in oklab,
+    var(--nord7) 8%,
+    var(--color-surface-primary)
+  );
+  --color-accent-100: color-mix(
+    in oklab,
+    var(--nord7) 12%,
+    var(--color-surface-primary)
+  );
   --color-accent-500: var(--nord7);
   --color-accent-600: color-mix(in oklab, var(--nord7) 90%, var(--nord6));
   --color-accent-700: color-mix(in oklab, var(--nord7) 70%, var(--nord6));
@@ -753,7 +873,7 @@
     position: relative;
     overflow: hidden;
   }
-  
+
   .product-card::before,
   .featured-card::before {
     content: '';
@@ -842,7 +962,7 @@
     color: var(--color-foreground);
     border: 1px solid var(--color-input);
     --tw-ring-color: var(--color-ring);
-    
+
     /* Dark mode dropdown arrow */
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
     background-position: right 0.5rem center;
@@ -850,39 +970,40 @@
     background-size: 1.5em 1.5em;
     padding-right: 2.5rem;
   }
-  
+
   /* Dark mode specific select styling */
   :root.nord-dark .form-select,
   :root.dark .form-select {
     background-color: var(--color-surface-secondary);
     border-color: var(--color-border-primary);
     color: var(--color-text-primary);
-    
+
     /* Dark mode dropdown arrow */
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23d1d5db' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
   }
-  
+
   /* Select options styling */
   .form-select option {
     background-color: var(--color-card);
     color: var(--color-foreground);
     padding: 0.5rem 0.75rem;
   }
-  
+
   /* Dark mode options */
   :root.nord-dark .form-select option,
   :root.dark .form-select option {
     background-color: var(--color-surface-secondary);
     color: var(--color-text-primary);
   }
-  
+
   /* Focus and hover states for dark mode */
   :root.nord-dark .form-select:focus,
   :root.dark .form-select:focus {
     border-color: var(--color-brand-primary);
-    box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-brand-primary) 20%, transparent);
+    box-shadow: 0 0 0 2px
+      color-mix(in oklab, var(--color-brand-primary) 20%, transparent);
   }
-  
+
   :root.nord-dark .form-select:hover,
   :root.dark .form-select:hover {
     border-color: var(--color-border-secondary);
@@ -1115,7 +1236,7 @@
 
 /* Nordic dark overrides for common utility colors */
 :root.nord-dark .glass {
-  background: rgba(46, 52, 64, 0.8);  /* More opaque Nord0 */
+  background: rgba(46, 52, 64, 0.8); /* More opaque Nord0 */
   border-color: var(--color-border);
 }
 
@@ -1362,11 +1483,19 @@
 
 /* Enhanced theme transition system */
 .theme-transitioning {
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .theme-transitioning * {
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, fill 0.2s ease, stroke 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    fill 0.2s ease,
+    stroke 0.2s ease;
 }
 
 /* Reduced motion class */
@@ -1494,13 +1623,21 @@
 }
 
 @keyframes shake {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateX(0);
   }
-  10%, 30%, 50%, 70%, 90% {
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
     transform: translateX(-4px);
   }
-  20%, 40%, 60%, 80% {
+  20%,
+  40%,
+  60%,
+  80% {
     transform: translateX(4px);
   }
 }
@@ -1547,7 +1684,9 @@
   background: rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   transform: translate(-50%, -50%);
-  transition: width 0.6s, height 0.6s;
+  transition:
+    width 0.6s,
+    height 0.6s;
 }
 
 .btn:active::before {
@@ -1610,7 +1749,8 @@
 
 .input-focus:focus {
   transform: scale(1.02);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 20%, transparent);
+  box-shadow: 0 0 0 3px
+    color-mix(in oklab, var(--color-primary) 20%, transparent);
 }
 
 /* Toast animations */
@@ -1639,6 +1779,11 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
   animation: progress-indeterminate 1.5s ease-in-out infinite;
 }

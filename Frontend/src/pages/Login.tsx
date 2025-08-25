@@ -38,21 +38,26 @@ const LoginPage: React.FC = () => {
     },
     onSubmit: async values => {
       console.log('Form submitted with values:', values);
-      
+
       // Validación manual simple
       if (!values.email) {
-        toast.error('El correo electrónico es obligatorio', { action: 'login' });
+        toast.error('El correo electrónico es obligatorio', {
+          action: 'login',
+        });
         return;
       }
       if (!values.password) {
         toast.error('La contraseña es obligatoria', { action: 'login' });
         return;
       }
-      
+
       if (!rateLimit.checkLimit()) {
-        toast.error('Demasiados intentos de inicio de sesión. Intenta más tarde.', {
-          action: 'login',
-        });
+        toast.error(
+          'Demasiados intentos de inicio de sesión. Intenta más tarde.',
+          {
+            action: 'login',
+          }
+        );
         return;
       }
 
@@ -60,7 +65,7 @@ const LoginPage: React.FC = () => {
       const result = await signIn(values.email, values.password);
       console.log('Sign in result:', result);
       console.log('Sign in result.error:', result.error);
-      
+
       if (result.error) {
         console.error('Login failed:', result.error);
         toast.error(result.error, {
@@ -105,7 +110,8 @@ const LoginPage: React.FC = () => {
                   Bienvenido de vuelta
                 </h2>
                 <p className='opacity-80 mb-6'>
-                  Accede a tu cuenta para continuar explorando los tesoros artesanales del Chocó.
+                  Accede a tu cuenta para continuar explorando los tesoros
+                  artesanales del Chocó.
                 </p>
                 <div className='space-y-4'>
                   <div className='flex items-center gap-3'>
@@ -124,9 +130,7 @@ const LoginPage: React.FC = () => {
                         />
                       </svg>
                     </div>
-                    <span className='text-sm'>
-                      Acceso rápido a tu perfil
-                    </span>
+                    <span className='text-sm'>Acceso rápido a tu perfil</span>
                   </div>
                   <div className='flex items-center gap-3'>
                     <div className='w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center'>
@@ -211,7 +215,9 @@ const LoginPage: React.FC = () => {
                       type='password'
                       placeholder='••••••••'
                       {...form.getInputProps('password')}
-                      className={form.hasError('password') ? 'border-red-500' : ''}
+                      className={
+                        form.hasError('password') ? 'border-red-500' : ''
+                      }
                     />
                     {form.hasError('password') && (
                       <p className='text-red-500 text-sm mt-1'>
@@ -225,7 +231,13 @@ const LoginPage: React.FC = () => {
                     type='submit'
                     className='w-full py-3 text-base'
                     disabled={form.isSubmitting || loading}
-                    onClick={() => console.log('Button clicked, form state:', { isSubmitting: form.isSubmitting, loading, values: form.values })}
+                    onClick={() =>
+                      console.log('Button clicked, form state:', {
+                        isSubmitting: form.isSubmitting,
+                        loading,
+                        values: form.values,
+                      })
+                    }
                   >
                     {form.isSubmitting || loading ? (
                       <div className='flex items-center gap-2'>

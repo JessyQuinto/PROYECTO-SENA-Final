@@ -413,8 +413,9 @@ export const secureValidationSchemas = {
   },
 
   phone: (value: string) => {
-    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
-    if (!phoneRegex.test(value.replace(/[\s\-\(\)]/g, ''))) {
+    // Simplified phone regex and character class (no need to escape + or parentheses inside char class)
+    const phoneRegex = /^\+?[1-9][\d]{0,15}$/;
+    if (!phoneRegex.test(value.replace(/[\s\-()]/g, ''))) {
       throw new Error('Número de teléfono inválido');
     }
     return security.sanitizeText(value);

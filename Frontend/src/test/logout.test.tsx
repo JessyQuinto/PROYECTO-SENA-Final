@@ -8,44 +8,42 @@ import { BrowserRouter } from 'react-router-dom';
 const mockSupabase = {
   auth: {
     signOut: vi.fn().mockResolvedValue({}),
-    onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
-    getSession: vi.fn().mockResolvedValue({ data: { session: null } })
+    onAuthStateChange: vi
+      .fn()
+      .mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
+    getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
   },
   from: vi.fn().mockReturnValue({
     select: vi.fn().mockReturnValue({
       eq: vi.fn().mockReturnValue({
-        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
-      })
-    })
-  })
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      }),
+    }),
+  }),
 };
 
 vi.mock('@/lib/supabaseClient', () => ({
-  supabase: mockSupabase
+  supabase: mockSupabase,
 }));
 
 // Mock toast hook
 vi.mock('@/hooks/useToast', () => ({
   useToast: () => ({
     success: vi.fn(),
-    error: vi.fn()
-  })
+    error: vi.fn(),
+  }),
 }));
 
 // Test component that uses auth
 const TestComponent = () => {
   const { user, signOut, loading } = useAuth();
-  
+
   return (
     <div>
-      <div data-testid="user-status">
+      <div data-testid='user-status'>
         {loading ? 'loading' : user ? `logged-in:${user.id}` : 'logged-out'}
       </div>
-      <button 
-        data-testid="logout-button" 
-        onClick={signOut}
-        disabled={loading}
-      >
+      <button data-testid='logout-button' onClick={signOut} disabled={loading}>
         Logout
       </button>
     </div>
@@ -54,9 +52,7 @@ const TestComponent = () => {
 
 const TestWrapper = ({ children }) => (
   <BrowserRouter>
-    <AuthProvider>
-      {children}
-    </AuthProvider>
+    <AuthProvider>{children}</AuthProvider>
   </BrowserRouter>
 );
 
@@ -74,23 +70,25 @@ describe('Logout Flow Tests', () => {
       removeItem: vi.fn(),
       clear: vi.fn(),
       key: vi.fn(),
-      length: 0
+      length: 0,
     };
-    
+
     // Mock Object.keys to return localStorage keys
     Object.defineProperty(localStorageMock, 'keys', {
-      value: vi.fn().mockReturnValue([
-        'user_preferences',
-        'cart_data_user123',
-        'theme_preference',
-        'sb-auth-token',
-        'cookie_consent',
-        'other_key'
-      ])
+      value: vi
+        .fn()
+        .mockReturnValue([
+          'user_preferences',
+          'cart_data_user123',
+          'theme_preference',
+          'sb-auth-token',
+          'cookie_consent',
+          'other_key',
+        ]),
     });
-    
+
     global.localStorage = localStorageMock;
-    
+
     // Mock sessionStorage
     global.sessionStorage = {
       clear: vi.fn(),
@@ -98,19 +96,19 @@ describe('Logout Flow Tests', () => {
       setItem: vi.fn(),
       removeItem: vi.fn(),
       key: vi.fn(),
-      length: 0
+      length: 0,
     };
 
     // Mock Object.keys for localStorage
-    global.Object.keys = vi.fn().mockImplementation((obj) => {
+    global.Object.keys = vi.fn().mockImplementation(obj => {
       if (obj === localStorage) {
         return [
           'user_preferences',
-          'cart_data_user123', 
+          'cart_data_user123',
           'theme_preference',
           'sb-auth-token',
           'cookie_consent',
-          'other_key'
+          'other_key',
         ];
       }
       return [];
@@ -134,11 +132,11 @@ describe('Logout Flow Tests', () => {
     const mockUser = {
       id: 'user123',
       email: 'test@example.com',
-      role: 'comprador'
+      role: 'comprador',
     };
 
     // Mock auth state change to simulate logged in user
-    mockSupabase.auth.onAuthStateChange.mockImplementation((callback) => {
+    mockSupabase.auth.onAuthStateChange.mockImplementation(callback => {
       // Simulate initial auth state with user
       setTimeout(() => callback('SIGNED_IN', { user: mockUser }), 0);
       return { data: { subscription: { unsubscribe: vi.fn() } } };
@@ -152,7 +150,9 @@ describe('Logout Flow Tests', () => {
 
     // Wait for initial auth state
     await waitFor(() => {
-      expect(screen.getByTestId('user-status')).toHaveTextContent('logged-in:user123');
+      expect(screen.getByTestId('user-status')).toHaveTextContent(
+        'logged-in:user123'
+      );
     });
 
     // Trigger logout
@@ -179,14 +179,18 @@ describe('Logout Flow Tests', () => {
     expect(window.dispatchEvent).toHaveBeenCalledWith(expect.any(Event));
     expect(window.dispatchEvent).toHaveBeenCalledWith(
       expect.objectContaining({
-        type: 'userLoggedOut'
+        type: 'userLoggedOut',
       })
     );
 
     // Verify comprehensive logging
     expect(consoleSpy).toHaveBeenCalledWith('[AuthContext] Sign out initiated');
-    expect(consoleSpy).toHaveBeenCalledWith('[AuthContext] Cleaning persistent data...');
-    expect(consoleSpy).toHaveBeenCalledWith('[AuthContext] Sign out completed successfully');
+    expect(consoleSpy).toHaveBeenCalledWith(
+      '[AuthContext] Cleaning persistent data...'
+    );
+    expect(consoleSpy).toHaveBeenCalledWith(
+      '[AuthContext] Sign out completed successfully'
+    );
   });
 
   it('should handle logout errors gracefully', async () => {
@@ -318,8 +322,8 @@ describe('Logout Flow Tests', () => {
       expect.objectContaining({
         type: 'userLoggedOut',
         detail: expect.objectContaining({
-          timestamp: expect.any(Number)
-        })
+          timestamp: expect.any(Number),
+        }),
       })
     );
   });
@@ -344,8 +348,10 @@ describe('Authentication State Persistence Tests', () => {
 
       return (
         <div>
-          <div data-testid="current-user">{user ? user.id : 'none'}</div>
-          <div data-testid="cached-user">{cachedUser ? cachedUser.id : 'none'}</div>
+          <div data-testid='current-user'>{user ? user.id : 'none'}</div>
+          <div data-testid='cached-user'>
+            {cachedUser ? cachedUser.id : 'none'}
+          </div>
         </div>
       );
     };

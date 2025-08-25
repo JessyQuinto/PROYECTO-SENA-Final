@@ -28,7 +28,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, className }) => {
   const handleSignOut = async () => {
     console.log('[UserMenu] Sign out initiated');
     setIsOpen(false);
-    
+
     // Add a small delay to ensure menu closes before signing out
     setTimeout(async () => {
       await signOut();

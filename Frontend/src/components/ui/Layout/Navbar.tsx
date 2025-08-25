@@ -67,7 +67,9 @@ const Navbar: React.FC = () => {
   // Listen for logout events and update navigation
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent | Event) => {
-      console.log('[Navbar] Storage/logout event detected, updating navigation');
+      console.log(
+        '[Navbar] Storage/logout event detected, updating navigation'
+      );
       setNavItems(filterNavItems());
       setIsMobileMenuOpen(false);
     };
@@ -82,11 +84,17 @@ const Navbar: React.FC = () => {
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('userLoggedOut', handleLogout as EventListener);
     window.addEventListener('userStateCleanup', handleLogout as EventListener);
-    
+
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('userLoggedOut', handleLogout as EventListener);
-      window.removeEventListener('userStateCleanup', handleLogout as EventListener);
+      window.removeEventListener(
+        'userLoggedOut',
+        handleLogout as EventListener
+      );
+      window.removeEventListener(
+        'userStateCleanup',
+        handleLogout as EventListener
+      );
     };
   }, [filterNavItems]);
 

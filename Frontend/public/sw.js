@@ -9,11 +9,7 @@ const API_CACHE_NAME = `tesoros-choco-api-${CACHE_VERSION}`;
 const IMAGE_CACHE_NAME = `tesoros-choco-images-${CACHE_VERSION}`;
 
 // Static assets to cache immediately
-const STATIC_ASSETS = [
-  '/',
-  '/productos',
-  '/manifest.json',
-];
+const STATIC_ASSETS = ['/', '/productos', '/manifest.json'];
 
 // API endpoints to cache with different strategies
 const API_CACHE_PATTERNS = [
@@ -31,16 +27,16 @@ const IMAGE_PATTERNS = [
 /**
  * Install event - cache static assets
  */
-self.addEventListener('install', (event) => {
+self.addEventListener('install', event => {
   console.log('🔧 Service Worker installing...');
-  
+
   event.waitUntil(
-    caches.open(STATIC_CACHE_NAME).then((cache) => {
+    caches.open(STATIC_CACHE_NAME).then(cache => {
       console.log('📦 Caching static assets');
       return cache.addAll(STATIC_ASSETS);
     })
   );
-  
+
   // Skip waiting to activate immediately
   self.skipWaiting();
 });
@@ -48,13 +44,13 @@ self.addEventListener('install', (event) => {
 /**
  * Activate event - clean up old caches
  */
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', event => {
   console.log('🚀 Service Worker activating...');
-  
+
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
+    caches.keys().then(cacheNames => {
       return Promise.all(
-        cacheNames.map((cacheName) => {
+        cacheNames.map(cacheName => {
           // Delete old cache versions
           if (
             cacheName.startsWith('tesoros-choco-') &&
@@ -67,7 +63,7 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
-  
+
   // Take control of all clients immediately
   self.clients.claim();
 });
@@ -75,20 +71,20 @@ self.addEventListener('activate', (event) => {
 /**
  * Fetch event - implement caching strategies
  */
-self.addEventListener('fetch', (event) => {
+self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
-  
+
   // Skip non-HTTP requests
   if (!url.protocol.startsWith('http')) {
     return;
   }
-  
+
   // Skip requests with special headers (like cache-control: no-cache)
   if (request.headers.get('cache-control') === 'no-cache') {
     return;
   }
-  
+
   // Handle different types of requests
   if (isStaticAsset(request)) {
     event.respondWith(handleStaticAsset(request));
@@ -110,10 +106,10 @@ function isStaticAsset(request) {
   return (
     request.method === 'GET' &&
     (url.pathname.endsWith('.js') ||
-     url.pathname.endsWith('.css') ||
-     url.pathname.endsWith('.html') ||
-     url.pathname === '/' ||
-     url.pathname.startsWith('/assets/'))
+      url.pathname.endsWith('.css') ||
+      url.pathname.endsWith('.html') ||
+      url.pathname === '/' ||
+      url.pathname.startsWith('/assets/'))
   );
 }
 
@@ -144,17 +140,17 @@ async function handleStaticAsset(request) {
   try {
     const cache = await caches.open(STATIC_CACHE_NAME);
     const cachedResponse = await cache.match(request);
-    
+
     if (cachedResponse) {
       return cachedResponse;
     }
-    
+
     // Fetch from network and cache
     const networkResponse = await fetch(request);
     if (networkResponse.ok) {
       cache.put(request, networkResponse.clone());
     }
-    
+
     return networkResponse;
   } catch (error) {
     console.warn('Static asset fetch failed:', error);
@@ -169,7 +165,7 @@ async function handleStaticAsset(request) {
 async function handleAPIRequest(request) {
   try {
     const cache = await caches.open(API_CACHE_NAME);
-    
+
     // Try network first
     try {
       const networkResponse = await fetch(request);
@@ -178,26 +174,26 @@ async function handleAPIRequest(request) {
         const responseToCache = networkResponse.clone();
         const headers = new Headers(responseToCache.headers);
         headers.set('sw-cached-at', Date.now().toString());
-        
+
         const responseWithTimestamp = new Response(responseToCache.body, {
           status: responseToCache.status,
           statusText: responseToCache.statusText,
           headers: headers,
         });
-        
+
         cache.put(request, responseWithTimestamp);
       }
       return networkResponse;
     } catch (networkError) {
       // Network failed, try cache
       const cachedResponse = await cache.match(request);
-      
+
       if (cachedResponse) {
         // Check if cached response is still valid (5 minutes TTL)
         const cachedAt = cachedResponse.headers.get('sw-cached-at');
-        const isExpired = cachedAt && 
-          (Date.now() - parseInt(cachedAt)) > (5 * 60 * 1000);
-        
+        const isExpired =
+          cachedAt && Date.now() - parseInt(cachedAt) > 5 * 60 * 1000;
+
         if (!isExpired) {
           console.log('📱 Serving cached API response:', request.url);
           return cachedResponse;
@@ -206,18 +202,15 @@ async function handleAPIRequest(request) {
           cache.delete(request);
         }
       }
-      
+
       throw networkError;
     }
   } catch (error) {
     console.warn('API request failed:', error);
-    return new Response(
-      JSON.stringify({ error: 'Network unavailable' }),
-      { 
-        status: 503,
-        headers: { 'Content-Type': 'application/json' }
-      }
-    );
+    return new Response(JSON.stringify({ error: 'Network unavailable' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }
 
@@ -228,18 +221,18 @@ async function handleImageRequest(request) {
   try {
     const cache = await caches.open(IMAGE_CACHE_NAME);
     const cachedResponse = await cache.match(request);
-    
+
     if (cachedResponse) {
       return cachedResponse;
     }
-    
+
     // Fetch from network
     const networkResponse = await fetch(request);
     if (networkResponse.ok) {
       // Cache images for longer period
       cache.put(request, networkResponse.clone());
     }
-    
+
     return networkResponse;
   } catch (error) {
     console.warn('Image fetch failed:', error);
@@ -251,15 +244,15 @@ async function handleImageRequest(request) {
 /**
  * Message event - handle commands from main thread
  */
-self.addEventListener('message', (event) => {
+self.addEventListener('message', event => {
   const { data } = event;
-  
+
   if (data.type === 'CLEAR_CACHE') {
     handleClearCache(data.cacheType).then(() => {
       event.ports[0].postMessage({ success: true });
     });
   } else if (data.type === 'GET_CACHE_STATS') {
-    getCacheStats().then((stats) => {
+    getCacheStats().then(stats => {
       event.ports[0].postMessage({ stats });
     });
   }
@@ -290,7 +283,7 @@ async function handleClearCache(cacheType) {
 async function getCacheStats() {
   const cacheNames = await caches.keys();
   const stats = {};
-  
+
   for (const cacheName of cacheNames) {
     if (cacheName.startsWith('tesoros-choco-')) {
       const cache = await caches.open(cacheName);
@@ -298,7 +291,7 @@ async function getCacheStats() {
       stats[cacheName] = keys.length;
     }
   }
-  
+
   return stats;
 }
 
