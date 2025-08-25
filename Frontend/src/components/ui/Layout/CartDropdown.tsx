@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '@/modules/buyer/CartContext';
 import { useAuth } from '@/auth/AuthContext';
@@ -7,23 +7,52 @@ import { cn } from '@/lib/utils';
 
 export const CartDropdown: React.FC = () => {
   const { items, total, remove, update } = useCart();
-  const { isSigningOut } = useAuth();
+  const { isSigningOut, user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const cartCount = items.reduce((sum, item) => sum + (item.cantidad || 0), 0);
+
+  // Memoized cart count to prevent unnecessary recalculations
+  const cartCount = useMemo(() => 
+    items.reduce((sum, item) => sum + (item.cantidad || 0), 0), 
+    [items]
+  );
 
   // Cerrar dropdown automáticamente si está cerrando sesión
-  React.useEffect(() => {
+  useEffect(() => {
     if (isSigningOut && isOpen) {
       setIsOpen(false);
     }
   }, [isSigningOut, isOpen]);
+
+  // Memoized event handlers
+  const handleToggleDropdown = useCallback(() => {
+    if (!isSigningOut) {
+      setIsOpen(prev => !prev);
+    }
+  }, [isSigningOut]);
+
+  const handleCloseDropdown = useCallback(() => {
+    setIsOpen(false);
+  }, []);
+
+  const handleRemoveItem = useCallback((productId: string) => {
+    remove(productId);
+  }, [remove]);
+
+  const handleUpdateQuantity = useCallback((productId: string, cantidad: number) => {
+    update(productId, cantidad);
+  }, [update]);
+
+  // Don't render if user is not a buyer or is signing out
+  if (!user || user.role !== 'comprador' || isSigningOut) {
+    return null;
+  }
 
   return (
     <div className='relative'>
       <Button
         variant='ghost'
         size='icon'
-        onClick={() => !isSigningOut && setIsOpen(!isOpen)}
+        onClick={handleToggleDropdown}
         className='relative h-9 w-9 transition-all duration-200 hover:bg-accent hover:scale-105'
         aria-label={`Carrito de compras (${cartCount} artículos)`}
         disabled={isSigningOut}
@@ -54,7 +83,7 @@ export const CartDropdown: React.FC = () => {
           {/* Backdrop */}
           <div
             className='fixed inset-0 z-40'
-            onClick={() => setIsOpen(false)}
+            onClick={handleCloseDropdown}
           />
 
           {/* Dropdown */}
@@ -70,7 +99,7 @@ export const CartDropdown: React.FC = () => {
               <Button
                 variant='ghost'
                 size='icon'
-                onClick={() => setIsOpen(false)}
+                onClick={handleCloseDropdown}
                 aria-label='Cerrar carrito'
                 className='h-8 w-8'
               >
@@ -142,7 +171,7 @@ export const CartDropdown: React.FC = () => {
                             <button
                               className='px-2 py-1 text-sm hover:bg-accent'
                               onClick={() =>
-                                update(
+                                handleUpdateQuantity(
                                   item.productoId,
                                   Math.max(1, item.cantidad - 1)
                                 )
@@ -158,7 +187,7 @@ export const CartDropdown: React.FC = () => {
                               max={item.stock ?? 9999}
                               value={item.cantidad}
                               onChange={e =>
-                                update(
+                                handleUpdateQuantity(
                                   item.productoId,
                                   Math.max(
                                     1,
@@ -174,7 +203,7 @@ export const CartDropdown: React.FC = () => {
                             <button
                               className='px-2 py-1 text-sm hover:bg-accent'
                               onClick={() =>
-                                update(
+                                handleUpdateQuantity(
                                   item.productoId,
                                   Math.min(
                                     item.cantidad + 1,
@@ -195,7 +224,7 @@ export const CartDropdown: React.FC = () => {
                       <Button
                         variant='ghost'
                         size='icon'
-                        onClick={() => remove(item.productoId)}
+                        onClick={() => handleRemoveItem(item.productoId)}
                         aria-label='Quitar del carrito'
                         className='h-8 w-8 text-muted-foreground hover:text-destructive'
                       >
@@ -229,12 +258,12 @@ export const CartDropdown: React.FC = () => {
                   </span>
                 </div>
                 <div className='grid grid-cols-2 gap-2'>
-                  <Link to='/carrito' onClick={() => setIsOpen(false)}>
+                  <Link to='/carrito' onClick={handleCloseDropdown}>
                     <Button variant='outline' className='w-full'>
                       Ver carrito
                     </Button>
                   </Link>
-                  <Link to='/checkout' onClick={() => setIsOpen(false)}>
+                  <Link to='/checkout' onClick={handleCloseDropdown}>
                     <Button className='w-full'>Pagar ahora</Button>
                   </Link>
                 </div>

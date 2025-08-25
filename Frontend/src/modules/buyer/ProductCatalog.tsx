@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import CatalogHeader from './CatalogHeader';
 import ProductFilters from './ProductFilters';
@@ -8,6 +8,7 @@ import {
   useCachedCategories,
   useCachedProductRatings,
 } from '../../hooks/useCache';
+import { useDebounce } from '@/hooks/useDebounce';
 
 interface Product {
   id: string;
@@ -36,8 +37,6 @@ const ProductCatalog: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedTerm, setDebouncedTerm] = useState('');
-  // Multi selección de categorías
   const [priceMaxAuto, setPriceMaxAuto] = useState<number>(1000000);
   const [priceMin, setPriceMin] = useState<number>(0);
   const [priceMax, setPriceMax] = useState<number>(1000000);
@@ -45,40 +44,30 @@ const ProductCatalog: React.FC = () => {
   const [sortBy, setSortBy] = useState<
     'newest' | 'price_asc' | 'price_desc' | 'name'
   >('newest');
-  // UX móvil
   const [showFiltersMobile, setShowFiltersMobile] = useState(false);
   const [twoColsMobile, setTwoColsMobile] = useState(false);
 
   // Use cached data hooks
-  const { data: categories, loading: categoriesLoading } =
-    useCachedCategories();
+  const { data: categories, loading: categoriesLoading } = useCachedCategories();
+  
+  // Debounced search term for better performance
+  const debouncedSearchTerm = useDebounce(searchTerm.trim(), 300);
+  
+  // Memoized product IDs to prevent unnecessary recalculations
   const productIds = useMemo(() => products.map(p => p.id), [products]);
   const { data: avgMap } = useCachedProductRatings(productIds);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  useEffect(() => {
-    const id = setTimeout(() => setDebouncedTerm(searchTerm.trim()), 300);
-    return () => clearTimeout(id);
-  }, [searchTerm]);
-
-  // Eliminado efecto muerto: usamos derivación directa (filteredProducts)
-
-  const loadData = async () => {
+  // Memoized data loading function
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
 
-      // Cargar productos con información del vendedor y categoría
       const { data: productsData, error: productsError } = await supabase
         .from('productos')
-        .select(
-          `
+        .select(`
           *,
           categorias(nombre)
-        `
-        )
+        `)
         .eq('estado', 'activo')
         .eq('archivado', false)
         .gt('stock', 0);
@@ -86,7 +75,8 @@ const ProductCatalog: React.FC = () => {
       if (productsError) throw productsError;
 
       setProducts(productsData || []);
-      // Ajustar rango de precios dinámicamente
+      
+      // Calculate price range dynamically
       const maxPrice = Math.max(
         100000,
         ...(productsData || []).map((p: any) => Number(p.precio || 0))
@@ -99,25 +89,40 @@ const ProductCatalog: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // Memoized filtered products with optimized filtering logic
   const filteredProducts = useMemo(() => {
+    if (!products.length) return [];
+
     let filtered = [...products];
-    const q = debouncedTerm.toLowerCase();
-    if (q) {
+    
+    // Apply search filter
+    if (debouncedSearchTerm) {
+      const searchLower = debouncedSearchTerm.toLowerCase();
       filtered = filtered.filter(product =>
-        product.nombre.toLowerCase().includes(q)
+        product.nombre.toLowerCase().includes(searchLower)
       );
     }
+    
+    // Apply category filter
     if (selectedCategories.length > 0) {
       filtered = filtered.filter(product =>
         selectedCategories.includes(product.categoria_id || '')
       );
     }
+    
+    // Apply price filter
     filtered = filtered.filter(
       product =>
         Number(product.precio) >= priceMin && Number(product.precio) <= priceMax
     );
+    
+    // Apply sorting
     switch (sortBy) {
       case 'price_asc':
         filtered.sort((a, b) => a.precio - b.precio);
@@ -136,24 +141,26 @@ const ProductCatalog: React.FC = () => {
         );
         break;
     }
+    
     return filtered;
-  }, [products, debouncedTerm, selectedCategories, priceMin, priceMax, sortBy]);
+  }, [products, debouncedSearchTerm, selectedCategories, priceMin, priceMax, sortBy]);
 
-  const handleToggleFiltersMobile = () => {
+  // Memoized event handlers
+  const handleToggleFiltersMobile = useCallback(() => {
     setShowFiltersMobile(prev => !prev);
-  };
+  }, []);
 
-  const handleToggleTwoColsMobile = () => {
+  const handleToggleTwoColsMobile = useCallback(() => {
     setTwoColsMobile(prev => !prev);
-  };
+  }, []);
 
-  const handleClearFilters = () => {
+  const handleClearFilters = useCallback(() => {
     setSearchTerm('');
     setSelectedCategories([]);
     setPriceMin(0);
     setPriceMax(priceMaxAuto);
     setSortBy('newest');
-  };
+  }, [priceMaxAuto]);
 
   // Loading state with enhanced skeleton
   if (loading || categoriesLoading) {

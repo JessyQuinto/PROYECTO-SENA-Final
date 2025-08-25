@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 
 interface OptimizedImageProps {
@@ -36,13 +36,63 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   sizes,
   quality = 75,
 }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
+  const [imageState, setImageState] = useState<'loading' | 'loaded' | 'error'>('loading');
   const [isInView, setIsInView] = useState(!lazy || priority);
   const imgRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
-  // Intersection Observer for lazy loading
+  // Memoized aspect ratio classes
+  const aspectRatioClasses = useMemo(() => ({
+    square: 'aspect-square',
+    video: 'aspect-video',
+    '3/2': 'aspect-[3/2]',
+    '4/3': 'aspect-[4/3]',
+    '16/9': 'aspect-[16/9]',
+  }), []);
+
+  // Memoized container class name
+  const containerClassName = useMemo(() => cn(
+    'relative overflow-hidden bg-gray-100',
+    aspectRatio &&
+      (aspectRatioClasses[aspectRatio as keyof typeof aspectRatioClasses] ||
+        aspectRatio),
+    className
+  ), [aspectRatio, aspectRatioClasses, className]);
+
+  // Memoized image class name
+  const imageClassName = useMemo(() => cn(
+    'transition-all duration-300',
+    objectFit === 'cover' && 'object-cover',
+    objectFit === 'contain' && 'object-contain',
+    objectFit === 'fill' && 'object-fill',
+    objectFit === 'none' && 'object-none',
+    objectFit === 'scale-down' && 'object-scale-down',
+    imageState === 'loading' && 'opacity-0',
+    imageState === 'loaded' && 'opacity-100',
+    imageState === 'error' && 'opacity-50'
+  ), [objectFit, imageState]);
+
+  // Memoized srcSet generation
+  const srcSet = useMemo(() => {
+    if (!src) return '';
+
+    const widths = [320, 480, 768, 1024, 1280, 1920];
+    return widths.map(w => `${src}?w=${w}&q=${quality} ${w}w`).join(', ');
+  }, [src, quality]);
+
+  // Memoized event handlers
+  const handleLoad = useCallback(() => {
+    setImageState('loaded');
+    onLoad?.();
+  }, [onLoad]);
+
+  const handleError = useCallback(() => {
+    setImageState('error');
+    onError?.();
+  }, [onError]);
+
+  // Intersection Observer setup
   useEffect(() => {
     if (!lazy || priority || isInView) return;
 
@@ -54,74 +104,38 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
         }
       },
       {
-        rootMargin: '50px', // Start loading 50px before the image enters viewport
+        rootMargin: '50px',
         threshold: 0.1,
       }
     );
+
+    observerRef.current = observer;
 
     if (containerRef.current) {
       observer.observe(containerRef.current);
     }
 
-    return () => observer.disconnect();
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
+    };
   }, [lazy, priority, isInView]);
 
-  const handleLoad = useCallback(() => {
-    setIsLoading(false);
-    setHasError(false);
-    onLoad?.();
-  }, [onLoad]);
+  // Cleanup observer on unmount
+  useEffect(() => {
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
+    };
+  }, []);
 
-  const handleError = useCallback(() => {
-    setIsLoading(false);
-    setHasError(true);
-    onError?.();
-  }, [onError]);
-
-  // Generate responsive srcSet for better performance
-  const generateSrcSet = useCallback(
-    (baseSrc: string): string => {
-      if (!baseSrc) return '';
-
-      // This is a simplified version - in a real app you'd use a CDN like Cloudinary
-      const widths = [320, 480, 768, 1024, 1280, 1920];
-      return widths.map(w => `${baseSrc}?w=${w}&q=${quality} ${w}w`).join(', ');
-    },
-    [quality]
-  );
-
-  // Aspect ratio classes
-  const aspectRatioClasses = {
-    square: 'aspect-square',
-    video: 'aspect-video',
-    '3/2': 'aspect-[3/2]',
-    '4/3': 'aspect-[4/3]',
-    '16/9': 'aspect-[16/9]',
-  };
-
-  const containerClassName = cn(
-    'relative overflow-hidden bg-gray-100',
-    aspectRatio &&
-      (aspectRatioClasses[aspectRatio as keyof typeof aspectRatioClasses] ||
-        aspectRatio),
-    className
-  );
-
-  const imageClassName = cn(
-    'transition-all duration-300',
-    objectFit === 'cover' && 'object-cover',
-    objectFit === 'contain' && 'object-contain',
-    objectFit === 'fill' && 'object-fill',
-    objectFit === 'none' && 'object-none',
-    objectFit === 'scale-down' && 'object-scale-down',
-    isLoading && 'opacity-0',
-    !isLoading && 'opacity-100',
-    hasError && 'opacity-50'
-  );
-
-  const shouldShowImage = isInView && !hasError;
-  const shouldShowPlaceholder = isLoading && placeholder !== 'none';
-  const shouldShowFallback = hasError && fallback;
+  const shouldShowImage = isInView && imageState !== 'error';
+  const shouldShowPlaceholder = imageState === 'loading' && placeholder !== 'none';
+  const shouldShowFallback = imageState === 'error' && fallback;
 
   return (
     <div ref={containerRef} className={containerClassName}>
@@ -150,7 +164,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
           width={width}
           height={height}
           sizes={sizes}
-          srcSet={generateSrcSet(src)}
+          srcSet={srcSet}
           loading={priority ? 'eager' : 'lazy'}
           decoding='async'
           className={cn(imageClassName, 'absolute inset-0 w-full h-full')}
@@ -170,7 +184,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
       )}
 
       {/* Error state */}
-      {hasError && !fallback && (
+      {imageState === 'error' && !fallback && (
         <div className='absolute inset-0 flex items-center justify-center bg-gray-100 text-gray-400'>
           <svg
             className='w-8 h-8'
@@ -189,7 +203,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
       )}
 
       {/* Loading indicator */}
-      {isLoading && isInView && (
+      {imageState === 'loading' && isInView && (
         <div className='absolute inset-0 flex items-center justify-center'>
           <div className='w-6 h-6 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin' />
         </div>

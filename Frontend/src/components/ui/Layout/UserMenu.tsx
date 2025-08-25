@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useAuth } from '@/auth/AuthContext';
 import { Button } from '@/components/ui/shadcn/button';
 import { cn } from '@/lib/utils';
@@ -138,7 +138,7 @@ export const UserAvatar: React.FC<{ user: User; className?: string }> = ({ user,
 export const SignOutButton: React.FC<{ className?: string }> = ({ className }) => {
   const { signOut, loading, isSigningOut } = useAuth();
 
-  const handleSignOut = async () => {
+  const handleSignOut = useCallback(async () => {
     console.log('[SignOutButton] Sign out initiated');
     
     try {
@@ -148,19 +148,13 @@ export const SignOutButton: React.FC<{ className?: string }> = ({ className }) =
         return;
       }
 
-      // Add a small delay to ensure menu closes before signing out
-      setTimeout(async () => {
-        try {
-          await signOut();
-          console.log('[SignOutButton] Sign out completed successfully');
-        } catch (error) {
-          console.error('[SignOutButton] Sign out failed:', error);
-        }
-      }, 100);
+      // Execute sign out immediately without delay
+      await signOut();
+      console.log('[SignOutButton] Sign out completed successfully');
     } catch (error) {
-      console.error('[SignOutButton] Error in handleSignOut:', error);
+      console.error('[SignOutButton] Sign out failed:', error);
     }
-  };
+  }, [signOut, isSigningOut]);
 
   // No mostrar el botón si está cargando o cerrando sesión
   if (loading || isSigningOut) {

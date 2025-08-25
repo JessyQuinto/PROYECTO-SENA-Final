@@ -4,6 +4,8 @@ import {
   useEffect,
   useState,
   ReactNode,
+  useCallback,
+  useMemo,
   useRef,
 } from 'react';
 import { supabase } from '@/lib/supabaseClient';
@@ -24,7 +26,7 @@ interface SessionUser {
 interface AuthContextValue {
   user: SessionUser | null;
   loading: boolean;
-  isSigningOut: boolean; // Nuevo estado para transición
+  isSigningOut: boolean;
   signIn(email: string, password: string): Promise<{ error?: string }>;
   signUp(
     email: string,
@@ -45,46 +47,48 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<SessionUser | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isSigningOut, setIsSigningOut] = useState(false); // Nuevo estado para transición
-  const signingOutRef = useRef(false);
-  useEffect(() => {
-    signingOutRef.current = isSigningOut;
-  }, [isSigningOut]);
-  const toast = useToast(); // Usar la versión simple que no depende de useAuth
-  const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL as
-    | string
-    | undefined;
+  const [authState, setAuthState] = useState<{
+    user: SessionUser | null;
+    loading: boolean;
+    isSigningOut: boolean;
+  }>({
+    user: null,
+    loading: true,
+    isSigningOut: false,
+  });
 
-  // Track loading state to prevent duplicate calls
-  const [profileLoading, setProfileLoading] = useState<string | null>(null);
-  const MAX_RETRIES = 3;
-  const RETRY_DELAY = 1000; // 1 second
+  const toast = useToast();
+  const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL as string | undefined;
+  
+  // Refs para evitar race conditions
+  const isSigningOutRef = useRef(false);
+  const currentUserIdRef = useRef<string | null>(null);
+  const authStateChangeInProgressRef = useRef(false);
 
-  const isEmailConfirmed = (session: Session | null): boolean => {
+  // Memoized state updates with proper locking
+  const updateAuthState = useCallback((updates: Partial<typeof authState>) => {
+    setAuthState(prev => {
+      // Prevent updates during sign out process
+      if (isSigningOutRef.current && updates.user !== null) {
+        return prev;
+      }
+      return { ...prev, ...updates };
+    });
+  }, []);
+
+  const isEmailConfirmed = useCallback((session: Session | null): boolean => {
     const u: any = session?.user;
     return !!(u?.email_confirmed_at || u?.confirmed_at || u?.email_confirmed);
-  };
+  }, []);
 
-  const loadProfile = async (uid: string, retryCount = 0) => {
-    if (!supabase) return;
-
-    // Prevent duplicate calls for the same user
-    if (profileLoading === uid) {
-      return;
-    }
-
-    // Circuit breaker: stop retrying after max attempts
-    if (retryCount >= MAX_RETRIES) {
-      console.warn('[auth] Max retries reached for loadProfile, giving up');
-      setLoading(false);
-      return;
-    }
-
-    setProfileLoading(uid);
+  const loadProfile = useCallback(async (uid: string) => {
+    if (!supabase || isSigningOutRef.current) return;
 
     try {
+      // Prevent duplicate profile loads
+      if (currentUserIdRef.current === uid) return;
+      currentUserIdRef.current = uid;
+
       const { data, error } = await supabase
         .from('users')
         .select('id, email, role, vendedor_estado, bloqueado, nombre_completo')
@@ -92,232 +96,175 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .maybeSingle();
 
       if (error) {
-        if (import.meta.env.DEV) {
-          console.warn(
-            `[auth] No se pudo cargar perfil users (attempt ${retryCount + 1}):`,
-            error.message
-          );
-        }
-
-        // Only retry on network errors, not on auth/permission errors
-        if (
-          error.message.includes('Failed to fetch') ||
-          error.code === 'PGRST301'
-        ) {
-          if (retryCount < MAX_RETRIES) {
-            setTimeout(
-              () => {
-                loadProfile(uid, retryCount + 1);
-              },
-              RETRY_DELAY * Math.pow(2, retryCount)
-            ); // Exponential backoff
-            return;
-          }
-          console.warn('[auth] Max retries reached for network errors');
-        }
-
-        setProfileLoading(null);
-        setLoading(false);
+        console.warn('[auth] Error loading profile:', error.message);
+        updateAuthState({ loading: false });
         return;
       }
 
       if (data) {
-        // Seguridad: si usuario está bloqueado, cerrar sesión.
         if (data.bloqueado) {
           await supabase.auth.signOut();
-          setUser(null);
-          setProfileLoading(null);
-          setLoading(false);
+          updateAuthState({ user: null, loading: false });
+          // Solo notificar bloqueo, no bienvenida duplicada
+          toast.error('Tu cuenta ha sido bloqueada por el administrador');
           return;
         }
 
-        setUser({
+        const user: SessionUser = {
           id: data.id,
           email: data.email || undefined,
           nombre: (data as any).nombre_completo || undefined,
           role: (data.role as SessionUser['role']) || undefined,
-          vendedor_estado:
-            data.vendedor_estado as SessionUser['vendedor_estado'],
+          vendedor_estado: data.vendedor_estado as SessionUser['vendedor_estado'],
           bloqueado: !!data.bloqueado,
-        });
+        };
 
-        setProfileLoading(null);
-        setLoading(false);
+        updateAuthState({ user, loading: false });
+        
+        // Solo mostrar bienvenida si es un inicio de sesión real (no refresh)
+        if (authState.user === null && !currentUserIdRef.current) {
+          toast.success(`¡Bienvenido, ${user.nombre || user.email}!`);
+        }
+      } else {
+        updateAuthState({ loading: false });
+      }
+    } catch (error) {
+      console.error('[auth] Unexpected error in loadProfile:', error);
+      updateAuthState({ loading: false });
+    }
+  }, [updateAuthState, toast, authState.user]);
+
+  // Memoized auth state change handler with proper locking
+  const handleAuthStateChange = useCallback(async (
+    _event: AuthChangeEvent,
+    session: Session | null
+  ) => {
+    // Prevent multiple simultaneous auth state changes
+    if (authStateChangeInProgressRef.current) return;
+    authStateChangeInProgressRef.current = true;
+
+    try {
+      if (isSigningOutRef.current) {
         return;
       }
 
-      // Si no existe perfil, no lo creamos desde cliente para evitar conflictos de FK/RLS.
-      // El perfil debe crearlo el backend en /auth/post-signup usando service role.
-      setProfileLoading(null);
-      setLoading(false);
-      return;
-    } catch (error) {
-      console.error('[auth] Unexpected error in loadProfile:', error);
-      setProfileLoading(null);
-      setLoading(false);
-      return;
+      if (session?.user) {
+        if (!isEmailConfirmed(session)) {
+          await supabase.auth.signOut();
+          updateAuthState({ user: null, loading: false });
+          toast.error('Confirma tu correo para iniciar sesión', { action: 'login' });
+          return;
+        }
+        await loadProfile(session.user.id);
+      } else {
+        updateAuthState({ user: null, loading: false });
+      }
+    } finally {
+      authStateChangeInProgressRef.current = false;
     }
-  };
+  }, [isEmailConfirmed, loadProfile, updateAuthState, toast]);
 
   useEffect(() => {
     if (!supabase) {
-      setLoading(false);
+      updateAuthState({ loading: false });
       return;
     }
-    // Evitar auto-login tras confirmar email: si vuelve con tokens (?/# type=signup), cerrar sesión y redirigir a /login
-    (async () => {
+
+    // Handle signup confirmation redirect
+    const handleSignupRedirect = async () => {
       try {
-        const hash = typeof window !== 'undefined' ? window.location.hash : '';
-        const query =
-          typeof window !== 'undefined' ? window.location.search : '';
-        const raw =
-          (hash && hash.startsWith('#') ? hash.substring(1) : hash) ||
-          (query && query.startsWith('?') ? query.substring(1) : '');
+        const hash = window.location.hash;
+        const query = window.location.search;
+        const raw = (hash && hash.startsWith('#') ? hash.substring(1) : hash) ||
+                   (query && query.startsWith('?') ? query.substring(1) : '');
         const params = new URLSearchParams(raw);
         const type = params.get('type');
+        
         if (type === 'signup') {
           await supabase.auth.signOut();
-          setUser(null);
-          try {
-            window.history.replaceState(
-              {},
-              document.title,
-              window.location.pathname
-            );
-          } catch {}
-          toast.success('Correo confirmado. Inicia sesión.', {
-            action: 'login',
-          });
-          setLoading(false);
-          try {
-            window.location.replace('/login');
-          } catch {}
-          return; // Importante: no continuar con listeners
+          updateAuthState({ user: null, loading: false });
+          window.history.replaceState({}, document.title, window.location.pathname);
+          toast.success('Correo confirmado. Inicia sesión.', { action: 'login' });
+          window.location.replace('/login');
+          return;
         }
       } catch {}
-    })();
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event: AuthChangeEvent, session: Session | null) => {
-        // Ignorar cambios durante cierre de sesión para evitar renders intermedios
-        if (signingOutRef.current) {
-          return;
-        }
-        if (session?.user) {
-          // Seguridad: si email no confirmado, cerrar sesión y avisar
-          if (!isEmailConfirmed(session)) {
-            supabase.auth.signOut().finally(() => {
-              setUser(null);
-              toast.error('Confirma tu correo para iniciar sesión', {
-                action: 'login',
-              });
-              setLoading(false);
-            });
-            return;
-          }
-          // Intentar obtener perfil desde tabla users para reflejar cambios admin.
-          // Only load if not already loading for this user
-          if (profileLoading !== session.user.id) {
-            loadProfile(session.user.id);
-          }
-        } else {
-          setUser(null);
-          setLoading(false);
-        }
+    };
+
+    handleSignupRedirect();
+
+    const { data: listener } = supabase.auth.onAuthStateChange(handleAuthStateChange);
+
+    // Initial session check
+    supabase.auth.getSession().then(async ({ data }: { data: { session: Session | null } }) => {
+      const session = data.session;
+      if (isSigningOutRef.current) {
+        updateAuthState({ loading: false });
+        return;
       }
-    );
-
-    // Initial session check - but avoid duplicate calls
-    // Evitar trabajo extra si ya estamos cerrando sesión
-    if (signingOutRef.current) {
-      setLoading(false);
-      return () => {
-        listener.subscription.unsubscribe();
-      };
-    }
-
-    supabase.auth
-      .getSession()
-      .then(async ({ data }: { data: { session: Session | null } }) => {
-        const session = data.session as Session | null;
-        if (signingOutRef.current) {
-          setLoading(false);
+      
+      if (session?.user) {
+        if (!isEmailConfirmed(session)) {
+          await supabase.auth.signOut();
+          updateAuthState({ user: null, loading: false });
           return;
         }
-        if (session?.user) {
-          if (!isEmailConfirmed(session)) {
-            await supabase.auth.signOut();
-            setUser(null);
-            setLoading(false);
-            return;
-          }
-          // Only load if not already loading for this user
-          if (profileLoading !== session.user.id) {
-            await loadProfile(session.user.id);
-          }
-        } else {
-          setLoading(false);
-        }
-      })
-      .catch((error: Error) => {
-        console.error('[auth] Error getting initial session:', error);
-        setLoading(false);
-      });
+        await loadProfile(session.user.id);
+      } else {
+        updateAuthState({ loading: false });
+      }
+    }).catch((error: Error) => {
+      console.error('[auth] Error getting initial session:', error);
+      updateAuthState({ loading: false });
+    });
+
     return () => {
       listener.subscription.unsubscribe();
     };
-  }, [toast]);
+  }, [handleAuthStateChange, isEmailConfirmed, loadProfile, updateAuthState, toast]);
 
-  const signIn = async (email: string, password: string) => {
-    console.log('[AuthContext] signIn called with email:', email);
-
+  const signIn = useCallback(async (email: string, password: string) => {
     if (!supabase) {
-      console.error('[AuthContext] Supabase not configured');
       return { error: 'Supabase no configurado' };
     }
 
     try {
+      // Show loading state immediately
+      updateAuthState({ loading: true });
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      console.log('[AuthContext] Supabase auth result:', { data, error });
-
       if (error) {
-        console.error('[AuthContext] Auth error:', error);
+        updateAuthState({ loading: false });
         return { error: error.message };
       }
 
       if (!data.user) {
-        console.error('[AuthContext] No user data returned');
+        updateAuthState({ loading: false });
         return { error: 'No se pudo obtener datos del usuario' };
       }
 
-      console.log('[AuthContext] User authenticated:', data.user.id);
-
-      // Verificar si el email está confirmado
       const sessionNow = (await supabase.auth.getSession()).data.session;
       if (!isEmailConfirmed(sessionNow)) {
-        console.log('[AuthContext] Email not confirmed, signing out');
         await supabase.auth.signOut();
+        updateAuthState({ loading: false });
         return { error: 'Debes confirmar tu correo antes de iniciar sesión' };
       }
 
-      // Cargar perfil del usuario
-      if (profileLoading !== data.user.id) {
-        console.log('[AuthContext] Loading profile for user:', data.user.id);
-        await loadProfile(data.user.id);
-      }
-
-      console.log('[AuthContext] Sign in completed successfully');
+      // Profile will be loaded by auth state change listener
+      // Don't set loading to false here - let the listener handle it
       return { error: undefined };
     } catch (error) {
       console.error('[AuthContext] Unexpected error in signIn:', error);
+      updateAuthState({ loading: false });
       return { error: 'Error inesperado durante el inicio de sesión' };
     }
-  };
+  }, [isEmailConfirmed, updateAuthState]);
 
-  const signUp = async (
+  const signUp = useCallback(async (
     email: string,
     password: string,
     role: 'comprador' | 'vendedor',
@@ -330,22 +277,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   ) => {
     if (!supabase) return { error: 'Supabase no configurado' };
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { role, ...extra },
-        emailRedirectTo: window.location.origin,
-      },
-    });
-    if (error) return { error: error.message };
+    
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { role, ...extra },
+          emailRedirectTo: window.location.origin,
+        },
+      });
+      
+      if (error) return { error: error.message };
 
-    // Post-signup backend: crear/actualizar perfil y claims de rol (seguro con service role)
-    if (data.user?.id) {
-      try {
-        if (backendUrl) {
-          let ok = false;
-          try {
+      if (data.user?.id) {
+        try {
+          if (backendUrl) {
             const resp = await fetch(
               `${backendUrl.replace(/\/$/, '')}/auth/post-signup`,
               {
@@ -359,12 +306,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 }),
               }
             );
-            ok = resp.ok;
-          } catch {
-            ok = false;
-          }
-          if (!ok) {
-            // Fallback si backend no disponible
+            
+            if (!resp.ok) {
+              // Fallback
+              const { error: insertError } = await supabase.from('users').insert({
+                id: data.user.id,
+                email: email,
+                role: role,
+                vendedor_estado: role === 'vendedor' ? 'pendiente' : null,
+                nombre_completo: extra?.nombre ?? null,
+              });
+              if (insertError && import.meta.env.DEV) {
+                console.warn('[auth] Error creando perfil de usuario (fallback):', insertError);
+              }
+            }
+          } else {
+            // Fallback para desarrollo
             const { error: insertError } = await supabase.from('users').insert({
               id: data.user.id,
               email: email,
@@ -372,140 +329,122 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               vendedor_estado: role === 'vendedor' ? 'pendiente' : null,
               nombre_completo: extra?.nombre ?? null,
             });
-            if (insertError) {
-              if (import.meta.env.DEV) {
-                console.warn(
-                  '[auth] Error creando perfil de usuario (fallback):',
-                  insertError
-                );
-              }
+            if (insertError && import.meta.env.DEV) {
+              console.warn('[auth] Error creando perfil de usuario (fallback):', insertError);
             }
           }
-        } else {
-          // Fallback: crear perfil mínimo vía RLS desde el cliente (menos seguro; solo dev)
-          const { error: insertError } = await supabase.from('users').insert({
-            id: data.user.id,
-            email: email,
-            role: role,
-            vendedor_estado: role === 'vendedor' ? 'pendiente' : null,
-            nombre_completo: extra?.nombre ?? null,
-          });
-          if (insertError) {
-            if (import.meta.env.DEV) {
-              console.warn(
-                '[auth] Error creando perfil de usuario (fallback):',
-                insertError
-              );
-            }
+        } catch (e) {
+          if (import.meta.env.DEV) {
+            console.warn('[auth] Error en post-signup:', e);
           }
-        }
-      } catch (e) {
-        if (import.meta.env.DEV) {
-          console.warn('[auth] Error en post-signup:', e);
         }
       }
+
+      return { error: undefined };
+    } catch (error) {
+      console.error('[auth] Error in signUp:', error);
+      return { error: 'Error inesperado durante el registro' };
     }
+  }, [backendUrl]);
 
-    return { error: undefined };
-  };
-
-  const signOut = async () => {
-    if (isSigningOut) {
+  const signOut = useCallback(async () => {
+    // Prevent multiple sign out attempts
+    if (isSigningOutRef.current || authState.isSigningOut) {
       return;
     }
 
     try {
-      setIsSigningOut(true);
-      // No activar loading global para evitar re-render completo
+      // Set flags immediately to prevent race conditions
+      isSigningOutRef.current = true;
+      updateAuthState({ isSigningOut: true });
+      
+      // Clear user state immediately for better UX
+      updateAuthState({ user: null });
 
-      // Limpiar estado de React inmediatamente para evitar parpadeo
-      setUser(null);
-      setProfileLoading('');
+      // Show immediate feedback
+      toast.info('Cerrando sesión...');
 
-      // Cerrar sesión en Supabase
       if (supabase) {
         await supabase.auth.signOut();
       }
 
-      // Usar el sistema centralizado de limpieza de estado
+      // Cleanup state
       cleanupUserState({
         clearSessionStorage: true,
         dispatchEvents: true,
-        preserveKeys: [
-          'theme_preference',
-          'language_preference',
-          'accessibility_settings',
-        ],
+        preserveKeys: ['theme_preference', 'language_preference', 'accessibility_settings'],
         emergency: false,
         verbose: false,
       });
 
-      // Validar que la limpieza fue exitosa
       const validation = validateCleanup();
       if (!validation.clean) {
         const { emergencyCleanup } = await import('@/lib/stateCleanup');
         emergencyCleanup();
       }
 
-      // Notificar a la UI y navegar sin recargar
+      // Notify UI
       window.dispatchEvent(new Event('storage'));
       window.dispatchEvent(
         new CustomEvent('userLoggedOut', {
-          detail: {
-            timestamp: Date.now(),
-            source: 'authContext-signout',
-          },
+          detail: { timestamp: Date.now(), source: 'authContext-signout' },
         })
       );
 
-      try {
-        const target = '/';
-        if (window.location.pathname !== target) {
-          window.history.replaceState({}, document.title, target);
-        }
-      } finally {
-        // Mantener loading en false; cerrar transición
-        setIsSigningOut(false);
+      // Navigate
+      if (window.location.pathname !== '/') {
+        window.history.replaceState({}, document.title, '/');
       }
+
+      // Show success message
+      toast.success('Sesión cerrada correctamente');
+
     } catch (error) {
       console.error('[AuthContext] Error during signOut:', error);
-
-      // Asegurar limpieza y desbloqueo de transición
-      setUser(null);
-      setProfileLoading('');
-      setIsSigningOut(false);
-
+      
+      // Emergency cleanup
+      updateAuthState({ user: null });
       try {
         const { emergencyCleanup } = await import('@/lib/stateCleanup');
         emergencyCleanup();
         window.dispatchEvent(new Event('storage'));
         window.dispatchEvent(
           new CustomEvent('userLoggedOut', {
-            detail: {
-              timestamp: Date.now(),
-              emergency: true,
-              source: 'authContext-error',
-            },
+            detail: { timestamp: Date.now(), emergency: true, source: 'authContext-error' },
           })
         );
       } catch (cleanupError) {
         console.error('[AuthContext] Emergency cleanup failed:', cleanupError);
       }
+    } finally {
+      // Reset all flags and states
+      isSigningOutRef.current = false;
+      currentUserIdRef.current = null;
+      updateAuthState({ isSigningOut: false, loading: false });
     }
-  };
+  }, [authState.isSigningOut, updateAuthState, toast]);
 
-  const refreshProfile = async () => {
-    if (!supabase) return;
+  const refreshProfile = useCallback(async () => {
+    if (!supabase || isSigningOutRef.current) return;
     const session = (await supabase.auth.getSession()).data.session;
-    if (session?.user?.id && profileLoading !== session.user.id) {
+    if (session?.user?.id) {
       await loadProfile(session.user.id);
     }
-  };
+  }, [loadProfile]);
+
+  // Memoized context value to prevent unnecessary re-renders
+  const contextValue = useMemo<AuthContextValue>(() => ({
+    user: authState.user,
+    loading: authState.loading,
+    isSigningOut: authState.isSigningOut,
+    signIn,
+    signUp,
+    signOut,
+    refreshProfile,
+  }), [authState.user, authState.loading, authState.isSigningOut, signIn, signUp, signOut, refreshProfile]);
 
   return (
-    <AuthContext.Provider
-      value={{ user, loading, isSigningOut, signIn, signUp, signOut, refreshProfile }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

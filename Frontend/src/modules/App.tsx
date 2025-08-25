@@ -1,249 +1,294 @@
-import React, { Suspense, lazy } from 'react';
+import React, { lazy, Suspense, useMemo } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@/auth/AuthContext';
-import { BrowserRouter, Routes, Route, FutureConfig } from 'react-router-dom';
-import MainLayout from '@/components/ui/Layout/MainLayout';
-import { Home } from '@/pages/Home';
-import { ProtectedRoute } from './ProtectedRoute';
-import { Landing } from './Landing';
-import { CartProvider } from './buyer/CartContext';
-import { ToastProvider } from '@/components/ui/ToastProvider';
-import { Toaster } from '@/components/ui/shadcn/toaster';
-import { ThemeProvider } from '@/components/ui/ThemeProvider';
-import { PageErrorBoundary } from '@/components/ui/ErrorBoundary';
+import { CartProvider } from '@/modules/buyer/CartContext';
 import { CacheProvider } from '@/components/cache/CacheProvider';
+import { ThemeProvider } from '@/components/ui/ThemeProvider';
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
+import { Toaster } from '@/components/ui/shadcn/toaster';
+import MainLayout from '@/components/ui/Layout/MainLayout';
+import LoadingSpinner from '@/components/ui/Skeleton';
 
 // Lazy load pages for better performance
-const AuthPage = lazy(() => import('@/pages/Auth'));
-const LoginPage = lazy(() => import('@/pages/Login'));
-const RegisterPage = lazy(() => import('@/pages/Register'));
-const VerifyEmailPage = lazy(() => import('@/pages/VerifyEmail'));
-const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPassword'));
-const ResetPasswordPage = lazy(() => import('@/pages/ResetPassword'));
+const Landing = lazy(() => import('@/modules/Landing').then(module => ({ default: module.Landing })));
+const Login = lazy(() => import('@/pages/Login'));
+const Register = lazy(() => import('@/pages/Register'));
+const ForgotPassword = lazy(() => import('@/pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
+const VerifyEmail = lazy(() => import('@/pages/VerifyEmail'));
 
-// Admin modules
-const AdminDashboard = lazy(() => import('./admin/AdminDashboard'));
-const CategoriesAdmin = lazy(() => import('./admin/CategoriesAdmin'));
-const UsersAdmin = lazy(() => import('./admin/UsersAdmin'));
-const ModerationAdmin = lazy(() => import('./admin/ModerationAdmin'));
-const MetricsAdmin = lazy(() => import('./admin/MetricsAdmin'));
-const AuditLogAdmin = lazy(() => import('./admin/AuditLogAdmin'));
-const AdminSettings = lazy(() => import('./admin/AdminSettings'));
+// Buyer pages
+const ProductCatalog = lazy(() => import('@/modules/buyer/ProductCatalog'));
+const ProductDetail = lazy(() => import('@/modules/buyer/ProductDetail'));
+const CartPage = lazy(() => import('@/modules/buyer/CartPage'));
+const CheckoutPage = lazy(() => import('@/modules/buyer/CheckoutPage'));
+const MyOrdersPage = lazy(() => import('@/modules/buyer/MyOrdersPage'));
+const OrderDetailPage = lazy(() => import('@/modules/buyer/OrderDetailPage'));
+const OrderReceiptPage = lazy(() => import('@/modules/buyer/OrderReceiptPage'));
+const BuyerProfile = lazy(() => import('@/modules/buyer/BuyerProfile'));
+const ReviewsPage = lazy(() => import('@/modules/buyer/ReviewsPage'));
 
-// Vendor modules
-const VendorDashboard = lazy(() => import('./vendor/VendorDashboard'));
+// Admin pages
+const AdminDashboard = lazy(() => import('@/modules/admin/AdminDashboard'));
+const UsersAdmin = lazy(() => import('@/modules/admin/UsersAdmin'));
+const CategoriesAdmin = lazy(() => import('@/modules/admin/CategoriesAdmin'));
+const MetricsAdmin = lazy(() => import('@/modules/admin/MetricsAdmin'));
+const ModerationAdmin = lazy(() => import('@/modules/admin/ModerationAdmin'));
+const AuditLogAdmin = lazy(() => import('@/modules/admin/AuditLogAdmin'));
+const AdminSettings = lazy(() => import('@/modules/admin/AdminSettings'));
 
-// Buyer modules
-const ProductCatalog = lazy(() => import('./buyer/ProductCatalog'));
-const ProductDetail = lazy(() => import('./buyer/ProductDetail'));
-const CartPage = lazy(() => import('./buyer/CartPage'));
-const MyOrdersPage = lazy(() => import('./buyer/MyOrdersPage'));
-const ReviewsPage = lazy(() => import('./buyer/ReviewsPage'));
-const CheckoutPage = lazy(() => import('./buyer/CheckoutPage'));
-const OrderReceiptPage = lazy(() => import('./buyer/OrderReceiptPage'));
-const OrderDetailPage = lazy(() => import('./buyer/OrderDetailPage'));
-const BuyerProfile = lazy(() => import('./buyer/BuyerProfile'));
-const BuyerProfilesManager = lazy(() => import('./buyer/ProfilesManager'));
+// Vendor pages
+const VendorDashboard = lazy(() => import('@/modules/vendor/VendorDashboard'));
 
-// Loading component
-const LoadingSpinner = () => (
-  <div className='container py-10 flex items-center justify-center'>
-    <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
-    <span className='ml-2'>Cargando…</span>
-  </div>
-);
+// Memoized LoadingSpinner to prevent unnecessary re-renders
+const MemoizedLoadingSpinner = React.memo(LoadingSpinner);
 
-export const App: React.FC = () => (
-  <PageErrorBoundary>
-    <ThemeProvider>
-      <CacheProvider>
+// Memoized future config for BrowserRouter
+const futureConfig = useMemo(() => ({
+  v7_startTransition: true,
+}), []);
+
+// Memoized Routes component tree
+const AppRoutes = useMemo(() => (
+  <Routes>
+    {/* Public routes */}
+    <Route path='/' element={<Landing />} />
+    <Route path='/login' element={<Login />} />
+    <Route path='/register' element={<Register />} />
+    <Route path='/forgot-password' element={<ForgotPassword />} />
+    <Route path='/reset-password' element={<ResetPassword />} />
+    <Route path='/verify-email' element={<VerifyEmail />} />
+
+    {/* Protected buyer routes */}
+    <Route
+      path='/productos'
+      element={
+        <MainLayout>
+          <Suspense fallback={<MemoizedLoadingSpinner />}>
+            <ProductCatalog />
+          </Suspense>
+        </MainLayout>
+      }
+    />
+
+    <Route
+      path='/producto/:id'
+      element={
+        <MainLayout>
+          <Suspense fallback={<MemoizedLoadingSpinner />}>
+            <ProductDetail />
+          </Suspense>
+        </MainLayout>
+      }
+    />
+
+    <Route
+      path='/carrito'
+      element={
+        <MainLayout>
+          <Suspense fallback={<MemoizedLoadingSpinner />}>
+            <CartPage />
+          </Suspense>
+        </MainLayout>
+      }
+    />
+
+    <Route
+      path='/checkout'
+      element={
+        <MainLayout>
+          <Suspense fallback={<MemoizedLoadingSpinner />}>
+            <CheckoutPage />
+          </Suspense>
+        </MainLayout>
+      }
+    />
+
+    <Route
+      path='/mis-pedidos'
+      element={
+        <MainLayout>
+          <Suspense fallback={<MemoizedLoadingSpinner />}>
+            <MyOrdersPage />
+          </Suspense>
+        </MainLayout>
+      }
+    />
+
+    <Route
+      path='/pedido/:id'
+      element={
+        <MainLayout>
+          <Suspense fallback={<MemoizedLoadingSpinner />}>
+            <OrderDetailPage />
+          </Suspense>
+        </MainLayout>
+      }
+    />
+
+    <Route
+      path='/recibo/:id'
+      element={
+        <MainLayout>
+          <Suspense fallback={<MemoizedLoadingSpinner />}>
+            <OrderReceiptPage />
+          </Suspense>
+        </MainLayout>
+      }
+    />
+
+    <Route
+      path='/perfil'
+      element={
+        <MainLayout>
+          <Suspense fallback={<MemoizedLoadingSpinner />}>
+            <BuyerProfile />
+          </Suspense>
+        </MainLayout>
+      }
+    />
+
+    <Route
+      path='/reviews'
+      element={
+        <MainLayout>
+          <Suspense fallback={<MemoizedLoadingSpinner />}>
+            <ReviewsPage />
+          </Suspense>
+        </MainLayout>
+      }
+    />
+
+    {/* Protected admin routes */}
+    <Route
+      path='/admin'
+      element={
+        <MainLayout>
+          <Suspense fallback={<MemoizedLoadingSpinner />}>
+            <AdminDashboard />
+          </Suspense>
+        </MainLayout>
+      }
+    />
+
+    <Route
+      path='/admin/users'
+      element={
+        <MainLayout>
+          <Suspense fallback={<MemoizedLoadingSpinner />}>
+            <UsersAdmin />
+          </Suspense>
+        </MainLayout>
+      }
+    />
+
+    <Route
+      path='/admin/categories'
+      element={
+        <MainLayout>
+          <Suspense fallback={<MemoizedLoadingSpinner />}>
+            <CategoriesAdmin />
+          </Suspense>
+        </MainLayout>
+      }
+    />
+
+    <Route
+      path='/admin/metrics'
+      element={
+        <MainLayout>
+          <Suspense fallback={<MemoizedLoadingSpinner />}>
+            <MetricsAdmin />
+          </Suspense>
+        </MainLayout>
+      }
+    />
+
+    <Route
+      path='/admin/moderation'
+      element={
+        <MainLayout>
+          <Suspense fallback={<MemoizedLoadingSpinner />}>
+            <ModerationAdmin />
+          </Suspense>
+        </MainLayout>
+      }
+    />
+
+    <Route
+      path='/admin/audit'
+      element={
+        <MainLayout>
+          <Suspense fallback={<MemoizedLoadingSpinner />}>
+            <AuditLogAdmin />
+          </Suspense>
+        </MainLayout>
+      }
+    />
+
+    <Route
+      path='/admin/settings'
+      element={
+        <MainLayout>
+          <Suspense fallback={<MemoizedLoadingSpinner />}>
+            <AdminSettings />
+          </Suspense>
+        </MainLayout>
+      }
+    />
+
+    {/* Protected vendor routes */}
+    <Route
+      path='/vendedor'
+      element={
+        <MainLayout>
+          <Suspense fallback={<MemoizedLoadingSpinner />}>
+            <VendorDashboard />
+          </Suspense>
+        </MainLayout>
+      }
+    />
+
+    {/* Catch-all route */}
+    <Route
+      path='*'
+      element={
+        <MainLayout>
+          <div className='container mx-auto px-4 py-8 text-center'>
+            <h1 className='text-4xl font-bold text-destructive mb-4'>404</h1>
+            <p className='text-xl text-muted-foreground mb-6'>
+              Página no encontrada
+            </p>
+            <a
+              href='/'
+              className='inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors'
+            >
+              Volver al inicio
+            </a>
+          </div>
+        </MainLayout>
+      }
+    />
+  </Routes>
+), []);
+
+const App: React.FC = () => {
+  return (
+    <ErrorBoundary>
+      <BrowserRouter future={futureConfig}>
         <AuthProvider>
-          <BrowserRouter
-            future={
-              {
-                v7_startTransition: true,
-                v7_relativeSplatPath: true,
-              } as unknown as FutureConfig
-            }
-          >
-            <CartProvider>
-              <ToastProvider>
-                <MainLayout>
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <Routes>
-                      {/* Public routes */}
-                      <Route path='/' element={<Home />} />
-                      <Route path='/productos' element={<ProductCatalog />} />
-                      <Route
-                        path='/productos/:id'
-                        element={<ProductDetail />}
-                      />
-                      <Route path='/demo' element={<Landing />} />
-                      <Route path='/auth' element={<AuthPage />} />
-                      <Route path='/login' element={<LoginPage />} />
-                      <Route path='/register' element={<RegisterPage />} />
-                      <Route
-                        path='/verifica-tu-correo'
-                        element={<VerifyEmailPage />}
-                      />
-                      <Route
-                        path='/forgot-password'
-                        element={<ForgotPasswordPage />}
-                      />
-                      <Route
-                        path='/reset-password'
-                        element={<ResetPasswordPage />}
-                      />
-
-                      {/* Protected buyer routes */}
-                      <Route
-                        path='/carrito'
-                        element={
-                          <ProtectedRoute roles={['comprador']}>
-                            <CartPage />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path='/pagar'
-                        element={
-                          <ProtectedRoute roles={['comprador']}>
-                            <CheckoutPage />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path='/checkout'
-                        element={
-                          <ProtectedRoute roles={['comprador']}>
-                            <CheckoutPage />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path='/recibo/:id'
-                        element={
-                          <ProtectedRoute roles={['comprador', 'admin']}>
-                            <OrderReceiptPage />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path='/pedido/:id'
-                        element={
-                          <ProtectedRoute roles={['comprador', 'admin']}>
-                            <OrderDetailPage />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path='/mis-pedidos'
-                        element={
-                          <ProtectedRoute roles={['comprador']}>
-                            <MyOrdersPage />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path='/mis-calificaciones'
-                        element={
-                          <ProtectedRoute roles={['comprador']}>
-                            <ReviewsPage />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path='/perfil'
-                        element={
-                          <ProtectedRoute roles={['comprador']}>
-                            <BuyerProfile />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path='/perfil/perfiles'
-                        element={
-                          <ProtectedRoute roles={['comprador']}>
-                            <BuyerProfilesManager />
-                          </ProtectedRoute>
-                        }
-                      />
-
-                      {/* Protected admin routes */}
-                      <Route
-                        path='/admin'
-                        element={
-                          <ProtectedRoute roles={['admin']}>
-                            <AdminDashboard />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path='/admin/categorias'
-                        element={
-                          <ProtectedRoute roles={['admin']}>
-                            <CategoriesAdmin />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path='/admin/usuarios'
-                        element={
-                          <ProtectedRoute roles={['admin']}>
-                            <UsersAdmin />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path='/admin/moderacion'
-                        element={
-                          <ProtectedRoute roles={['admin']}>
-                            <ModerationAdmin />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path='/admin/metricas'
-                        element={
-                          <ProtectedRoute roles={['admin']}>
-                            <MetricsAdmin />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path='/admin/auditoria'
-                        element={
-                          <ProtectedRoute roles={['admin']}>
-                            <AuditLogAdmin />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path='/admin/configuracion'
-                        element={
-                          <ProtectedRoute roles={['admin']}>
-                            <AdminSettings />
-                          </ProtectedRoute>
-                        }
-                      />
-
-                      {/* Protected vendor routes */}
-                      <Route
-                        path='/vendedor'
-                        element={
-                          <ProtectedRoute roles={['vendedor']}>
-                            <VendorDashboard />
-                          </ProtectedRoute>
-                        }
-                      />
-                    </Routes>
-                  </Suspense>
-                </MainLayout>
+          <CartProvider>
+            <CacheProvider>
+              <ThemeProvider>
+                {AppRoutes}
                 <Toaster position='top-right' richColors closeButton />
-              </ToastProvider>
-            </CartProvider>
-          </BrowserRouter>
+              </ThemeProvider>
+            </CacheProvider>
+          </CartProvider>
         </AuthProvider>
-      </CacheProvider>
-    </ThemeProvider>
-  </PageErrorBoundary>
-);
+      </BrowserRouter>
+    </ErrorBoundary>
+  );
+};
+
+export default App;

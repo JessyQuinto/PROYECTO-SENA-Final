@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { useCacheWarming, useCacheManager } from '@/hooks/useCache';
 import { cache } from '@/lib/cache';
 
@@ -32,42 +32,73 @@ export const CacheProvider: React.FC<CacheProviderProps> = ({
   warmOnMount = true,
 }) => {
   const [isReady, setIsReady] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const cacheManager = useCacheManager();
   const cacheWarming = useCacheWarming();
+
+  // Memoized initialization function
+  const initializeCache = useCallback(async () => {
+    if (!enableAutoWarming || !warmOnMount) {
+      setIsReady(true);
+      setIsInitializing(false);
+      return;
+    }
+
+    try {
+      console.log('🗂️ Initializing cache system...');
+      
+      // Use requestIdleCallback for non-blocking initialization
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(async () => {
+          try {
+            console.log('🔥 Warming cache with essential data...');
+            await cacheWarming.warmEssentialData();
+            console.log('✅ Cache warming completed');
+          } catch (error) {
+            console.warn('⚠️ Cache warming failed:', error);
+          } finally {
+            setIsReady(true);
+            setIsInitializing(false);
+          }
+        });
+      } else {
+        // Fallback for browsers without requestIdleCallback
+        setTimeout(async () => {
+          try {
+            console.log('🔥 Warming cache with essential data...');
+            await cacheWarming.warmEssentialData();
+            console.log('✅ Cache warming completed');
+          } catch (error) {
+            console.warn('⚠️ Cache warming failed:', error);
+          } finally {
+            setIsReady(true);
+            setIsInitializing(false);
+          }
+        }, 100);
+      }
+    } catch (error) {
+      console.warn('⚠️ Cache initialization failed:', error);
+      setIsReady(true);
+      setIsInitializing(false);
+    }
+  }, [enableAutoWarming, warmOnMount, cacheWarming]);
 
   useEffect(() => {
     let mounted = true;
 
-    const initializeCache = async () => {
-      try {
-        // Initialize cache system
-        console.log('🗂️ Initializing cache system...');
-
-        // Warm essential data if enabled
-        if (warmOnMount && enableAutoWarming) {
-          console.log('🔥 Warming cache with essential data...');
-          await cacheWarming.warmEssentialData();
-          console.log('✅ Cache warming completed');
-        }
-
-        if (mounted) {
-          setIsReady(true);
-          console.log('🚀 Cache system ready');
-        }
-      } catch (error) {
-        console.warn('⚠️ Cache initialization failed:', error);
-        if (mounted) {
-          setIsReady(true); // Still set ready to not block the app
-        }
+    const init = async () => {
+      await initializeCache();
+      if (mounted) {
+        setIsReady(true);
       }
     };
 
-    initializeCache();
+    init();
 
     return () => {
       mounted = false;
     };
-  }, [enableAutoWarming, warmOnMount, cacheWarming]);
+  }, [initializeCache]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -76,12 +107,13 @@ export const CacheProvider: React.FC<CacheProviderProps> = ({
     };
   }, []);
 
-  const contextValue: CacheContextValue = {
+  // Memoized context value
+  const contextValue = useMemo<CacheContextValue>(() => ({
     isReady,
     stats: cacheManager.stats,
     actions: {
       refresh: cacheManager.refreshStats,
-      warmCache: cacheWarming.warmEssentialData,
+      warmCache: cacheManager.warmProductCache,
       warmProductCache: cacheManager.warmProductCache,
       invalidateProductCache: cacheManager.invalidateProductCache,
       invalidateProductCacheById: cacheManager.invalidateProductCacheById,
@@ -90,7 +122,18 @@ export const CacheProvider: React.FC<CacheProviderProps> = ({
       invalidateConfigCache: cacheManager.invalidateConfigCache,
       clearAllCache: cacheManager.clearAllCache,
     },
-  };
+  }), [isReady, cacheManager]);
+
+  // Show loading state only during initialization
+  if (isInitializing) {
+    return (
+      <div className="cache-loading">
+        <CacheContext.Provider value={contextValue}>
+          {children}
+        </CacheContext.Provider>
+      </div>
+    );
+  }
 
   return (
     <CacheContext.Provider value={contextValue}>
@@ -114,7 +157,7 @@ export const CacheManagementPanel: React.FC = () => {
   const { stats, actions } = useCache();
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleWarmCache = async () => {
+  const handleWarmCache = useCallback(async () => {
     setIsLoading(true);
     try {
       await actions.warmCache();
@@ -122,7 +165,7 @@ export const CacheManagementPanel: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [actions]);
 
   return (
     <div className='bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700'>
@@ -205,7 +248,7 @@ export const useCachedMutation = <TData, TVariables>(
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const mutate = async (variables: TVariables): Promise<TData | null> => {
+  const mutate = useCallback(async (variables: TVariables): Promise<TData | null> => {
     try {
       setIsLoading(true);
       setError(null);
@@ -230,7 +273,7 @@ export const useCachedMutation = <TData, TVariables>(
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [mutationFn, options]);
 
   return {
     mutate,

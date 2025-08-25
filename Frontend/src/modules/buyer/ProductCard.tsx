@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/shadcn/card';
 import { useCart } from './CartContext';
@@ -35,22 +35,35 @@ const ProductCardBase: React.FC<ProductCardProps> = ({
   className = '',
 }) => {
   const { add } = useCart();
-  const isLowStock = Number(product.stock) <= 5 && Number(product.stock) > 0;
-  const createdAt = product.created_at ? new Date(product.created_at) : null;
-  const isNew = createdAt
-    ? Date.now() - createdAt.getTime() < 1000 * 60 * 60 * 24 * 14
-    : false;
 
-  const handleAddToCart = () => {
-    add({
-      productoId: product.id,
-      nombre: product.nombre,
-      precio: Number(product.precio),
-      cantidad: 1,
-      imagenUrl: product.imagen_url || undefined,
-      stock: product.stock,
-    });
-  };
+  // Memoized computed values
+  const isLowStock = useMemo(() => 
+    Number(product.stock) <= 5 && Number(product.stock) > 0, 
+    [product.stock]
+  );
+
+  const isNew = useMemo(() => {
+    if (!product.created_at) return false;
+    const createdAt = new Date(product.created_at);
+    return Date.now() - createdAt.getTime() < 1000 * 60 * 60 * 24 * 14;
+  }, [product.created_at]);
+
+  // Memoized cart item
+  const cartItem = useMemo(() => ({
+    productoId: product.id,
+    nombre: product.nombre,
+    precio: Number(product.precio),
+    cantidad: 1,
+    imagenUrl: product.imagen_url || undefined,
+    stock: product.stock,
+  }), [product.id, product.nombre, product.precio, product.imagen_url, product.stock]);
+
+  // Memoized event handlers
+  const handleAddToCart = useCallback(() => {
+    add(cartItem);
+  }, [add, cartItem]);
+
+  const isOutOfStock = Number(product.stock) <= 0;
 
   return (
     <Card
@@ -103,7 +116,7 @@ const ProductCardBase: React.FC<ProductCardProps> = ({
           <button
             className='btn btn-primary btn-sm'
             onClick={handleAddToCart}
-            disabled={Number(product.stock) <= 0}
+            disabled={isOutOfStock}
             aria-label={`Añadir ${product.nombre} al carrito`}
           >
             +
@@ -114,6 +127,7 @@ const ProductCardBase: React.FC<ProductCardProps> = ({
   );
 };
 
+// Memoized component to prevent unnecessary re-renders
 const ProductCard = React.memo(ProductCardBase);
 
 export default ProductCard;
