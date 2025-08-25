@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 
 // Separate components for better maintainability
 import NavigationMenu from './NavigationMenu.tsx';
-import UserMenu from './UserMenu.tsx';
+import UserMenu, { UserAvatar, SignOutButton } from './UserMenu.tsx';
 import CartDropdown from './CartDropdown.tsx';
 import MobileMenu from './MobileMenu.tsx';
 
@@ -139,18 +139,22 @@ const Navbar: React.FC = () => {
             <NavigationMenu items={navItems} currentPath={location.pathname} />
           </div>
 
-          {/* Right side items */}
+          {/* Right side items - Reorganized order */}
           <div className='flex items-center space-x-4'>
-            {/* Theme toggle */}
+            {/* 1. User Avatar (Logo with animation + Name) */}
+            {user && <UserAvatar user={user} />}
+
+            {/* 2. Cart dropdown */}
+            {user?.role === 'comprador' && <CartDropdown />}
+
+            {/* 3. Theme toggle */}
             <ThemeToggle />
 
-            {/* Cart dropdown */}
-            <CartDropdown />
+            {/* 4. Sign out button */}
+            {user && <SignOutButton />}
 
-            {/* User menu or auth buttons */}
-            {user ? (
-              <UserMenu user={user} />
-            ) : (
+            {/* Auth buttons for non-authenticated users */}
+            {!user && (
               <div className='flex items-center space-x-2'>
                 {/* Desktop auth buttons */}
                 <div className='hidden sm:flex items-center space-x-2'>

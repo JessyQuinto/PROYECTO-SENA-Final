@@ -24,25 +24,26 @@ export const CartDropdown: React.FC = () => {
         variant='ghost'
         size='icon'
         onClick={() => !isSigningOut && setIsOpen(!isOpen)}
-        className='relative'
+        className='relative h-9 w-9 transition-all duration-200 hover:bg-accent hover:scale-105'
         aria-label={`Carrito de compras (${cartCount} artículos)`}
         disabled={isSigningOut}
       >
+        {/* Improved shopping cart icon */}
         <svg
           className='h-5 w-5'
           viewBox='0 0 24 24'
           fill='none'
           stroke='currentColor'
+          strokeWidth='2'
         >
           <path
             strokeLinecap='round'
             strokeLinejoin='round'
-            strokeWidth={2}
-            d='M3 3h2l.4 2M7 13h10l3-8H6.4M7 13L5.4 5M7 13l-2 9m12-9l2 9M10 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z'
+            d='M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z'
           />
         </svg>
         {cartCount > 0 && (
-          <span className='absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-medium text-destructive-foreground'>
+          <span className='absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground shadow-sm animate-pulse'>
             {cartCount}
           </span>
         )}
@@ -104,7 +105,7 @@ export const CartDropdown: React.FC = () => {
                         strokeLinecap='round'
                         strokeLinejoin='round'
                         strokeWidth={2}
-                        d='M3 3h2l.4 2M7 13h10l3-8H6.4M7 13L5.4 5M7 13l-2 9m12-9l2 9M10 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z'
+                        d='M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z'
                       />
                     </svg>
                   </div>
