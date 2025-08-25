@@ -112,12 +112,16 @@ bun run test
 
 ## 📚 Documentación Adicional
 
-- [Arquitectura del Sistema](ARQUITECTURA.md)
-- [Diseño del Sistema](DISEÑO_SISTEMA.md)
-- [Documentación Frontend](FRONTEND.md)
-- [Documentación Backend](BACKEND.md)
-- [API Reference](API.md)
-- [Guía de Despliegue](DEPLOYMENT.md)
+- [Arquitectura del Sistema](Docs/ARQUITECTURA.md)
+- [Diseño del Sistema](Docs/DISEÑO_SISTEMA.md)
+- [Documentación Frontend](Docs/FRONTEND.md)
+- [Documentación Backend](Docs/BACKEND.md)
+- [API Reference](Docs/API.md)
+- [Guía de Despliegue](Docs/DEPLOYMENT.md)
+- [Seguridad y Buenas Prácticas](Docs/SECURITY.md)
+- [Configuración de Supabase](Docs/SUPABASE.md)
+- [Guía de Testing](Docs/TESTING.md)
+
 
 ## 🤝 Contribución
 
