@@ -105,7 +105,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (data.bloqueado) {
           await supabase.auth.signOut();
           updateAuthState({ user: null, loading: false });
-          // Solo notificar bloqueo, no bienvenida duplicada
           toast.error('Tu cuenta ha sido bloqueada por el administrador');
           return;
         }
@@ -121,8 +120,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         updateAuthState({ user, loading: false });
         
-        // Solo mostrar bienvenida si es un inicio de sesión real (no refresh)
-        if (authState.user === null && !currentUserIdRef.current) {
+        // Show success notification for sign in
+        if (authState.user === null) {
           toast.success(`¡Bienvenido, ${user.nombre || user.email}!`);
         }
       } else {

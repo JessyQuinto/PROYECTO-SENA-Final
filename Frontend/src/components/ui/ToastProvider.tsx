@@ -4,7 +4,6 @@ import React, {
   useContext,
   useEffect,
   useMemo,
-  useRef,
 } from 'react';
 import { useAuth } from '@/auth/AuthContext';
 import { toast } from 'sonner';
@@ -17,7 +16,6 @@ export interface ToastOptions {
   role?: AppRole;
   action?: ToastAction;
   durationMs?: number;
-  id?: string; // Para deduplicación
 }
 
 // Mantener API, pero delegar a sonner
@@ -64,10 +62,6 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const { user } = useAuth();
-  
-  // Ref para tracking de notificaciones recientes (deduplicación)
-  const recentToastsRef = useRef<Map<string, number>>(new Map());
-  const TOAST_DEDUP_INTERVAL = 3000; // 3 segundos
 
   const notify = useCallback(
     (opts: ToastOptions) => {
@@ -77,51 +71,27 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
         opts.title ?? roleActionDefaultTitle(role, opts.action, type);
       const duration = opts.durationMs ?? (type === 'error' ? 6000 : 4000);
       
-      // Sistema de deduplicación
-      const toastKey = `${type}-${title}-${opts.message}`;
-      const now = Date.now();
-      const lastShown = recentToastsRef.current.get(toastKey);
-      
-      if (lastShown && (now - lastShown) < TOAST_DEDUP_INTERVAL) {
-        console.log('[ToastProvider] Duplicate toast prevented:', toastKey);
-        return; // Evitar notificación duplicada
-      }
-      
-      // Registrar timestamp de esta notificación
-      recentToastsRef.current.set(toastKey, now);
-      
-      // Limpiar toasts antiguos (más de 10 segundos)
-      for (const [key, timestamp] of recentToastsRef.current.entries()) {
-        if (now - timestamp > 10000) {
-          recentToastsRef.current.delete(key);
-        }
-      }
-      
       // Use immediate execution for better responsiveness
       if (type === 'error') {
         toast.error(title, { 
           description: opts.message, 
           duration,
-          id: opts.id || toastKey, // Usar ID para deduplicación
         });
       } else if (type === 'success') {
         toast.success(title, { 
           description: opts.message, 
           duration,
-          id: opts.id || toastKey, // Usar ID para deduplicación
         });
       } else if (type === 'warning') {
         toast(title, { 
           description: opts.message, 
           duration,
           icon: '⚠️',
-          id: opts.id || toastKey, // Usar ID para deduplicación
         });
       } else {
         toast(title, { 
           description: opts.message, 
           duration,
-          id: opts.id || toastKey, // Usar ID para deduplicación
         });
       }
     },
@@ -135,7 +105,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
   );
   
   const error = useCallback(
-    (message: string, opts?: Omit<ToastOptions, 'message' | 'type'>): void =>
+    (message: string, opts?: Omit<ToastOptions, 'message' | 'type'>) =>
       notify({ ...opts, type: 'error', message }),
     [notify]
   );

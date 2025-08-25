@@ -1,6 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import App from './modules/App';
+import { App } from './modules/App';
 import { initPerformanceMonitoring } from './lib/performance';
 import './lib/errorHandler';
 import { initializeSecurity } from './lib/csp';
