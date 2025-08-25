@@ -60,21 +60,21 @@ export default [
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-empty-function': 'off',
 
-  // Code quality rules
-  'no-console': 'warn',
-  // Relaxed to warn to avoid blocking commits during large refactors
-  'no-debugger': 'warn',
-  'prefer-const': 'warn',
-  'no-var': 'warn',
+      // Code quality rules
+      'no-console': 'warn',
+      // Relaxed to warn to avoid blocking commits during large refactors
+      'no-debugger': 'warn',
+      'prefer-const': 'warn',
+      'no-var': 'warn',
 
-  // empty blocks often show up during refactors; warn instead of error to unblock commits
-  'no-empty': 'warn',
+      // empty blocks often show up during refactors; warn instead of error to unblock commits
+      'no-empty': 'warn',
 
-  // Prettier integration (warn to avoid blocking commits after formatting)
-  'prettier/prettier': 'warn',
-  // Tests and some legacy files reference `global` and other env-specific identifiers
-  // Disable `no-undef` to avoid false positives in test environment
-  'no-undef': 'off',
+      // Prettier integration (warn to avoid blocking commits after formatting)
+      'prettier/prettier': 'warn',
+      // Tests and some legacy files reference `global` and other env-specific identifiers
+      // Disable `no-undef` to avoid false positives in test environment
+      'no-undef': 'off',
     },
   },
 ];
