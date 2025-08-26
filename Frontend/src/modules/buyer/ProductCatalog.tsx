@@ -209,7 +209,7 @@ const ProductCatalog: React.FC = () => {
   }
 
   return (
-    <div className='container py-8'>
+    <div className='container py-4 md:py-8'>
       <CatalogHeader
         searchTerm={filters.searchTerm}
         onSearchChange={handleSearchTermChange}
@@ -221,7 +221,7 @@ const ProductCatalog: React.FC = () => {
         onToggleTwoColsMobile={handleToggleTwoColsMobile}
       />
 
-      <div className='grid grid-cols-1 lg:grid-cols-4 gap-6'>
+      <div className='grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6'>
         <ProductFilters
           categories={categories || []}
           selectedCategories={filters.selectedCategories}

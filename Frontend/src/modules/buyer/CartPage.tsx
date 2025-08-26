@@ -51,19 +51,19 @@ const CartPage: React.FC = () => {
   };
 
   return (
-    <div className='container py-8'>
+    <div className='container py-4 md:py-8'>
       <div className='max-w-6xl mx-auto'>
         {/* Header mejorado */}
-        <div className='text-center mb-8'>
-          <h1 className='heading-lg mb-3 flex items-center justify-center gap-3'>
+        <div className='text-center mb-6 md:mb-8'>
+          <h1 className='text-2xl md:text-3xl lg:text-4xl font-bold mb-3 flex items-center justify-center gap-3'>
             <Icon
               category='Carrito y checkout'
               name='WhhShoppingcart'
-              className='w-8 h-8'
+              className='w-6 h-6 md:w-8 md:h-8'
             />
             Tu Carrito de Compras
           </h1>
-          <p className='text-gray-600 text-lg'>
+          <p className='text-gray-600 text-base md:text-lg'>
             {items.length > 0
               ? `Tienes ${items.length} producto${items.length > 1 ? 's' : ''} en tu carrito`
               : 'Tu carrito está vacío'}
@@ -100,18 +100,18 @@ const CartPage: React.FC = () => {
             </Card>
           </div>
         ) : (
-          <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
+          <div className='grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8'>
             {/* Lista de productos */}
-            <div className='lg:col-span-2 space-y-4'>
-              <div className='flex items-center justify-between mb-4'>
-                <h2 className='text-lg font-semibold text-gray-900'>
+            <div className='lg:col-span-2 space-y-3 md:space-y-4'>
+              <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4'>
+                <h2 className='text-base md:text-lg font-semibold text-gray-900'>
                   Productos en tu carrito
                 </h2>
                 <Button
                   variant='outline'
                   size='sm'
                   onClick={clear}
-                  className='flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50'
+                  className='flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 self-start sm:self-auto'
                 >
                   <Icon
                     category='Estados y Feedback'
@@ -124,11 +124,11 @@ const CartPage: React.FC = () => {
 
               {items.map(i => (
                 <Card key={i.productoId} className='card-hover'>
-                  <CardContent className='p-6'>
-                    <div className='flex items-center justify-between gap-4'>
+                  <CardContent className='p-4 md:p-6'>
+                    <div className='flex flex-col sm:flex-row items-start sm:items-center gap-4'>
                       {/* Información del producto */}
-                      <div className='flex items-center gap-4 flex-1'>
-                        <div className='w-24 h-24 bg-gray-100 overflow-hidden rounded-lg flex-shrink-0'>
+                      <div className='flex items-start sm:items-center gap-4 flex-1 w-full sm:w-auto'>
+                        <div className='w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 overflow-hidden rounded-lg flex-shrink-0'>
                           {i.imagenUrl ? (
                             <img
                               src={i.imagenUrl}
@@ -146,10 +146,10 @@ const CartPage: React.FC = () => {
                           )}
                         </div>
                         <div className='flex-1 min-w-0'>
-                          <h3 className='font-semibold text-gray-900 mb-1 truncate'>
+                          <h3 className='text-sm sm:text-base font-semibold text-gray-900 mb-1 truncate'>
                             {i.nombre}
                           </h3>
-                          <p className='text-lg font-bold text-green-600'>
+                          <p className='text-base sm:text-lg font-bold text-green-600'>
                             ${i.precio.toLocaleString()}
                           </p>
                           {i.stock !== undefined && (
@@ -162,7 +162,7 @@ const CartPage: React.FC = () => {
                       </div>
 
                       {/* Controles de cantidad */}
-                      <div className='flex items-center gap-3'>
+                      <div className='flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto'>
                         <div className='inline-flex items-center border-2 border-gray-200 rounded-lg overflow-hidden'>
                           <button
                             aria-label='Reducir cantidad'
@@ -216,28 +216,30 @@ const CartPage: React.FC = () => {
                           </button>
                         </div>
 
-                        {/* Subtotal del item */}
-                        <div className='text-right min-w-[80px]'>
-                          <p className='text-sm text-gray-500'>Subtotal</p>
-                          <p className='font-semibold text-gray-900'>
-                            ${(i.precio * i.cantidad).toLocaleString()}
-                          </p>
-                        </div>
+                        {/* Subtotal y botón eliminar */}
+                        <div className='flex items-center justify-between sm:flex-col sm:items-end gap-3 w-full sm:w-auto'>
+                          <div className='text-left sm:text-right min-w-[80px]'>
+                            <p className='text-xs text-gray-500'>Subtotal</p>
+                            <p className='text-sm sm:text-base font-semibold text-gray-900'>
+                              ${(i.precio * i.cantidad).toLocaleString()}
+                            </p>
+                          </div>
 
-                        {/* Botón eliminar */}
-                        <Button
-                          variant='outline'
-                          size='sm'
-                          onClick={() => remove(i.productoId)}
-                          className='flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200'
-                        >
-                          <Icon
-                            category='Estados y Feedback'
-                            name='BxErrorCircle'
-                            className='w-4 h-4'
-                          />
-                          Eliminar
-                        </Button>
+                          {/* Botón eliminar */}
+                          <Button
+                            variant='outline'
+                            size='sm'
+                            onClick={() => remove(i.productoId)}
+                            className='flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 min-h-[44px]'
+                          >
+                            <Icon
+                              category='Estados y Feedback'
+                              name='BxErrorCircle'
+                              className='w-4 h-4'
+                            />
+                            <span className='hidden sm:inline'>Eliminar</span>
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -246,12 +248,12 @@ const CartPage: React.FC = () => {
             </div>
 
             {/* Resumen y botones de acción */}
-            <div className='lg:col-span-1'>
-              <Card className='card-hover sticky top-8'>
-                <CardContent className='p-6 space-y-6'>
+            <div className='lg:col-span-1 order-first lg:order-last'>
+              <Card className='card-hover lg:sticky lg:top-8'>
+                <CardContent className='p-4 md:p-6 space-y-4 md:space-y-6'>
                   {/* Header del resumen */}
                   <div className='text-center pb-4 border-b'>
-                    <h2 className='text-xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-2'>
+                    <h2 className='text-lg md:text-xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-2'>
                       <Icon
                         category='Carrito y checkout'
                         name='VaadinWallet'
@@ -310,7 +312,7 @@ const CartPage: React.FC = () => {
                       <span className='text-lg font-semibold text-gray-900'>
                         Total a pagar
                       </span>
-                      <span className='text-3xl font-bold text-green-600'>
+                      <span className='text-2xl md:text-3xl font-bold text-green-600'>
                         ${total.toLocaleString()}
                       </span>
                     </div>
@@ -322,7 +324,7 @@ const CartPage: React.FC = () => {
                   {/* Botones de acción */}
                   <div className='space-y-3 pt-4'>
                     <Button
-                      className='w-full flex items-center justify-center gap-3 text-lg py-4 bg-green-600 hover:bg-green-700'
+                      className='w-full flex items-center justify-center gap-3 text-base md:text-lg py-3 md:py-4 bg-green-600 hover:bg-green-700'
                       onClick={() => navigate('/pagar')}
                       size='lg'
                     >

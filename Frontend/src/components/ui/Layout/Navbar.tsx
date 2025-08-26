@@ -112,16 +112,16 @@ const Navbar: React.FC = () => {
       role='navigation'
       aria-label='Navegación principal'
     >
-      <div className='container mx-auto px-4'>
-        <div className='flex items-center justify-between h-16'>
+      <div className='container mx-auto px-3 sm:px-4'>
+        <div className='flex items-center justify-between h-14 md:h-16'>
           {/* Logo */}
           <Link
             to='/'
-            className='flex items-center space-x-2 text-xl font-bold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md'
+            className='flex items-center space-x-2 text-lg md:text-xl font-bold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md'
             aria-label='Ir a página de inicio - Tesoros Chocó'
           >
             <svg
-              className='h-8 w-8'
+              className='h-6 w-6 md:h-8 md:w-8'
               viewBox='0 0 24 24'
               fill='none'
               stroke='currentColor'
@@ -143,7 +143,7 @@ const Navbar: React.FC = () => {
           </div>
 
           {/* Right side items - Reorganized order */}
-          <div className='flex items-center space-x-4'>
+          <div className='flex items-center space-x-2 md:space-x-4'>
             {/* 1. User Avatar (Logo with animation + Name) */}
             {user && !isSigningOut && <UserAvatar user={user} />}
 

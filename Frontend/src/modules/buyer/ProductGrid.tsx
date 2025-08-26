@@ -32,16 +32,16 @@ const ProductGrid: React.FC<ProductGridProps> = React.memo(
     // Empty state
     if (products.length === 0) {
       return (
-        <div className={`text-center py-12 ${className}`}>
+        <div className={`text-center py-8 px-4 ${className}`}>
           <Icon
             category='Catálogo y producto'
             name='BxsPackage'
             className='w-12 h-12 text-gray-400 mx-auto mb-4'
           />
-          <h3 className='text-lg font-medium text-gray-900 mb-2'>
+          <h3 className='text-base md:text-lg font-medium text-gray-900 mb-2'>
             No se encontraron productos
           </h3>
-          <p className='text-gray-500'>
+          <p className='text-sm md:text-base text-gray-500'>
             Intenta ajustar tus filtros de búsqueda
           </p>
         </div>
@@ -51,8 +51,8 @@ const ProductGrid: React.FC<ProductGridProps> = React.memo(
     return (
       <div className={`min-w-0 lg:col-span-3 ${className}`}>
         {/* Results count */}
-        <div className='flex justify-between items-center mb-6'>
-          <p className='opacity-80'>
+        <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4 md:mb-6'>
+          <p className='text-sm md:text-base opacity-80'>
             {products.length} producto{products.length !== 1 ? 's' : ''}{' '}
             encontrado{products.length !== 1 ? 's' : ''}
           </p>
@@ -62,7 +62,7 @@ const ProductGrid: React.FC<ProductGridProps> = React.memo(
         <div
           className={`grid ${
             twoColsMobile ? 'grid-cols-2' : 'grid-cols-1'
-          } sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch content-start`}
+          } sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 items-stretch content-start`}
         >
           {products.map(product => (
             <ProductCard

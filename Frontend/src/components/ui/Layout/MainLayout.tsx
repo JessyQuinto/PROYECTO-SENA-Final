@@ -42,8 +42,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({
       
       <Header />
       
-      <MainContent className={`${className} pb-24 md:pb-0`}>
-        {children}
+      <MainContent className={`${className} pb-20 md:pb-0 px-4 md:px-6 lg:px-8`}>
+        <div className='max-w-screen-2xl mx-auto w-full'>
+          {children}
+        </div>
       </MainContent>
       
       <Footer />

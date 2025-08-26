@@ -123,13 +123,13 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
     <div 
       ref={menuRef}
       id={id}
-      className='md:hidden border-t bg-card'
+      className='md:hidden border-t bg-card shadow-lg'
       role='region'
       aria-label='Menú de navegación móvil'
     >
-      <div className='px-4 py-4 space-y-3'>
+      <div className='px-4 py-4 space-y-4'>
         {/* Theme toggle */}
-        <div className='flex items-center justify-between py-2'>
+        <div className='flex items-center justify-between py-3 border-b'>
           <span className='text-sm font-medium'>Tema</span>
           <ThemeToggle />
         </div>
@@ -139,13 +139,13 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
           <Link
             to='/carrito'
             onClick={onClose}
-            className='flex items-center justify-between rounded-md px-3 py-2 text-base font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+            className='flex items-center justify-between rounded-md px-4 py-3 text-base font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
             aria-label={`Ir al carrito${cartCount > 0 ? ` (${cartCount} artículos)` : ''}`}
           >
             <span>Carrito</span>
             {cartCount > 0 && (
               <span 
-                className='flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-medium text-destructive-foreground'
+                className='flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-xs font-medium text-destructive-foreground'
                 aria-label={`${cartCount} artículos en el carrito`}
               >
                 {cartCount}
@@ -155,7 +155,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
         )}
 
         {/* Navigation items */}
-        <nav className='space-y-1' role='navigation' aria-label='Elementos de navegación'>
+        <nav className='space-y-2' role='navigation' aria-label='Elementos de navegación'>
           {items.map(item => {
             const isActive = currentPath === item.path;
             return (
@@ -164,7 +164,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                 to={item.path}
                 onClick={onClose}
                 className={cn(
-                  'block rounded-md px-3 py-2 text-base font-medium transition-colors',
+                  'block rounded-md px-4 py-3 text-base font-medium transition-colors',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                   isActive
                     ? 'bg-accent text-accent-foreground'

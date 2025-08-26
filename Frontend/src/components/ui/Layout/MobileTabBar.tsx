@@ -121,12 +121,14 @@ const MobileTabBar: React.FC = () => {
             <Link
               to={t.path}
               className={`mobile-tabbar-item ${isActive(t.path) ? 'active' : ''}`}
+              aria-current={isActive(t.path) ? 'page' : undefined}
             >
               <div className='relative'>
                 <Icon
                   category={t.icon.category}
                   name={t.icon.name}
                   className='w-6 h-6'
+                  aria-hidden='true'
                 />
                 {t.showBadge && cartCount > 0 && (
                   <span
