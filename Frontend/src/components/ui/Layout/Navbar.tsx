@@ -144,8 +144,10 @@ const Navbar: React.FC = () => {
 
           {/* Sección derecha reorganizada */}
           <div className='flex items-center space-x-1 sm:space-x-2 md:space-x-4'>
-            {/* Solo Theme Toggle visible en móvil - el resto se mueve al menú */}
-            <ThemeToggle />
+            {/* Desktop: Theme Toggle visible */}
+            <div className='hidden md:block'>
+              <ThemeToggle />
+            </div>
 
             {/* Desktop: Elementos completos */}
             <div className='hidden md:flex items-center space-x-4'>

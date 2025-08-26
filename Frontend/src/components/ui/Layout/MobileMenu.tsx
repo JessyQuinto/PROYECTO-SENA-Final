@@ -177,6 +177,14 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
           </Link>
         )}
 
+        {/* Theme Toggle Section - Accesible en móvil */}
+        <div className='border-t pt-3 mt-4'>
+          <div className='flex items-center justify-between py-2'>
+            <span className='text-sm font-medium text-foreground'>Tema</span>
+            <ThemeToggle className='mobile-theme-toggle' />
+          </div>
+        </div>
+
         {/* Sección de usuario compacta en la parte inferior */}
         {user ? (
           <div className='border-t pt-3 mt-4'>
