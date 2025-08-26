@@ -11,6 +11,7 @@ import { Toaster } from '@/components/ui/shadcn/toaster';
 import { ThemeProvider } from '@/components/ui/ThemeProvider';
 import { PageErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { CacheProvider } from '@/components/cache/CacheProvider';
+import { LoadingPageSkeleton } from '@/components/ui/Skeleton';
 
 // Lazy load pages for better performance
 const AuthPage = lazy(() => import('@/pages/Auth'));
@@ -44,12 +45,13 @@ const OrderDetailPage = lazy(() => import('./buyer/OrderDetailPage'));
 const BuyerProfile = lazy(() => import('./buyer/BuyerProfile'));
 const BuyerProfilesManager = lazy(() => import('./buyer/ProfilesManager'));
 
-// Loading component
-const LoadingSpinner = () => (
-  <div className='container py-10 flex items-center justify-center'>
-    <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
-    <span className='ml-2'>Cargando…</span>
-  </div>
+// Enhanced loading component with skeleton
+const AppLoadingSkeleton = () => (
+  <LoadingPageSkeleton 
+    showNavigation={true} 
+    layout='dashboard' 
+    itemCount={6}
+  />
 );
 
 export const App: React.FC = () => (
@@ -68,7 +70,7 @@ export const App: React.FC = () => (
             <CartProvider>
               <ToastProvider>
                 <MainLayout>
-                  <Suspense fallback={<LoadingSpinner />}>
+                  <Suspense fallback={<AppLoadingSkeleton />}>
                     <Routes>
                       {/* Public routes */}
                       <Route path='/' element={<Home />} />
