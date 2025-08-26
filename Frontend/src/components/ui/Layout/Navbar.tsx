@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthContext';
 import { Button } from '@/components/ui/shadcn/button';
@@ -22,10 +22,11 @@ interface NavigationItem {
 const Navbar: React.FC = () => {
   const { user, loading, isSigningOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [navItems, setNavItems] = useState<NavigationItem[]>([]);
   const location = useLocation();
 
-  // Navigation items definition - memoized to prevent recreation
-  const navigationItems = useMemo<NavigationItem[]>(() => [
+  // Navigation items definition
+  const navigationItems: NavigationItem[] = [
     { path: '/', label: 'Inicio', public: true },
     { path: '/productos', label: 'Productos', public: true },
     { path: '/perfil', label: 'Mi perfil', roles: ['comprador'] },
@@ -40,10 +41,10 @@ const Navbar: React.FC = () => {
       label: 'Administración',
       roles: ['admin'],
     },
-  ], []);
+  ];
 
-  // Filter navigation items based on user authentication and role - memoized
-  const navItems = useMemo(() => {
+  // Filter navigation items based on user authentication and role
+  const filterNavItems = useCallback(() => {
     // Si está en proceso de cerrar sesión, mostrar solo items públicos
     if (isSigningOut) {
       return navigationItems.filter(item => item.public);
@@ -61,7 +62,12 @@ const Navbar: React.FC = () => {
         return false;
       return true;
     });
-  }, [user, loading, isSigningOut, navigationItems]);
+  }, [user, loading, isSigningOut]);
+
+  // Update navigation items when user or loading state changes
+  useEffect(() => {
+    setNavItems(filterNavItems());
+  }, [user, loading, filterNavItems]);
 
   // Listen for logout events and update navigation
   useEffect(() => {
@@ -71,13 +77,15 @@ const Navbar: React.FC = () => {
       );
       // No actualizar inmediatamente si está en transición
       if (!isSigningOut) {
-        setIsMobileMenuOpen(false);
+        setNavItems(filterNavItems());
       }
+      setIsMobileMenuOpen(false);
     };
 
     const handleLogout = (e: CustomEvent) => {
       console.log('[Navbar] Custom logout event detected:', e.detail);
       // Mostrar solo items públicos inmediatamente
+      setNavItems(navigationItems.filter(item => item.public));
       setIsMobileMenuOpen(false);
     };
 
@@ -97,45 +105,9 @@ const Navbar: React.FC = () => {
         handleLogout as EventListener
       );
     };
-  }, [isSigningOut]);
+  }, [filterNavItems, isSigningOut, navigationItems]);
 
-  const isActivePage = useCallback((path: string) => location.pathname === path, [location.pathname]);
-
-  // Memoized event handlers
-  const handleToggleMobileMenu = useCallback(() => {
-    setIsMobileMenuOpen(prev => !prev);
-  }, []);
-
-  // Don't render navigation while loading to prevent flash
-  if (loading) {
-    return (
-      <nav className='bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40'>
-        <div className='container mx-auto px-4'>
-          <div className='flex items-center justify-between h-16'>
-            {/* Logo skeleton */}
-            <div className='flex items-center space-x-2'>
-              <div className='h-8 w-8 bg-muted animate-pulse rounded'></div>
-              <div className='h-6 w-32 bg-muted animate-pulse rounded'></div>
-            </div>
-
-            {/* Navigation skeleton */}
-            <div className='hidden md:flex items-center space-x-6'>
-              {[1, 2, 3].map(i => (
-                <div key={i} className='h-4 w-20 bg-muted animate-pulse rounded'></div>
-              ))}
-            </div>
-
-            {/* Right side skeleton */}
-            <div className='flex items-center space-x-4'>
-              <div className='h-9 w-9 bg-muted animate-pulse rounded'></div>
-              <div className='h-9 w-9 bg-muted animate-pulse rounded'></div>
-              <div className='h-9 w-9 bg-muted animate-pulse rounded'></div>
-            </div>
-          </div>
-        </div>
-      </nav>
-    );
-  }
+  const isActivePage = (path: string) => location.pathname === path;
 
   return (
     <nav className='bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40'>
@@ -245,7 +217,7 @@ const Navbar: React.FC = () => {
               variant='ghost'
               size='icon'
               className='md:hidden'
-              onClick={handleToggleMobileMenu}
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-label='Toggle menu'
               aria-expanded={isMobileMenuOpen}
             >

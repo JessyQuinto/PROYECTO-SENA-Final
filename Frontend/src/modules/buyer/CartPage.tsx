@@ -43,34 +43,6 @@ const CartPage: React.FC = () => {
           throw new Error(msg);
         }
       }
-      // Enviar recibo por email usando Edge Function `order-emails`
-      try {
-        const session = (await supabase.auth.getSession()).data.session;
-        const token = session?.access_token;
-        const buyerEmail = session?.user?.email;
-        const supaUrl = (import.meta as any).env?.VITE_SUPABASE_URL as
-          | string
-          | undefined;
-        if (supaUrl && token && buyerEmail) {
-          const projectRef = new URL(supaUrl).host.split('.')[0];
-          await fetch(
-            `https://${projectRef}.functions.supabase.co/order-emails`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({
-                action: 'receipt',
-                email: buyerEmail,
-                order_id: data,
-                nombre: (session?.user as any)?.user_metadata?.full_name ?? null,
-              }),
-            }
-          );
-        }
-      } catch {}
       clear();
       alert('Compra realizada. Pedido: ' + data);
     } catch (e: any) {

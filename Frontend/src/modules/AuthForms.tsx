@@ -44,13 +44,19 @@ export const AuthForms: React.FC<AuthFormsProps> = ({
       try {
         const result = await signIn(values.email, values.password);
         if (result.error) {
-          toast.error('Error en el inicio de sesión');
+          toast.error('Error en el inicio de sesión', {
+            action: 'login',
+          });
         } else {
-          toast.success('Inicio de sesión exitoso');
+          toast.success('Inicio de sesión exitoso', {
+            action: 'login',
+          });
           navigate('/dashboard');
         }
       } catch (error: any) {
-        toast.error('Error inesperado');
+        toast.error('Error inesperado', {
+          action: 'login',
+        });
       }
     },
   });
@@ -64,17 +70,24 @@ export const AuthForms: React.FC<AuthFormsProps> = ({
         // Los administradores solo pueden ser creados por el super-admin
         const result = await signUp(values.email, values.password, 'comprador');
         if (result.error) {
-          toast.error(result.error);
+          toast.error(result.error, {
+            action: 'register',
+          });
         } else {
           toast.success(
-            'Registro exitoso. Revisa tu correo para confirmar tu cuenta.'
+            'Registro exitoso. Revisa tu correo para confirmar tu cuenta.',
+            {
+              action: 'register',
+            }
           );
           navigate('/verify-email', {
             state: { email: values.email },
           });
         }
       } catch (error: any) {
-        toast.error('Error inesperado');
+        toast.error('Error inesperado', {
+          action: 'register',
+        });
       }
     },
   });

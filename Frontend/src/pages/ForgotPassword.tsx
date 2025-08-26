@@ -32,7 +32,9 @@ const ForgotPasswordPage: React.FC = () => {
       );
 
       if (result !== null) {
-        toast.success('Email enviado');
+        toast.success('Email enviado', {
+          action: 'update',
+        });
       }
     },
   });

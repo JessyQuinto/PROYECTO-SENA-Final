@@ -44,13 +44,16 @@ const MyOrdersPage: React.FC = () => {
         );
         const j = await resp.json();
         if (!resp.ok) throw new Error(j?.error || 'No se pudo eliminar');
-        (window as any).toast?.success('Cuenta eliminada');
+        (window as any).toast?.success('Cuenta eliminada', {
+          action: 'delete',
+        });
         await supabase.auth.signOut();
         window.location.href = '/';
       }
     } catch (e: any) {
       (window as any).toast?.error(
-        e?.message || 'No se pudo eliminar la cuenta'
+        e?.message || 'No se pudo eliminar la cuenta',
+        { action: 'delete' }
       );
     }
   };
@@ -76,9 +79,15 @@ const MyOrdersPage: React.FC = () => {
       const j = await resp.json();
       if (!resp.ok) throw new Error(j?.error || 'No se pudo cancelar');
       await load();
-      (window as any).toast?.success('Pedido cancelado');
+      (window as any).toast?.success('Pedido cancelado', {
+        role: 'comprador',
+        action: 'cancel',
+      });
     } catch (e: any) {
-      (window as any).toast?.error(e?.message || 'No se pudo cancelar');
+      (window as any).toast?.error(e?.message || 'No se pudo cancelar', {
+        role: 'comprador',
+        action: 'cancel',
+      });
     }
   };
 

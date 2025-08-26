@@ -123,7 +123,7 @@ export const useProducts = (filters: ProductFilters = {}) => {
     queryKey: productQueryKeys.list(filters),
     queryFn: () => fetchProducts(filters),
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     keepPreviousData: true,
     refetchOnWindowFocus: false,
   });
@@ -138,7 +138,7 @@ export const useInfiniteProducts = (filters: ProductFilters = {}) => {
       return lastPage.hasMore ? allPages.length : undefined;
     },
     staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 };
@@ -173,7 +173,7 @@ export const useProduct = (productId: string) => {
     },
     enabled: !!productId,
     staleTime: 10 * 60 * 1000, // 10 minutes
-    cacheTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
   });
 };
 
@@ -200,7 +200,7 @@ export const useProductRatings = (productIds: string[]) => {
     },
     enabled: productIds.length > 0,
     staleTime: 10 * 60 * 1000, // 10 minutes
-    cacheTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
   });
 };
 
@@ -218,7 +218,7 @@ export const useCategories = () => {
       return data || [];
     },
     staleTime: 60 * 60 * 1000, // 1 hour
-    cacheTime: 2 * 60 * 60 * 1000, // 2 hours
+    gcTime: 2 * 60 * 60 * 1000, // 2 hours
   });
 };
 

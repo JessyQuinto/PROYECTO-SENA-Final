@@ -1,8 +1,6 @@
 import { useCallback } from 'react';
 import { toast } from 'sonner';
-import { useAuth } from '@/auth/AuthContext';
 
-// Types
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 export type AppRole = 'admin' | 'vendedor' | 'comprador' | undefined;
 export type ToastAction =
@@ -27,14 +25,6 @@ export interface ToastOptions {
   durationMs?: number;
 }
 
-// Constants
-const DEFAULT_DURATIONS = {
-  error: 6000,
-  success: 4000,
-  info: 4000,
-  warning: 4000,
-} as const;
-
 const ACTION_TEXT_MAP: Record<ToastAction, string> = {
   register: 'Registro',
   login: 'Inicio de sesión',
@@ -55,45 +45,38 @@ const ROLE_TEXT_MAP: Record<NonNullable<AppRole>, string> = {
   comprador: 'Comprador',
 };
 
-// Utility functions
 function getDefaultTitle(
   role: AppRole,
   action?: ToastAction,
   type?: ToastType
 ): string {
-  // For production, we want clean notifications without unnecessary prefixes
-  if (type === 'error') return 'Error';
-  return '';
+  const actionText = action ? ACTION_TEXT_MAP[action] : 'Notificación';
+  const roleText = role ? ROLE_TEXT_MAP[role] : 'Usuario';
+
+  if (type === 'error') return `${actionText} (${roleText}) - Error`;
+  if (type === 'success') return `${actionText} (${roleText}) - Éxito`;
+  return `${actionText} (${roleText})`;
 }
 
-function getToastDuration(type: ToastType, customDuration?: number): number {
-  return customDuration ?? DEFAULT_DURATIONS[type];
-}
-
-function showToast(type: ToastType, title: string, message: string, duration: number): void {
-  switch (type) {
-    case 'error':
-      toast.error(title, { description: message, duration });
-      break;
-    case 'success':
-      toast.success(title, { description: message, duration });
-      break;
-    case 'warning':
-      toast.warning(title, { description: message, duration });
-      break;
-    default:
-      toast.info(title, { description: message, duration });
-  }
-}
-
-// Base hook without authentication
 export const useToast = () => {
   const notify = useCallback((opts: ToastOptions) => {
     const type: ToastType = opts.type ?? 'info';
     const title = opts.title ?? getDefaultTitle(opts.role, opts.action, type);
-    const duration = getToastDuration(type, opts.durationMs);
+    const duration = opts.durationMs ?? (type === 'error' ? 6000 : 4000);
 
-    showToast(type, title, opts.message, duration);
+    switch (type) {
+      case 'error':
+        toast.error(title, { description: opts.message, duration });
+        break;
+      case 'success':
+        toast.success(title, { description: opts.message, duration });
+        break;
+      case 'warning':
+        toast(title, { description: opts.message, duration });
+        break;
+      default:
+        toast(title, { description: opts.message, duration });
+    }
   }, []);
 
   const success = useCallback(
@@ -133,7 +116,8 @@ export const useToast = () => {
   };
 };
 
-// Hook with authentication context
+// Versión que incluye el rol del usuario actual (para usar después de que AuthProvider esté disponible)
+import { useAuth } from '@/auth/AuthContext';
 export const useToastWithAuth = () => {
   const { user } = useAuth();
 
@@ -142,9 +126,21 @@ export const useToastWithAuth = () => {
       const role: AppRole = opts.role ?? (user?.role as AppRole);
       const type: ToastType = opts.type ?? 'info';
       const title = opts.title ?? getDefaultTitle(role, opts.action, type);
-      const duration = getToastDuration(type, opts.durationMs);
+      const duration = opts.durationMs ?? (type === 'error' ? 6000 : 4000);
 
-      showToast(type, title, opts.message, duration);
+      switch (type) {
+        case 'error':
+          toast.error(title, { description: opts.message, duration });
+          break;
+        case 'success':
+          toast.success(title, { description: opts.message, duration });
+          break;
+        case 'warning':
+          toast(title, { description: opts.message, duration });
+          break;
+        default:
+          toast(title, { description: opts.message, duration });
+      }
     },
     [user?.role]
   );

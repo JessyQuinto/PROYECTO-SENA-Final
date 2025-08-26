@@ -6,7 +6,6 @@
  */
 import React from 'react';
 import logger from './logger';
-import { clearSupabaseAuth } from './supabaseClient';
 
 export interface CleanupOptions {
   /** Whether to clear session storage */
@@ -19,8 +18,6 @@ export interface CleanupOptions {
   emergency?: boolean;
   /** Whether to log cleanup operations */
   verbose?: boolean;
-  /** Whether to clear Supabase auth storage */
-  clearSupabase?: boolean;
 }
 
 export interface CleanupResult {
@@ -36,7 +33,7 @@ export interface CleanupResult {
 export const KEY_PATTERNS = {
   USER_DATA: ['user_', 'profile_', 'preferences_'],
   CART_DATA: ['cart_'],
-  AUTH_DATA: ['sb-', 'supabase', 'auth_', 'tesoros_choco_auth'],
+  AUTH_DATA: ['sb-', 'supabase', 'auth_'],
   SESSION_DATA: ['session_', 'temp_'],
   SYSTEM_DATA: ['theme', 'language', 'locale'],
 } as const;
@@ -72,7 +69,6 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
     preserveKeys = [...DEFAULT_PRESERVE_KEYS],
     emergency = false,
     verbose = true,
-    clearSupabase = true,
   } = options;
 
   const result: CleanupResult = {
@@ -88,7 +84,6 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
       dispatchEvents,
       preserveKeys,
       emergency,
-      clearSupabase,
     });
   }
 
@@ -96,21 +91,6 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
     if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
       logger.warn('[StateCleanup] Browser storage not available');
       return { ...result, success: false };
-    }
-
-    // Clear Supabase auth storage first if requested
-    if (clearSupabase) {
-      try {
-        clearSupabaseAuth();
-        if (verbose) {
-          logger.debug('[StateCleanup] ✅ Supabase auth storage cleared');
-        }
-      } catch (error) {
-        result.errors.push({ key: 'supabase_auth', error: error as Error });
-        if (verbose) {
-          logger.error('[StateCleanup] ❌ Failed to clear Supabase auth:', error);
-        }
-      }
     }
 
     // Get all current localStorage keys
@@ -196,21 +176,6 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
       }
     }
 
-    // Clear cache manager if available
-    try {
-      if (typeof window !== 'undefined' && (window as any).__CACHE_MANAGER__) {
-        (window as any).__CACHE_MANAGER__.clear();
-        if (verbose) {
-          logger.debug('[StateCleanup] ✅ Cache manager cleared');
-        }
-      }
-    } catch (error) {
-      result.errors.push({ key: 'cache_manager', error: error as Error });
-      if (verbose) {
-        logger.error('[StateCleanup] ❌ Failed to clear cache manager:', error);
-      }
-    }
-
     // Dispatch events to notify components if requested
     if (dispatchEvents) {
       try {
@@ -282,7 +247,6 @@ export function emergencyCleanup(): CleanupResult {
     emergency: true,
     clearSessionStorage: true,
     dispatchEvents: true,
-    clearSupabase: true,
     preserveKeys: ['cookie_consent'], // Only preserve cookie consent
     verbose: true,
   });
@@ -296,7 +260,6 @@ export function gentleCleanup(): CleanupResult {
     emergency: false,
     clearSessionStorage: true,
     dispatchEvents: true,
-    clearSupabase: true,
     preserveKeys: [
       ...DEFAULT_PRESERVE_KEYS,
       'user_display_preferences',

@@ -49,13 +49,19 @@ const VerifyEmailPage: React.FC = () => {
         });
 
         if (error) {
-          toast.error('Código inválido');
+          toast.error('Código inválido', {
+            action: 'update',
+          });
         } else {
-          toast.success('Email verificado');
+          toast.success('Email verificado', {
+            action: 'update',
+          });
           navigate('/login');
         }
       } catch (err: any) {
-        toast.error('Error al verificar');
+        toast.error('Error al verificar', {
+          action: 'update',
+        });
       } finally {
         setVerifying(false);
       }
@@ -78,7 +84,9 @@ const VerifyEmailPage: React.FC = () => {
 
   const resendCode = async () => {
     if (!form.values.email) {
-      toast.error('Email requerido');
+      toast.error('Email requerido', {
+        action: 'update',
+      });
       return;
     }
 
@@ -93,7 +101,9 @@ const VerifyEmailPage: React.FC = () => {
 
     if (result !== null) {
       setSeconds(TOTAL);
-      toast.success('Código reenviado');
+      toast.success('Código reenviado', {
+        action: 'update',
+      });
     }
   };
 

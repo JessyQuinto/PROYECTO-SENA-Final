@@ -28,20 +28,34 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | undefined>(undefined);
 
-// Función simplificada para títulos más profesionales
-function getProfessionalTitle(
+function roleActionDefaultTitle(
   role: AppRole,
   action?: ToastOptions['action'],
   type?: ToastType
 ) {
-  // Solo generar título automático para acciones específicas que lo necesiten
-  if (action === 'approve') return 'Aprobación exitosa';
-  if (action === 'reject') return 'Rechazo procesado';
-  if (action === 'ship') return 'Envío confirmado';
-  if (action === 'delete') return 'Eliminación completada';
-  
-  // Para la mayoría de casos, no usar título automático
-  return undefined;
+  const actionText: Record<NonNullable<ToastOptions['action']>, string> = {
+    register: 'Registro',
+    login: 'Inicio de sesión',
+    purchase: 'Compra',
+    sale: 'Venta',
+    update: 'Actualización',
+    delete: 'Eliminación',
+    approve: 'Aprobación',
+    reject: 'Rechazo',
+    ship: 'Envío',
+    cancel: 'Cancelación',
+    generic: 'Notificación',
+  };
+  const roleText: Record<NonNullable<AppRole>, string> = {
+    admin: 'Administrador',
+    vendedor: 'Vendedor',
+    comprador: 'Comprador',
+  } as any;
+  const base = action ? actionText[action] : 'Notificación';
+  const who = role ? roleText[role] : 'Usuario';
+  if (type === 'error') return `${base} (${who}) - Error`;
+  if (type === 'success') return `${base} (${who}) - Éxito`;
+  return `${base} (${who})`;
 }
 
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -53,44 +67,16 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
     (opts: ToastOptions) => {
       const role: AppRole = opts.role ?? (user?.role as AppRole);
       const type: ToastType = opts.type ?? 'info';
-      
-      // Solo usar título automático si no se proporciona uno personalizado
-      const title = opts.title ?? getProfessionalTitle(role, opts.action, type);
+      const title =
+        opts.title ?? roleActionDefaultTitle(role, opts.action, type);
       const duration = opts.durationMs ?? (type === 'error' ? 6000 : 4000);
-      
-      // Para notificaciones de éxito, usar solo el mensaje si no hay título
-      if (type === 'success' && !title) {
-        toast.success(opts.message, { duration });
-      } else if (type === 'error' && !title) {
-        toast.error(opts.message, { duration });
-      } else if (title) {
-        // Solo usar título + descripción cuando sea necesario
-        if (type === 'error') {
-          toast.error(title, { 
-            description: opts.message, 
-            duration,
-          });
-        } else if (type === 'success') {
-          toast.success(title, { 
-            description: opts.message, 
-            duration,
-          });
-        } else if (type === 'warning') {
-          toast(title, { 
-            description: opts.message, 
-            duration,
-            icon: '⚠️',
-          });
-        } else {
-          toast(title, { 
-            description: opts.message, 
-            duration,
-          });
-        }
-      } else {
-        // Notificación simple sin título
-        toast(opts.message, { duration });
-      }
+      if (type === 'error')
+        toast.error(title, { description: opts.message, duration });
+      else if (type === 'success')
+        toast.success(title, { description: opts.message, duration });
+      else if (type === 'warning')
+        toast(title, { description: opts.message, duration });
+      else toast(title, { description: opts.message, duration });
     },
     [user?.role]
   );
@@ -100,7 +86,6 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
       notify({ ...opts, type: 'success', message }),
     [notify]
   );
-  
   const error = useCallback(
     (message: string, opts?: Omit<ToastOptions, 'message' | 'type'>) =>
       notify({ ...opts, type: 'error', message }),

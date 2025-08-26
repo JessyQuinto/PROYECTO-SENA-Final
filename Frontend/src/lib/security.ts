@@ -273,8 +273,8 @@ export class SecurityManager {
    */
   checkRateLimit(
     key: string,
-    maxAttempts: number = 10, // Aumentado de 5 a 10 intentos
-    windowMs: number = 5 * 60 * 1000 // 5 minutos (300,000 ms)
+    maxAttempts: number = 5,
+    windowMs: number = 15 * 60 * 1000
   ): boolean {
     const now = Date.now();
     const storageKey = `rate_limit_${key}`;
@@ -369,8 +369,8 @@ export const security = new SecurityManager();
 
 // Security constants
 export const SECURITY_CONSTANTS = {
-  MAX_LOGIN_ATTEMPTS: 10, // Aumentado de 5 a 10 intentos
-  LOGIN_LOCKOUT_DURATION: 5 * 60 * 1000, // 5 minutos (300,000 ms)
+  MAX_LOGIN_ATTEMPTS: 5,
+  LOGIN_LOCKOUT_DURATION: 15 * 60 * 1000, // 15 minutes
   PASSWORD_MIN_LENGTH: 8,
   MAX_FILE_SIZE_MB: 5,
   MAX_IMAGE_SIZE_MB: 2,

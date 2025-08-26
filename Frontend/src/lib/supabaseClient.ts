@@ -23,59 +23,8 @@ export const supabase =
           autoRefreshToken: true,
           persistSession: true,
           detectSessionInUrl: true,
-          storageKey: 'tesoros_choco_auth', // Custom storage key to avoid conflicts
-          storage: {
-            getItem: (key: string) => {
-              try {
-                const item = localStorage.getItem(key);
-                return item ? JSON.parse(item) : null;
-              } catch (error) {
-                console.warn(`[Supabase] Error reading auth storage for ${key}:`, error);
-                return null;
-              }
-            },
-            setItem: (key: string, value: string) => {
-              try {
-                localStorage.setItem(key, value);
-              } catch (error) {
-                console.warn(`[Supabase] Error writing auth storage for ${key}:`, error);
-                // Try to clear some space
-                try {
-                  const keys = Object.keys(localStorage);
-                  const authKeys = keys.filter(k => k.startsWith('sb-') || k.includes('supabase'));
-                  if (authKeys.length > 10) {
-                    // Remove oldest auth keys
-                    authKeys.slice(0, 5).forEach(k => localStorage.removeItem(k));
-                    localStorage.setItem(key, value);
-                  }
-                } catch (cleanupError) {
-                  console.error('[Supabase] Failed to cleanup auth storage:', cleanupError);
-                }
-              }
-            },
-            removeItem: (key: string) => {
-              try {
-                localStorage.removeItem(key);
-              } catch (error) {
-                console.warn(`[Supabase] Error removing auth storage for ${key}:`, error);
-              }
-            },
-          },
         },
-        global: { 
-          headers: { 
-            'x-application-name': 'tesoros-choco-frontend',
-            'Cache-Control': 'no-cache', // Prevent caching of API responses
-          } 
-        },
-        db: {
-          schema: 'public',
-        },
-        realtime: {
-          params: {
-            eventsPerSecond: 10,
-          },
-        },
+        global: { headers: { 'x-application-name': 'tesoros-choco-frontend' } },
       })
     : (undefined as any);
 
@@ -85,21 +34,3 @@ try {
     (window as any).supabase = supabase;
   }
 } catch {}
-
-// Utility function to clear Supabase auth storage
-export const clearSupabaseAuth = () => {
-  try {
-    if (typeof window !== 'undefined' && localStorage) {
-      // Clear all Supabase-related keys
-      const keys = Object.keys(localStorage);
-      keys.forEach(key => {
-        if (key.startsWith('sb-') || key.includes('supabase') || key.includes('tesoros_choco_auth')) {
-          localStorage.removeItem(key);
-        }
-      });
-      console.log('[Supabase] Auth storage cleared');
-    }
-  } catch (error) {
-    console.warn('[Supabase] Error clearing auth storage:', error);
-  }
-};
