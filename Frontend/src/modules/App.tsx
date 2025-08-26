@@ -11,18 +11,18 @@ import ProtectedRoute from '@/modules/ProtectedRoute';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 // Lazy load pages for better performance
-const Home = lazy(() => import('@/pages/Home'));
-const Login = lazy(() => import('@/pages/Login'));
-const Register = lazy(() => import('@/pages/Register'));
-const Profile = lazy(() => import('@/pages/Profile'));
-const VendorDashboard = lazy(() => import('@/pages/VendorDashboard'));
-const AdminDashboard = lazy(() => import('@/pages/AdminDashboard'));
-const Products = lazy(() => import('@/pages/Products'));
-const ProductDetail = lazy(() => import('@/pages/ProductDetail'));
-const Cart = lazy(() => import('@/pages/Cart'));
-const Checkout = lazy(() => import('@/pages/Checkout'));
-const Orders = lazy(() => import('@/pages/Orders'));
-const NotFound = lazy(() => import('@/pages/NotFound'));
+const Home = lazy(() => import('../pages/Home'));
+const Login = lazy(() => import('../pages/Login'));
+const Register = lazy(() => import('../pages/Register'));
+const Profile = lazy(() => import('../pages/Profile'));
+const VendorDashboard = lazy(() => import('../pages/VendorDashboard'));
+const AdminDashboard = lazy(() => import('../pages/AdminDashboard'));
+const Products = lazy(() => import('../pages/Products'));
+const ProductDetail = lazy(() => import('../pages/ProductDetail'));
+const Cart = lazy(() => import('../pages/Cart'));
+const Checkout = lazy(() => import('../pages/Checkout'));
+const Orders = lazy(() => import('../pages/Orders'));
+const NotFound = lazy(() => import('../pages/NotFound'));
 
 const App: React.FC = () => {
   return (
@@ -61,7 +61,7 @@ const App: React.FC = () => {
                         <Route
                           path="/vendedor/*"
                           element={
-                            <ProtectedRoute requiredRole="vendedor">
+                            <ProtectedRoute roles={["vendedor"]}>
                               <VendorDashboard />
                             </ProtectedRoute>
                           }
@@ -70,7 +70,7 @@ const App: React.FC = () => {
                         <Route
                           path="/admin/*"
                           element={
-                            <ProtectedRoute requiredRole="admin">
+                            <ProtectedRoute roles={["admin"]}>
                               <AdminDashboard />
                             </ProtectedRoute>
                           }
@@ -79,7 +79,7 @@ const App: React.FC = () => {
                         <Route
                           path="/carrito"
                           element={
-                            <ProtectedRoute requiredRole="comprador">
+                            <ProtectedRoute roles={["comprador"]}>
                               <Cart />
                             </ProtectedRoute>
                           }
@@ -88,7 +88,7 @@ const App: React.FC = () => {
                         <Route
                           path="/checkout"
                           element={
-                            <ProtectedRoute requiredRole="comprador">
+                            <ProtectedRoute roles={["comprador"]}>
                               <Checkout />
                             </ProtectedRoute>
                           }
@@ -97,7 +97,7 @@ const App: React.FC = () => {
                         <Route
                           path="/pedidos"
                           element={
-                            <ProtectedRoute requiredRole="comprador">
+                            <ProtectedRoute roles={["comprador"]}>
                               <Orders />
                             </ProtectedRoute>
                           }
