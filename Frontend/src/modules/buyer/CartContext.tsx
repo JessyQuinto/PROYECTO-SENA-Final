@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth } from '@/auth/AuthContext';
-import { useLogoutFlag } from '@/hooks/useLogoutFlag';
 import type { CartItem } from '@/types/domain';
 
 interface CartContextValue {
@@ -19,54 +18,33 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [items, setItems] = useState<CartItem[]>([]);
-  // 🔑 USAR EL HOOK UNIFICADO para estado consistente
-  const { user, isSigningOut } = useAuth();
-  
-  // 🔑 CLAVE: Usar hook personalizado para detectar logout
-  const isLogoutInProgress = useLogoutFlag();
+  const { user } = useAuth();
   
   const storageKey = user?.id ? `${STORAGE_KEY_BASE}_${user.id}` : null;
 
-  // 🔑 LIMPIAR CARRITO INMEDIATAMENTE cuando el usuario cierre sesión
+  // Clear cart when user changes
   useEffect(() => {
-    const handleAuthChange = (event: CustomEvent) => {
-      if (event.detail?.type === 'logout_started') {
-        console.log('[CartContext] Logout started, clearing cart immediately');
-        setItems([]);
-      }
-    };
-
-    window.addEventListener('authStateChanged', handleAuthChange as EventListener);
-    return () => {
-      window.removeEventListener('authStateChanged', handleAuthChange as EventListener);
-    };
-  }, []);
-
-  // 🔑 LIMPIAR CARRITO cuando isSigningOut o isLogoutInProgress cambien
-  useEffect(() => {
-    if (isSigningOut || isLogoutInProgress) {
-      console.log('[CartContext] User signing out, clearing cart');
-      setItems([]);
-    }
-  }, [isSigningOut, isLogoutInProgress]);
-
-  useEffect(() => {
-    // cargar carrito por usuario; si no hay usuario, mantener vacío
     if (!storageKey) {
       setItems([]);
       return;
     }
+    
     try {
       const raw = localStorage.getItem(storageKey);
-      if (raw) setItems(JSON.parse(raw));
-      else setItems([]);
+      if (raw) {
+        setItems(JSON.parse(raw));
+      } else {
+        setItems([]);
+      }
     } catch {
       setItems([]);
     }
   }, [storageKey]);
 
+  // Persist cart to localStorage
   useEffect(() => {
-    if (!storageKey) return; // no persistir sin usuario
+    if (!storageKey) return;
+    
     try {
       localStorage.setItem(storageKey, JSON.stringify(items));
     } catch {}

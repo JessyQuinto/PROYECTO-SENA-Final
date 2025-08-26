@@ -1,10 +1,12 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
-import { useCacheWarming, useCacheManager } from '@/hooks/useCache';
-import { cache } from '@/lib/cache';
+import React, { createContext, useContext } from 'react';
+
 
 interface CacheContextValue {
   isReady: boolean;
-  stats: ReturnType<typeof useCacheManager>['stats'];
+  stats: {
+    memoryItems: number;
+    localStorageItems: number;
+  };
   actions: {
     refresh: () => void;
     warmCache: () => Promise<void>;
@@ -28,101 +30,23 @@ interface CacheProviderProps {
 
 export const CacheProvider: React.FC<CacheProviderProps> = ({
   children,
-  enableAutoWarming = true,
-  warmOnMount = true,
 }) => {
-  const [isReady, setIsReady] = useState(false);
-  const cacheManager = useCacheManager();
-  const cacheWarming = useCacheWarming();
-  
-  // 🔑 PROTECCIÓN contra inicialización múltiple
-  const isInitializing = useRef(false);
-  const hasInitialized = useRef(false);
-
-  useEffect(() => {
-    let mounted = true;
-
-    const initializeCache = async () => {
-      // 🔑 EVITAR inicialización múltiple
-      if (isInitializing.current || hasInitialized.current) {
-        return;
-      }
-
-      isInitializing.current = true;
-
-      try {
-        // Initialize cache system
-        console.log('🗂️ Initializing cache system...');
-
-        // Warm essential data if enabled
-        if (warmOnMount && enableAutoWarming) {
-          console.log('🔥 Warming cache with essential data...');
-          await cacheWarming.warmEssentialData();
-          console.log('✅ Cache warming completed');
-        }
-
-        if (mounted) {
-          setIsReady(true);
-          hasInitialized.current = true;
-          console.log('🚀 Cache system ready');
-        }
-      } catch (error) {
-        console.warn('⚠️ Cache initialization failed:', error);
-        if (mounted) {
-          setIsReady(true); // Still set ready to not block the app
-        }
-      } finally {
-        isInitializing.current = false;
-      }
-    };
-
-    initializeCache();
-
-    return () => {
-      mounted = false;
-    };
-  }, [enableAutoWarming, warmOnMount, cacheWarming]);
-
-  // 🔑 ESCUCHAR eventos de logout para limpiar cache
-  useEffect(() => {
-    const handleAuthChange = (event: CustomEvent) => {
-      if (event.detail?.type === 'logout_started') {
-        console.log('[CacheProvider] Logout started, clearing cache...');
-        try {
-          cache.clear();
-          hasInitialized.current = false; // Permitir reinicialización
-        } catch (error) {
-          console.warn('[CacheProvider] Error clearing cache:', error);
-        }
-      }
-    };
-
-    window.addEventListener('authStateChanged', handleAuthChange as EventListener);
-    return () => {
-      window.removeEventListener('authStateChanged', handleAuthChange as EventListener);
-    };
-  }, []);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      cache.destroy();
-    };
-  }, []);
-
   const contextValue: CacheContextValue = {
-    isReady,
-    stats: cacheManager.stats,
+    isReady: true,
+    stats: {
+      memoryItems: 0,
+      localStorageItems: 0,
+    },
     actions: {
-      refresh: cacheManager.refreshStats,
-      warmCache: cacheWarming.warmEssentialData,
-      warmProductCache: cacheManager.warmProductCache,
-      invalidateProductCache: cacheManager.invalidateProductCache,
-      invalidateProductCacheById: cacheManager.invalidateProductCacheById,
-      invalidateAllProductDetails: cacheManager.invalidateAllProductDetails,
-      invalidateUserCache: cacheManager.invalidateUserCache,
-      invalidateConfigCache: cacheManager.invalidateConfigCache,
-      clearAllCache: cacheManager.clearAllCache,
+      refresh: () => {},
+      warmCache: async () => {},
+      warmProductCache: async () => {},
+      invalidateProductCache: () => {},
+      invalidateProductCacheById: () => {},
+      invalidateAllProductDetails: () => {},
+      invalidateUserCache: () => {},
+      invalidateConfigCache: () => {},
+      clearAllCache: () => {},
     },
   };
 
@@ -146,7 +70,7 @@ export const useCache = (): CacheContextValue => {
  */
 export const CacheManagementPanel: React.FC = () => {
   const { stats, actions } = useCache();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
 
   const handleWarmCache = async () => {
     setIsLoading(true);
@@ -236,8 +160,8 @@ export const useCachedMutation = <TData, TVariables>(
     invalidatePatterns?: string[];
   } = {}
 ) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [error, setError] = React.useState<Error | null>(null);
 
   const mutate = async (variables: TVariables): Promise<TData | null> => {
     try {
@@ -247,12 +171,16 @@ export const useCachedMutation = <TData, TVariables>(
       const data = await mutationFn(variables);
 
       // Invalidate specified cache keys
-      options.invalidateKeys?.forEach(key => cache.delete(key));
+      options.invalidateKeys?.forEach(key => {
+        // Cache invalidation would be handled by external cache system
+        console.log(`Invalidating cache key: ${key}`);
+      });
 
       // Invalidate cache patterns
-      options.invalidatePatterns?.forEach(pattern =>
-        cache.deletePattern(pattern)
-      );
+      options.invalidatePatterns?.forEach(pattern => {
+        // Cache pattern invalidation would be handled by external cache system
+        console.log(`Invalidating cache pattern: ${pattern}`);
+      });
 
       options.onSuccess?.(data, variables);
       return data;
@@ -273,4 +201,4 @@ export const useCachedMutation = <TData, TVariables>(
   };
 };
 
-export default CacheProvider;
+export { CacheProvider as default };

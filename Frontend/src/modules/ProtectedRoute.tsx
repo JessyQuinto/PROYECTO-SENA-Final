@@ -9,14 +9,14 @@ interface Props {
 }
 
 export const ProtectedRoute: React.FC<Props> = ({ children, roles }) => {
-  // 🔑 USAR EL HOOK UNIFICADO para estado consistente
-  const { user, loading, isSigningOut } = useAuth();
+  // Use unified hook for consistent state
+  const { user, loading } = useAuth();
   
-  // 🔑 CLAVE: Usar hook personalizado para detectar logout
+  // Use custom hook to detect logout in progress
   const isLogoutInProgress = useLogoutFlag();
 
-  // 🔑 CLAVE: Durante el cierre de sesión, evitar renderizar contenido protegido
-  if (isSigningOut || isLogoutInProgress) return <Navigate to='/' replace />;
+  // During logout, avoid rendering protected content
+  if (isLogoutInProgress) return <Navigate to='/' replace />;
 
   if (loading) return <p>Cargando sesión...</p>;
   if (!user) return <Navigate to='/' replace />;
@@ -30,3 +30,5 @@ export const ProtectedRoute: React.FC<Props> = ({ children, roles }) => {
 
   return children;
 };
+
+export default ProtectedRoute;

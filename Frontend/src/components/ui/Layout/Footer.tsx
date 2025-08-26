@@ -7,7 +7,7 @@ interface FooterProps {
 }
 
 const Footer: React.FC<FooterProps> = ({ className = '' }) => {
-  const { user, isSigningOut } = useAuth();
+  const { user } = useAuth();
   const role = user?.role;
   const isBuyer = role === 'comprador';
   const isVendor = role === 'vendedor';
@@ -100,8 +100,8 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
                     Productos
                   </Link>
                 </li>
-                {/* Evitar cambios bruscos durante cierre de sesión */}
-                {isBuyer && !isSigningOut && (
+                {/* Show navigation links based on user state */}
+                {isBuyer && (
                   <>
                     <li>
                       <Link
@@ -121,7 +121,7 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
                     </li>
                   </>
                 )}
-                {!user && !isSigningOut && (
+                {!user && (
                   <>
                     <li>
                       <Link
@@ -141,7 +141,7 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
                     </li>
                   </>
                 )}
-                {isVendor && !isSigningOut && (
+                {isVendor && (
                   <li>
                     <Link
                       to='/vendedor'
@@ -151,7 +151,7 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
                     </Link>
                   </li>
                 )}
-                {isAdmin && !isSigningOut && (
+                {isAdmin && (
                   <li>
                     <Link
                       to='/admin'

@@ -1,4 +1,4 @@
-import { lazy, ComponentType } from 'react';
+import { lazy, ComponentType, LazyExoticComponent } from 'react';
 
 // Route preloading utilities for performance optimization
 export interface RouteConfig {
@@ -14,7 +14,7 @@ export interface RouteConfig {
 const moduleCache = new Map<string, Promise<{ default: ComponentType<any> }>>();
 
 // Cache for component instances
-const componentCache = new Map<string, ComponentType<any>>();
+const componentCache = new Map<string, LazyExoticComponent<ComponentType<any>>>();
 
 /**
  * Enhanced lazy loading with caching and preloading
@@ -22,10 +22,10 @@ const componentCache = new Map<string, ComponentType<any>>();
 export function createLazyComponent<T = {}>(
   importFn: () => Promise<{ default: ComponentType<T> }>,
   componentName: string
-): ComponentType<T> {
+): LazyExoticComponent<ComponentType<T>> {
   // Check if component is already cached
   if (componentCache.has(componentName)) {
-    return componentCache.get(componentName) as ComponentType<T>;
+    return componentCache.get(componentName) as LazyExoticComponent<ComponentType<T>>;
   }
 
   // Create cached import function
@@ -247,7 +247,7 @@ export const createRouteComponent = (
     preload?: boolean;
     priority?: 'high' | 'medium' | 'low';
   }
-) => {
+): LazyExoticComponent<ComponentType<any>> => {
   const component = createLazyComponent(importFn, routeName);
 
   // Schedule preloading if requested

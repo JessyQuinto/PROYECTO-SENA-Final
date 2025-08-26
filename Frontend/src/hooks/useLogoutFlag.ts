@@ -1,57 +1,48 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/auth/AuthContext';
 
 /**
- * Hook personalizado para detectar el estado global de logout
- * Evita múltiples verificaciones del flag global en diferentes componentes
- * Optimizado para eliminar polling innecesario
+ * Custom hook to track logout state and prevent navigation issues
+ * This helps prevent flashing of protected content during logout
  */
-export function useLogoutFlag() {
+export function useLogoutFlag(): boolean {
   const [isLogoutInProgress, setIsLogoutInProgress] = useState(false);
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    const checkLogoutFlag = () => {
-      if (typeof window !== 'undefined' && (window as any).__LOGOUT_IN_PROGRESS__) {
-        setIsLogoutInProgress(true);
-      } else {
-        setIsLogoutInProgress(false);
-      }
-    };
-
-    // Verificar al montar
-    checkLogoutFlag();
-
-    // 🔑 ESCUCHAR EVENTOS en lugar de polling para mejor rendimiento
-    const handleLogoutStarted = () => {
-      console.log('[useLogoutFlag] Logout started event received');
+    // Listen for custom logout events
+    const handleLogoutStart = () => {
       setIsLogoutInProgress(true);
     };
 
-    const handleLogoutCompleted = () => {
-      console.log('[useLogoutFlag] Logout completed event received');
+    const handleLogoutComplete = () => {
       setIsLogoutInProgress(false);
     };
 
-    // Escuchar eventos personalizados
-    window.addEventListener('userLoggedOut', handleLogoutCompleted);
-    
-    // 🔑 ESCUCHAR CAMBIOS DEL FLAG GLOBAL solo cuando sea necesario
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === '__LOGOUT_IN_PROGRESS__') {
-        checkLogoutFlag();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-
-    // 🔑 VERIFICACIÓN PERIÓDICA como fallback (cada 500ms en lugar de 100ms)
-    const interval = setInterval(checkLogoutFlag, 500);
+    // Listen for logout events
+    window.addEventListener('userLogoutStart', handleLogoutStart);
+    window.addEventListener('userLoggedOut', handleLogoutComplete);
 
     return () => {
-      clearInterval(interval);
-      window.removeEventListener('userLoggedOut', handleLogoutCompleted);
-      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('userLogoutStart', handleLogoutStart);
+      window.removeEventListener('userLoggedOut', handleLogoutComplete);
     };
   }, []);
 
+  useEffect(() => {
+    // Auto-clear logout flag when auth state stabilizes
+    if (!loading && !user && isLogoutInProgress) {
+      // Small delay to ensure smooth transition
+      const timer = setTimeout(() => {
+        setIsLogoutInProgress(false);
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [loading, user, isLogoutInProgress]);
+
   return isLogoutInProgress;
 }
+
+// Default export for better module resolution
+export default useLogoutFlag;

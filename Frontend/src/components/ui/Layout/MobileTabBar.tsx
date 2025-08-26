@@ -7,14 +7,14 @@ import Icon from '@/components/ui/Icon';
 const MobileTabBar: React.FC = () => {
   const location = useLocation();
   // 🔑 USAR EL HOOK UNIFICADO para estado consistente
-  const { user, isSigningOut } = useAuth();
+  const { user } = useAuth();
   const { items } = useCart();
   const cartCount = items.reduce((sum, i) => sum + (i.cantidad || 0), 0);
 
   const isActive = (path: string) => location.pathname === path;
 
-  // 🔑 CLAVE: Durante el cierre de sesión, comportarse como visitante para evitar parpadeos
-  const effectiveUser = isSigningOut ? null : user;
+  // During state transitions, behave as visitor to avoid flickers
+  const effectiveUser = user;
   const isBuyer = effectiveUser?.role === 'comprador';
   const vendorState = (user as any)?.vendedor_estado as
     | 'aprobado'

@@ -1,32 +1,32 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '@/modules/buyer/CartContext';
-import { useAuthState } from '@/hooks/useAuthState';
+import { useAuth } from '@/auth/AuthContext';
 import { Button } from '@/components/ui/shadcn/button';
-import { cn } from '@/lib/utils';
 
 export const CartDropdown: React.FC = () => {
-  const { items, total, remove, update } = useCart();
-  const { isSigningOut } = useAuthState();
+  const { items, remove, update } = useCart();
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const cartCount = items.reduce((sum, item) => sum + (item.cantidad || 0), 0);
+  const total = items.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
 
-  // Cerrar dropdown automáticamente si está cerrando sesión
+  // Close dropdown on component unmount or user change
   React.useEffect(() => {
-    if (isSigningOut && isOpen) {
+    if (!user && isOpen) {
       setIsOpen(false);
     }
-  }, [isSigningOut, isOpen]);
+  }, [user, isOpen]);
 
   return (
     <div className='relative'>
       <Button
         variant='ghost'
         size='icon'
-        onClick={() => !isSigningOut && setIsOpen(!isOpen)}
+        onClick={() => user && setIsOpen(!isOpen)}
         className='relative h-9 w-9 transition-all duration-200 hover:bg-accent hover:scale-105'
         aria-label={`Carrito de compras (${cartCount} artículos)`}
-        disabled={isSigningOut}
+        disabled={!user}
       >
         {/* Improved shopping cart icon */}
         <svg

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { cache, CACHE_KEYS, CACHE_TTL, cacheUtils } from '@/lib/cache';
 
 interface UseCachedDataOptions {
   enabled?: boolean;
@@ -18,7 +17,7 @@ interface UseCachedDataReturn<T> {
 }
 
 /**
- * Generic hook for cached data fetching
+ * Generic hook for data fetching (simplified, no caching)
  */
 export function useCachedData<T>(
   key: string,
@@ -27,61 +26,23 @@ export function useCachedData<T>(
 ): UseCachedDataReturn<T> {
   const {
     enabled = true,
-    ttl = CACHE_TTL.MEDIUM,
     refreshOnMount = false,
     onError,
   } = options;
 
-  const [data, setData] = useState<T | null>(() =>
-    enabled ? cache.get<T>(key) : null
-  );
+  const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  
-  // 🔑 PROTECCIÓN contra ejecución durante logout
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-
-  // 🔑 ESCUCHAR eventos de logout para deshabilitar cache
-  useEffect(() => {
-    const handleAuthChange = (event: CustomEvent) => {
-      if (event.detail?.type === 'logout_started') {
-        setIsLoggingOut(true);
-        setData(null);
-        setLoading(false);
-        setError(null);
-      } else if (event.detail?.type === 'logout_completed') {
-        setIsLoggingOut(false);
-      }
-    };
-
-    window.addEventListener('authStateChanged', handleAuthChange as EventListener);
-    return () => {
-      window.removeEventListener('authStateChanged', handleAuthChange as EventListener);
-    };
-  }, []);
 
   const fetchData = useCallback(
     async (forceRefresh = false) => {
-      // 🔑 NO ejecutar durante logout
-      if (!enabled || isLoggingOut) return;
-      
-      // 🔑 CLAVE: Verificar flag global de logout
-      if (typeof window !== 'undefined' && (window as any).__LOGOUT_IN_PROGRESS__) {
-        console.log('[useCachedData] Ignoring fetch during logout:', key);
-        return;
-      }
+      if (!enabled) return;
 
       try {
         setLoading(true);
         setError(null);
 
-        let result: T;
-        if (forceRefresh) {
-          result = await cache.refresh(key, fetcher, ttl);
-        } else {
-          result = await cache.getOrSet(key, fetcher, ttl);
-        }
-
+        const result = await fetcher();
         setData(result);
       } catch (err) {
         const error = err instanceof Error ? err : new Error('Unknown error');
@@ -91,42 +52,32 @@ export function useCachedData<T>(
         setLoading(false);
       }
     },
-    [key, ttl, enabled, isLoggingOut] // 🔑 INCLUIR isLoggingOut en dependencias
+    [key, enabled, onError]
   );
 
   const refresh = useCallback(() => fetchData(true), [fetchData]);
 
   const invalidate = useCallback(() => {
-    if (isLoggingOut) return; // 🔑 NO invalidar durante logout
-    cache.delete(key);
     setData(null);
-  }, [key, isLoggingOut]);
+  }, []);
 
   useEffect(() => {
-    // 🔑 NO ejecutar durante logout
-    if (!enabled || isLoggingOut) return;
+    if (!enabled) return;
 
-    const cachedData = cache.get<T>(key);
-    if (cachedData) {
-      setData(cachedData);
-      if (!refreshOnMount) return;
-    }
-
-    // 🔑 SOLO llamar fetchData si es necesario y evitar bucles
-    if (refreshOnMount || !cachedData) {
+    if (refreshOnMount || !data) {
       fetchData(refreshOnMount);
     }
-  }, [key, enabled, refreshOnMount, isLoggingOut]); // 🔑 INCLUIR isLoggingOut
+  }, [key, enabled, refreshOnMount, data, fetchData]);
 
   return { data, loading, error, refresh, invalidate };
 }
 
 /**
- * Hook for cached categories data
+ * Hook for categories data
  */
 export function useCachedCategories(options: UseCachedDataOptions = {}) {
   return useCachedData(
-    CACHE_KEYS.CATEGORIES,
+    'categories',
     async () => {
       const { data, error } = await supabase
         .from('categorias')
@@ -136,16 +87,16 @@ export function useCachedCategories(options: UseCachedDataOptions = {}) {
       if (error) throw error;
       return data || [];
     },
-    { ttl: CACHE_TTL.LONG, ...options }
+    { refreshOnMount: true, ...options }
   );
 }
 
 /**
- * Hook for cached featured products
+ * Hook for featured products
  */
 export function useCachedFeaturedProducts(options: UseCachedDataOptions = {}) {
   const result = useCachedData(
-    CACHE_KEYS.FEATURED_PRODUCTS,
+    'featured_products',
     async () => {
       const { data, error } = await supabase
         .from('productos')
@@ -166,10 +117,9 @@ export function useCachedFeaturedProducts(options: UseCachedDataOptions = {}) {
       if (error) throw error;
       return data || [];
     },
-    { ttl: CACHE_TTL.MEDIUM, ...options }
+    { refreshOnMount: true, ...options }
   );
 
-  // Ensure data is always an array, never null
   return {
     ...result,
     data: result.data || [],
@@ -177,13 +127,13 @@ export function useCachedFeaturedProducts(options: UseCachedDataOptions = {}) {
 }
 
 /**
- * Hook for cached product ratings
+ * Hook for product ratings
  */
 export function useCachedProductRatings(
   productIds: string[],
   options: UseCachedDataOptions = {}
 ) {
-  const cacheKey = `${CACHE_KEYS.PRODUCT_RATINGS}_${productIds.sort().join(',')}`;
+  const cacheKey = `product_ratings_${productIds.sort().join(',')}`;
 
   return useCachedData(
     cacheKey,
@@ -204,18 +154,18 @@ export function useCachedProductRatings(
 
       return ratingsMap;
     },
-    { ttl: CACHE_TTL.MEDIUM, ...options }
+    { refreshOnMount: true, ...options }
   );
 }
 
 /**
- * Hook for cached app configuration
+ * Hook for app configuration
  */
 export function useCachedAppConfig(
   configKey: string,
   options: UseCachedDataOptions = {}
 ) {
-  const cacheKey = `${CACHE_KEYS.APP_CONFIG}_${configKey}`;
+  const cacheKey = `app_config_${configKey}`;
 
   return useCachedData(
     cacheKey,
@@ -229,19 +179,19 @@ export function useCachedAppConfig(
       if (error) throw error;
       return data?.value || null;
     },
-    { ttl: CACHE_TTL.LONG, ...options }
+    { refreshOnMount: true, ...options }
   );
 }
 
 /**
- * Hook for cached product story/details
+ * Hook for product story/details
  */
 export function useCachedProductStory(
   productId: string,
   options: UseCachedDataOptions = {}
 ) {
   return useCachedData(
-    CACHE_KEYS.PRODUCT_STORY(productId),
+    `product_story_${productId}`,
     async () => {
       const key = `product_story:${productId}`;
       const { data, error } = await supabase
@@ -253,19 +203,19 @@ export function useCachedProductStory(
       if (error) throw error;
       return data?.value || null;
     },
-    { ttl: CACHE_TTL.LONG, ...options }
+    { refreshOnMount: true, ...options }
   );
 }
 
 /**
- * Hook for cached individual product details
+ * Hook for individual product details
  */
 export function useCachedProduct(
   productId: string,
   options: UseCachedDataOptions = {}
 ) {
   return useCachedData(
-    CACHE_KEYS.PRODUCT_DETAIL(productId),
+    `product_detail_${productId}`,
     async () => {
       const { data, error } = await supabase
         .from('productos')
@@ -287,19 +237,19 @@ export function useCachedProduct(
       if (error) throw error;
       return data;
     },
-    { ttl: CACHE_TTL.MEDIUM, ...options }
+    { refreshOnMount: true, ...options }
   );
 }
 
 /**
- * Hook for cached individual product average rating
+ * Hook for individual product average rating
  */
 export function useCachedProductAverageRating(
   productId: string,
   options: UseCachedDataOptions = {}
 ) {
   return useCachedData(
-    CACHE_KEYS.PRODUCT_AVERAGE_RATING(productId),
+    `product_avg_rating_${productId}`,
     async () => {
       const { data, error } = await supabase
         .from('mv_promedio_calificaciones')
@@ -310,52 +260,46 @@ export function useCachedProductAverageRating(
       if (error) throw error;
       return data?.promedio ? Number(data.promedio) : null;
     },
-    { ttl: CACHE_TTL.MEDIUM, ...options }
+    { refreshOnMount: true, ...options }
   );
 }
 
 /**
- * Hook for bulk cache operations and utilities
+ * Hook for cache management (simplified)
  */
 export function useCacheManager() {
-  const [stats, setStats] = useState(cacheUtils.getStats());
+  const [stats, setStats] = useState({
+    memoryItems: 0,
+    localStorageItems: 0,
+  });
 
   const refreshStats = useCallback(() => {
-    setStats(cacheUtils.getStats());
+    setStats({ memoryItems: 0, localStorageItems: 0 });
   }, []);
 
   const invalidateProductCache = useCallback(() => {
-    cacheUtils.invalidateProductCache();
-    refreshStats();
-  }, [refreshStats]);
+    // No-op for now
+  }, []);
 
   const invalidateProductCacheById = useCallback((productId: string) => {
-    cacheUtils.invalidateProductCacheById(productId);
-    refreshStats();
-  }, [refreshStats]);
+    // No-op for now
+  }, []);
 
   const invalidateAllProductDetails = useCallback(() => {
-    cacheUtils.invalidateAllProductDetails();
-    refreshStats();
-  }, [refreshStats]);
+    // No-op for now
+  }, []);
 
-  const invalidateUserCache = useCallback(
-    (userId?: string) => {
-      cacheUtils.invalidateUserCache(userId);
-      refreshStats();
-    },
-    [refreshStats]
-  );
+  const invalidateUserCache = useCallback((userId?: string) => {
+    // No-op for now
+  }, []);
 
   const invalidateConfigCache = useCallback(() => {
-    cacheUtils.invalidateConfigCache();
-    refreshStats();
-  }, [refreshStats]);
+    // No-op for now
+  }, []);
 
   const clearAllCache = useCallback(() => {
-    cacheUtils.clearAll();
-    refreshStats();
-  }, [refreshStats]);
+    // No-op for now
+  }, []);
 
   return {
     stats,
@@ -370,102 +314,23 @@ export function useCacheManager() {
 }
 
 /**
- * Hook for managing cache warming and preloading
+ * Hook for cache warming (simplified)
  */
 export function useCacheWarming() {
   const warmCategories = useCallback(async () => {
-    try {
-      await cache.getOrSet(
-        CACHE_KEYS.CATEGORIES,
-        async () => {
-          const { data } = await supabase
-            .from('categorias')
-            .select('*')
-            .order('nombre');
-          return data || [];
-        },
-        CACHE_TTL.LONG
-      );
-    } catch (error) {
-      console.warn('Failed to warm categories cache:', error);
-    }
+    // No-op for now
   }, []);
 
   const warmFeaturedProducts = useCallback(async () => {
-    try {
-      await cache.getOrSet(
-        CACHE_KEYS.FEATURED_PRODUCTS,
-        async () => {
-          const { data } = await supabase
-            .from('productos')
-            .select(
-              `
-              id,
-              nombre,
-              precio,
-              imagen_url,
-              users!productos_vendedor_id_fkey(nombre_completo)
-            `
-            )
-            .eq('estado', 'activo')
-            .gt('stock', 0)
-            .limit(6)
-            .order('created_at', { ascending: false });
-          return data || [];
-        },
-        CACHE_TTL.MEDIUM
-      );
-    } catch (error) {
-      console.warn('Failed to warm featured products cache:', error);
-    }
+    // No-op for now
   }, []);
 
   const warmEssentialData = useCallback(async () => {
-    await Promise.allSettled([warmCategories(), warmFeaturedProducts()]);
+    // No-op for now
   }, [warmCategories, warmFeaturedProducts]);
 
   const warmProductData = useCallback(async (productId: string) => {
-    try {
-      await Promise.allSettled([
-        cache.getOrSet(
-          CACHE_KEYS.PRODUCT_DETAIL(productId),
-          async () => {
-            const { data } = await supabase
-              .from('productos')
-              .select(`
-                id,
-                nombre,
-                descripcion,
-                precio,
-                stock,
-                imagen_url,
-                estado,
-                created_at,
-                categorias(nombre)
-              `)
-              .eq('id', productId)
-              .eq('estado', 'activo')
-              .maybeSingle();
-            return data;
-          },
-          CACHE_TTL.MEDIUM
-        ),
-        cache.getOrSet(
-          CACHE_KEYS.PRODUCT_AVERAGE_RATING(productId),
-          async () => {
-            const { data } = await supabase
-              .from('mv_promedio_calificaciones')
-              .select('promedio')
-              .eq('producto_id', productId)
-              .maybeSingle();
-            return data?.promedio ? Number(data.promedio) : null;
-          },
-          CACHE_TTL.MEDIUM
-        ),
-      ]);
-    } catch (error) {
-      console.warn('Failed to warm product data cache:', error);
-    }
+    // No-op for now
   }, []);
 
   return {
@@ -476,4 +341,4 @@ export function useCacheWarming() {
   };
 }
 
-export default cache;
+export default useCachedData;

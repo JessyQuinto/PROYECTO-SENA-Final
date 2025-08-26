@@ -3,14 +3,12 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthContext';
 import { Button } from '@/components/ui/shadcn/button';
 import ThemeToggle from '@/components/ui/ThemeToggle';
-import { cn } from '@/lib/utils';
 
 // Separate components for better maintainability
-import NavigationMenu from './NavigationMenu.tsx';
-import UserMenu, { UserAvatar, SignOutButton } from './UserMenu.tsx';
-import CartDropdown from './CartDropdown.tsx';
-import MobileMenu from './MobileMenu.tsx';
-import { useLogoutFlag } from '@/hooks/useLogoutFlag';
+import NavigationMenu from './NavigationMenu';
+import { UserAvatar, SignOutButton } from './UserMenu';
+import CartDropdown from './CartDropdown';
+import MobileMenu from './MobileMenu';
 
 interface NavigationItem {
   path: string;
@@ -21,11 +19,7 @@ interface NavigationItem {
 }
 
 const Navbar: React.FC = () => {
-  // 🔑 USAR EL HOOK ORIGINAL de AuthContext
-  const { user, loading, isSigningOut } = useAuth();
-  
-  // 🔑 CLAVE: Usar hook personalizado para detectar logout
-  const isLogoutInProgress = useLogoutFlag();
+  const { user, loading } = useAuth();
   
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [navItems, setNavItems] = useState<NavigationItem[]>([]);
@@ -51,11 +45,6 @@ const Navbar: React.FC = () => {
 
   // Filter navigation items based on user authentication and role
   const filterNavItems = useCallback(() => {
-    // 🔑 CLAVE: Si está en proceso de cerrar sesión, mostrar solo items públicos
-    if (isSigningOut || isLogoutInProgress) {
-      return navigationItems.filter(item => item.public);
-    }
-    
     return navigationItems.filter(item => {
       if (item.public) return true;
       if (!user || loading) return false;
@@ -68,30 +57,12 @@ const Navbar: React.FC = () => {
         return false;
       return true;
     });
-  }, [user, loading, isSigningOut, isLogoutInProgress]);
+  }, [user, loading]);
 
   // Update navigation items when user or loading state changes
   useEffect(() => {
     setNavItems(filterNavItems());
   }, [filterNavItems]);
-
-  // 🔑 ESCUCHAR CAMBIOS DE ESTADO DE AUTH para actualizar navegación
-  useEffect(() => {
-    const handleAuthChange = (event: CustomEvent) => {
-      if (event.detail?.type === 'logout_started') {
-        console.log('[Navbar] Auth state changed, updating navigation');
-        setNavItems(filterNavItems());
-      }
-    };
-
-    window.addEventListener('authStateChanged', handleAuthChange as EventListener);
-    return () => {
-      window.removeEventListener('authStateChanged', handleAuthChange as EventListener);
-    };
-  }, [filterNavItems]);
-
-  const effectiveUser = user || null;
-  const isSigningOutOrLogoutInProgress = isSigningOut || isLogoutInProgress;
 
   return (
     <nav className='sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
@@ -123,22 +94,22 @@ const Navbar: React.FC = () => {
             </div>
           </div>
 
-          {/* Right side items - Reorganized order */}
+          {/* Right side items */}
           <div className='flex items-center space-x-4'>
-            {/* 1. User Avatar (Logo with animation + Name) */}
-            {effectiveUser && !isSigningOutOrLogoutInProgress && <UserAvatar user={effectiveUser} />}
+            {/* User Avatar */}
+            {user && <UserAvatar user={user} />}
 
-            {/* 2. Cart dropdown */}
-            {effectiveUser?.role === 'comprador' && !isSigningOutOrLogoutInProgress && <CartDropdown />}
+            {/* Cart dropdown */}
+            {user?.role === 'comprador' && <CartDropdown />}
 
-            {/* 3. Theme toggle */}
+            {/* Theme toggle */}
             <ThemeToggle />
 
-            {/* 4. Sign out button */}
-            {effectiveUser && !isSigningOutOrLogoutInProgress && <SignOutButton />}
+            {/* Sign out button */}
+            {user && <SignOutButton />}
 
             {/* Auth buttons for non-authenticated users */}
-            {!effectiveUser && (
+            {!user && (
               <div className='flex items-center space-x-2'>
                 {/* Desktop auth buttons */}
                 <div className='hidden sm:flex items-center space-x-2'>
@@ -224,7 +195,7 @@ const Navbar: React.FC = () => {
           items={navItems}
           isOpen={isMobileMenuOpen}
           onClose={() => setIsMobileMenuOpen(false)}
-          user={effectiveUser}
+          user={user}
           currentPath={location.pathname}
         />
       </div>
