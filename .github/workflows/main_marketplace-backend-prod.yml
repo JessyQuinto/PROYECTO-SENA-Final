@@ -82,7 +82,6 @@ jobs:
           echo "Copying production files..."
           cp -r Backend/dist deployment/
           cp Backend/package.json deployment/
-          cp Backend/package-lock.json deployment/
           
           # Create a minimal package.json for production
           echo "Creating production package.json..."
@@ -118,12 +117,9 @@ jobs:
             console.log('Production package.json created with dependencies:', Object.keys(prodDeps));
           "
           
-          # Install only production dependencies
+          # Install only production dependencies using npm install (not npm ci)
           echo "Installing production dependencies..."
-          npm ci --only=production --no-audit --no-fund
-          
-          # Clean up
-          rm package-lock.json
+          npm install --only=production --no-audit --no-fund
           
           echo "Deployment package created successfully"
           echo "Final package contents:"
