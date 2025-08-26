@@ -24,69 +24,81 @@ jobs:
         with:
           node-version: '22.x'
           cache: npm
-          cache-dependency-path: Backend/package-lock.json
+          cache-dependency-path: package-lock.json
           registry-url: 'https://registry.npmjs.org/'
 
-      - name: Verify Backend structure
+      - name: Verify project structure
         run: |
-          echo "Verifying Backend directory structure..."
+          echo "Verifying project structure..."
           echo "Current directory: $(pwd)"
-          echo "Backend directory contents:"
-          ls -la Backend/
+          echo "Root package.json exists: $(test -f package.json && echo 'YES' || echo 'NO')"
+          echo "Backend directory exists: $(test -d Backend && echo 'YES' || echo 'NO')"
           echo "Backend package.json exists: $(test -f Backend/package.json && echo 'YES' || echo 'NO')"
-          echo "Backend package-lock.json exists: $(test -f Backend/package-lock.json && echo 'YES' || echo 'NO')"
-          echo "Backend src directory exists: $(test -d Backend/src && echo 'YES' || echo 'NO')"
-        working-directory: .
+          echo "Workspace configuration:"
+          cat package.json | grep -A 5 "workspaces"
 
-      - name: Install dependencies
+      - name: Install all dependencies (workspace)
         run: |
           set -e
-          echo "Installing dependencies in Backend directory..."
+          echo "Installing dependencies for the entire workspace..."
           echo "Current working directory: $(pwd)"
           echo "Node.js version: $(node --version)"
           echo "npm version: $(npm --version)"
           
-          # Install dependencies
+          # Install all dependencies including workspaces
           npm ci --ignore-scripts --no-audit --no-fund
           
-          echo "Dependencies installed successfully"
-          echo "Installed packages:"
+          echo "All dependencies installed successfully"
+          echo "Installed packages in root:"
           npm list --depth=0
-        working-directory: Backend
+          echo "Installed packages in Backend:"
+          npm list --depth=0 --workspace=Backend
         env:
           CI: true
           HUSKY: 0
 
-      - name: Build application
+      - name: Build Backend application
         run: |
-          echo "Starting build process..."
+          echo "Starting Backend build process..."
+          cd Backend
           npm run build
           echo "Build completed successfully"
           
           # Verify build output
           echo "Build output contents:"
           ls -la dist/
-        working-directory: Backend
         env:
           CI: true
           NODE_ENV: production
 
-      - name: Prune dev dependencies
+      - name: Prepare Backend for deployment
         run: |
-          echo "Pruning development dependencies..."
-          npm prune --omit=dev --no-audit
-          echo "Development dependencies pruned successfully"
+          echo "Preparing Backend for deployment..."
+          cd Backend
           
-          # Show final package size
-          echo "Final production dependencies:"
+          # Remove dev dependencies from Backend only
+          echo "Removing dev dependencies from Backend..."
+          npm prune --omit=dev --no-audit
+          
+          echo "Backend prepared successfully"
+          echo "Final Backend dependencies:"
           npm list --depth=0
-        working-directory: Backend
+          
+          # Copy Backend to a clean directory for deployment
+          cd ..
+          mkdir -p deployment
+          cp -r Backend/* deployment/
+          
+          echo "Deployment package prepared:"
+          ls -la deployment/
+        env:
+          CI: true
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: backend-app
-          path: Backend
+          path: deployment
 
   deploy:
     runs-on: ubuntu-latest
