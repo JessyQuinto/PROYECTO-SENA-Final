@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { cache, CACHE_KEYS, CACHE_TTL, cacheUtils } from '@/lib/cache';
 
 interface UseCachedDataOptions {
   enabled?: boolean;
@@ -17,7 +18,7 @@ interface UseCachedDataReturn<T> {
 }
 
 /**
- * Generic hook for data fetching (simplified, no caching)
+ * Generic hook for cached data fetching
  */
 export function useCachedData<T>(
   key: string,
@@ -26,11 +27,14 @@ export function useCachedData<T>(
 ): UseCachedDataReturn<T> {
   const {
     enabled = true,
+    ttl = CACHE_TTL.MEDIUM,
     refreshOnMount = false,
     onError,
   } = options;
 
-  const [data, setData] = useState<T | null>(null);
+  const [data, setData] = useState<T | null>(() =>
+    enabled ? cache.get<T>(key) : null
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -42,7 +46,13 @@ export function useCachedData<T>(
         setLoading(true);
         setError(null);
 
-        const result = await fetcher();
+        let result: T;
+        if (forceRefresh) {
+          result = await cache.refresh(key, fetcher, ttl);
+        } else {
+          result = await cache.getOrSet(key, fetcher, ttl);
+        }
+
         setData(result);
       } catch (err) {
         const error = err instanceof Error ? err : new Error('Unknown error');
@@ -52,32 +62,37 @@ export function useCachedData<T>(
         setLoading(false);
       }
     },
-    [key, enabled, onError]
+    [key, fetcher, ttl, enabled, onError]
   );
 
   const refresh = useCallback(() => fetchData(true), [fetchData]);
 
   const invalidate = useCallback(() => {
+    cache.delete(key);
     setData(null);
-  }, []);
+  }, [key]);
 
   useEffect(() => {
     if (!enabled) return;
 
-    if (refreshOnMount || !data) {
-      fetchData(refreshOnMount);
+    const cachedData = cache.get<T>(key);
+    if (cachedData) {
+      setData(cachedData);
+      if (!refreshOnMount) return;
     }
-  }, [key, enabled, refreshOnMount, data, fetchData]);
+
+    fetchData(refreshOnMount);
+  }, [key, enabled, refreshOnMount, fetchData]);
 
   return { data, loading, error, refresh, invalidate };
 }
 
 /**
- * Hook for categories data
+ * Hook for cached categories data
  */
 export function useCachedCategories(options: UseCachedDataOptions = {}) {
   return useCachedData(
-    'categories',
+    CACHE_KEYS.CATEGORIES,
     async () => {
       const { data, error } = await supabase
         .from('categorias')
@@ -87,16 +102,16 @@ export function useCachedCategories(options: UseCachedDataOptions = {}) {
       if (error) throw error;
       return data || [];
     },
-    { refreshOnMount: true, ...options }
+    { ttl: CACHE_TTL.LONG, ...options }
   );
 }
 
 /**
- * Hook for featured products
+ * Hook for cached featured products
  */
 export function useCachedFeaturedProducts(options: UseCachedDataOptions = {}) {
   const result = useCachedData(
-    'featured_products',
+    CACHE_KEYS.FEATURED_PRODUCTS,
     async () => {
       const { data, error } = await supabase
         .from('productos')
@@ -117,9 +132,10 @@ export function useCachedFeaturedProducts(options: UseCachedDataOptions = {}) {
       if (error) throw error;
       return data || [];
     },
-    { refreshOnMount: true, ...options }
+    { ttl: CACHE_TTL.MEDIUM, ...options }
   );
 
+  // Ensure data is always an array, never null
   return {
     ...result,
     data: result.data || [],
@@ -127,13 +143,13 @@ export function useCachedFeaturedProducts(options: UseCachedDataOptions = {}) {
 }
 
 /**
- * Hook for product ratings
+ * Hook for cached product ratings
  */
 export function useCachedProductRatings(
   productIds: string[],
   options: UseCachedDataOptions = {}
 ) {
-  const cacheKey = `product_ratings_${productIds.sort().join(',')}`;
+  const cacheKey = `${CACHE_KEYS.PRODUCT_RATINGS}_${productIds.sort().join(',')}`;
 
   return useCachedData(
     cacheKey,
@@ -154,18 +170,18 @@ export function useCachedProductRatings(
 
       return ratingsMap;
     },
-    { refreshOnMount: true, ...options }
+    { ttl: CACHE_TTL.MEDIUM, ...options }
   );
 }
 
 /**
- * Hook for app configuration
+ * Hook for cached app configuration
  */
 export function useCachedAppConfig(
   configKey: string,
   options: UseCachedDataOptions = {}
 ) {
-  const cacheKey = `app_config_${configKey}`;
+  const cacheKey = `${CACHE_KEYS.APP_CONFIG}_${configKey}`;
 
   return useCachedData(
     cacheKey,
@@ -179,19 +195,19 @@ export function useCachedAppConfig(
       if (error) throw error;
       return data?.value || null;
     },
-    { refreshOnMount: true, ...options }
+    { ttl: CACHE_TTL.LONG, ...options }
   );
 }
 
 /**
- * Hook for product story/details
+ * Hook for cached product story/details
  */
 export function useCachedProductStory(
   productId: string,
   options: UseCachedDataOptions = {}
 ) {
   return useCachedData(
-    `product_story_${productId}`,
+    CACHE_KEYS.PRODUCT_STORY(productId),
     async () => {
       const key = `product_story:${productId}`;
       const { data, error } = await supabase
@@ -203,19 +219,19 @@ export function useCachedProductStory(
       if (error) throw error;
       return data?.value || null;
     },
-    { refreshOnMount: true, ...options }
+    { ttl: CACHE_TTL.LONG, ...options }
   );
 }
 
 /**
- * Hook for individual product details
+ * Hook for cached individual product details
  */
 export function useCachedProduct(
   productId: string,
   options: UseCachedDataOptions = {}
 ) {
   return useCachedData(
-    `product_detail_${productId}`,
+    CACHE_KEYS.PRODUCT_DETAIL(productId),
     async () => {
       const { data, error } = await supabase
         .from('productos')
@@ -237,19 +253,19 @@ export function useCachedProduct(
       if (error) throw error;
       return data;
     },
-    { refreshOnMount: true, ...options }
+    { ttl: CACHE_TTL.MEDIUM, ...options }
   );
 }
 
 /**
- * Hook for individual product average rating
+ * Hook for cached individual product average rating
  */
 export function useCachedProductAverageRating(
   productId: string,
   options: UseCachedDataOptions = {}
 ) {
   return useCachedData(
-    `product_avg_rating_${productId}`,
+    CACHE_KEYS.PRODUCT_AVERAGE_RATING(productId),
     async () => {
       const { data, error } = await supabase
         .from('mv_promedio_calificaciones')
@@ -260,46 +276,52 @@ export function useCachedProductAverageRating(
       if (error) throw error;
       return data?.promedio ? Number(data.promedio) : null;
     },
-    { refreshOnMount: true, ...options }
+    { ttl: CACHE_TTL.MEDIUM, ...options }
   );
 }
 
 /**
- * Hook for cache management (simplified)
+ * Hook for bulk cache operations and utilities
  */
 export function useCacheManager() {
-  const [stats, setStats] = useState({
-    memoryItems: 0,
-    localStorageItems: 0,
-  });
+  const [stats, setStats] = useState(cacheUtils.getStats());
 
   const refreshStats = useCallback(() => {
-    setStats({ memoryItems: 0, localStorageItems: 0 });
+    setStats(cacheUtils.getStats());
   }, []);
 
   const invalidateProductCache = useCallback(() => {
-    // No-op for now
-  }, []);
+    cacheUtils.invalidateProductCache();
+    refreshStats();
+  }, [refreshStats]);
 
   const invalidateProductCacheById = useCallback((productId: string) => {
-    // No-op for now
-  }, []);
+    cacheUtils.invalidateProductCacheById(productId);
+    refreshStats();
+  }, [refreshStats]);
 
   const invalidateAllProductDetails = useCallback(() => {
-    // No-op for now
-  }, []);
+    cacheUtils.invalidateAllProductDetails();
+    refreshStats();
+  }, [refreshStats]);
 
-  const invalidateUserCache = useCallback((userId?: string) => {
-    // No-op for now
-  }, []);
+  const invalidateUserCache = useCallback(
+    (userId?: string) => {
+      cacheUtils.invalidateUserCache(userId);
+      refreshStats();
+    },
+    [refreshStats]
+  );
 
   const invalidateConfigCache = useCallback(() => {
-    // No-op for now
-  }, []);
+    cacheUtils.invalidateConfigCache();
+    refreshStats();
+  }, [refreshStats]);
 
   const clearAllCache = useCallback(() => {
-    // No-op for now
-  }, []);
+    cacheUtils.clearAll();
+    refreshStats();
+  }, [refreshStats]);
 
   return {
     stats,
@@ -314,23 +336,102 @@ export function useCacheManager() {
 }
 
 /**
- * Hook for cache warming (simplified)
+ * Hook for managing cache warming and preloading
  */
 export function useCacheWarming() {
   const warmCategories = useCallback(async () => {
-    // No-op for now
+    try {
+      await cache.getOrSet(
+        CACHE_KEYS.CATEGORIES,
+        async () => {
+          const { data } = await supabase
+            .from('categorias')
+            .select('*')
+            .order('nombre');
+          return data || [];
+        },
+        CACHE_TTL.LONG
+      );
+    } catch (error) {
+      console.warn('Failed to warm categories cache:', error);
+    }
   }, []);
 
   const warmFeaturedProducts = useCallback(async () => {
-    // No-op for now
+    try {
+      await cache.getOrSet(
+        CACHE_KEYS.FEATURED_PRODUCTS,
+        async () => {
+          const { data } = await supabase
+            .from('productos')
+            .select(
+              `
+              id,
+              nombre,
+              precio,
+              imagen_url,
+              users!productos_vendedor_id_fkey(nombre_completo)
+            `
+            )
+            .eq('estado', 'activo')
+            .gt('stock', 0)
+            .limit(6)
+            .order('created_at', { ascending: false });
+          return data || [];
+        },
+        CACHE_TTL.MEDIUM
+      );
+    } catch (error) {
+      console.warn('Failed to warm featured products cache:', error);
+    }
   }, []);
 
   const warmEssentialData = useCallback(async () => {
-    // No-op for now
+    await Promise.allSettled([warmCategories(), warmFeaturedProducts()]);
   }, [warmCategories, warmFeaturedProducts]);
 
   const warmProductData = useCallback(async (productId: string) => {
-    // No-op for now
+    try {
+      await Promise.allSettled([
+        cache.getOrSet(
+          CACHE_KEYS.PRODUCT_DETAIL(productId),
+          async () => {
+            const { data } = await supabase
+              .from('productos')
+              .select(`
+                id,
+                nombre,
+                descripcion,
+                precio,
+                stock,
+                imagen_url,
+                estado,
+                created_at,
+                categorias(nombre)
+              `)
+              .eq('id', productId)
+              .eq('estado', 'activo')
+              .maybeSingle();
+            return data;
+          },
+          CACHE_TTL.MEDIUM
+        ),
+        cache.getOrSet(
+          CACHE_KEYS.PRODUCT_AVERAGE_RATING(productId),
+          async () => {
+            const { data } = await supabase
+              .from('mv_promedio_calificaciones')
+              .select('promedio')
+              .eq('producto_id', productId)
+              .maybeSingle();
+            return data?.promedio ? Number(data.promedio) : null;
+          },
+          CACHE_TTL.MEDIUM
+        ),
+      ]);
+    } catch (error) {
+      console.warn('Failed to warm product data cache:', error);
+    }
   }, []);
 
   return {
@@ -341,4 +442,4 @@ export function useCacheWarming() {
   };
 }
 
-export default useCachedData;
+export default cache;

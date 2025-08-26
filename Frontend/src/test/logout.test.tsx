@@ -50,33 +50,28 @@ const TestComponent = () => {
   );
 };
 
-const TestWrapper = ({ children }: { children: React.ReactNode }) => (
+const TestWrapper = ({ children }) => (
   <BrowserRouter>
     <AuthProvider>{children}</AuthProvider>
   </BrowserRouter>
 );
 
 describe('Logout Flow Tests', () => {
-  let originalLocalStorage: Storage;
-  let localStorageMock: any;
-  let consoleSpy: any;
+  let originalLocalStorage;
+  let localStorageMock;
+  let consoleSpy;
 
   beforeEach(() => {
-    // Store original localStorage before mocking
+    // Mock localStorage
     originalLocalStorage = global.localStorage;
-    
-    // Mock localStorage with proper implementation
     localStorageMock = {
       getItem: vi.fn(),
       setItem: vi.fn(),
-      removeItem: vi.fn() as any,
+      removeItem: vi.fn(),
       clear: vi.fn(),
       key: vi.fn(),
       length: 0,
     };
-
-    // Add mockImplementation to removeItem
-    localStorageMock.removeItem.mockImplementation(() => {});
 
     // Mock Object.keys to return localStorage keys
     Object.defineProperty(localStorageMock, 'keys', {
@@ -279,7 +274,7 @@ describe('Logout Flow Tests', () => {
 
   it('should work when localStorage is unavailable', async () => {
     // Mock localStorage to throw errors
-    (localStorage.removeItem as any).mockImplementation(() => {
+    localStorage.removeItem.mockImplementation(() => {
       throw new Error('localStorage not available');
     });
 
@@ -343,7 +338,7 @@ describe('Authentication State Persistence Tests', () => {
     // Mock component that might cache user state
     const CachingComponent = () => {
       const { user } = useAuth();
-      const [cachedUser, setCachedUser] = React.useState<any>(null);
+      const [cachedUser, setCachedUser] = React.useState(null);
 
       React.useEffect(() => {
         if (user) {

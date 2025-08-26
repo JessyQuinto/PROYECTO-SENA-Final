@@ -1,16 +1,8 @@
 import React from 'react';
+import AdminDashboard from '@/modules/admin/AdminDashboard';
 
-const AdminDashboard: React.FC = () => {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Panel de Administración</h1>
-      <div className="bg-card rounded-lg p-6 border border-border">
-        <p className="text-muted-foreground">
-          Dashboard de administración en desarrollo.
-        </p>
-      </div>
-    </div>
-  );
+const AdminDashboardPage: React.FC = () => {
+  return <AdminDashboard />;
 };
 
-export default AdminDashboard;
+export default AdminDashboardPage;

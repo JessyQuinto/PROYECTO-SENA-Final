@@ -4,6 +4,7 @@ const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
 if (!url || !anonKey) {
+  // Evita lanzar error duro para que la app cargue y muestre aviso claro.
   console.error(
     '[supabase] Variables VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY no definidas.'
   );
@@ -27,7 +28,9 @@ export const supabase =
       })
     : (undefined as any);
 
-// Expose reference globally for debugging (development only)
-if (import.meta.env.DEV && typeof window !== 'undefined' && supabase) {
-  (window as any).supabase = supabase;
-}
+// Exponer referencia global para comprobaciones puntuales en UI (solo navegador)
+try {
+  if (typeof window !== 'undefined' && supabase) {
+    (window as any).supabase = supabase;
+  }
+} catch {}

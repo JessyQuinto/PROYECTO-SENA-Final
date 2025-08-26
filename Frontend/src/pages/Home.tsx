@@ -20,7 +20,7 @@ interface FeaturedProduct {
   };
 }
 
-const Home: React.FC = () => {
+export const Home: React.FC = () => {
   const { user } = useAuth();
   const {
     data: featuredProducts,
@@ -322,5 +322,3 @@ const Home: React.FC = () => {
     </div>
   );
 };
-
-export default Home;

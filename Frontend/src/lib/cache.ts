@@ -41,12 +41,6 @@ class CacheManager {
    * Get item from cache with automatic fallback and validation
    */
   get<T>(key: string): T | null {
-    // 🔑 CLAVE: Verificar flag de logout ANTES de devolver datos
-    if (typeof window !== 'undefined' && (window as any).__LOGOUT_IN_PROGRESS__) {
-      console.log('[Cache] Ignoring cache request during logout:', key);
-      return null;
-    }
-    
     // Try memory cache first
     const memoryItem = this.memoryCache.get(key);
     if (memoryItem && this.isValid(memoryItem)) {

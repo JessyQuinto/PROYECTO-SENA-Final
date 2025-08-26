@@ -8,8 +8,8 @@ import {
 import { Button } from '@/components/ui/shadcn/button';
 import { SecurityBadge } from './SecureComponents';
 import { cspManager } from '@/lib/csp';
-import { SECURITY_CONSTANTS } from '@/lib/security';
-
+import { security, SECURITY_CONSTANTS } from '@/lib/security';
+import { serviceWorkerManager } from '@/lib/serviceWorker';
 
 interface SecurityStats {
   cspSupported: boolean;

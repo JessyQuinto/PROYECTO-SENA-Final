@@ -19,121 +19,96 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set working directory
+        run: echo "Using Backend/ as working directory"
+        working-directory: Backend
+
       - name: Set up Node.js version
         uses: actions/setup-node@v4
         with:
           node-version: '22.x'
           cache: npm
-          cache-dependency-path: package-lock.json
+          cache-dependency-path: Backend/package-lock.json
           registry-url: 'https://registry.npmjs.org/'
 
-      - name: Verify project structure
+      - name: Isolate Backend from workspace
         run: |
-          echo "Verifying project structure..."
-          echo "Current directory: $(pwd)"
-          echo "Root package.json exists: $(test -f package.json && echo 'YES' || echo 'NO')"
-          echo "Backend directory exists: $(test -d Backend && echo 'YES' || echo 'NO')"
-          echo "Backend package.json exists: $(test -f Backend/package.json && echo 'YES' || echo 'NO')"
-          echo "Workspace configuration:"
-          cat package.json | grep -A 5 "workspaces"
+          echo "Preparing Backend for standalone deployment..."
+          echo "Current directory contents:"
+          ls -la
+          # Remove workspace references that might cause conflicts
+          rm -f package.json package-lock.json .npmrc || true
+          echo "Files removed. Backend directory contents:"
+          ls -la Backend/
+          echo "Backend isolated successfully"
+        working-directory: .
 
-      - name: Install all dependencies (workspace)
+      - name: Install dependencies with retry
         run: |
           set -e
-          echo "Installing dependencies for the entire workspace..."
+          max_attempts=3
+          attempt=1
+          
           echo "Current working directory: $(pwd)"
           echo "Node.js version: $(node --version)"
           echo "npm version: $(npm --version)"
+          echo "Package.json exists: $(test -f package.json && echo 'yes' || echo 'no')"
+          echo ".npmrc exists: $(test -f .npmrc && echo 'yes' || echo 'no')"
           
-          # Install all dependencies including workspaces
-          npm ci --ignore-scripts --no-audit --no-fund
+          if [ -f .npmrc ]; then
+            echo "Contents of .npmrc:"
+            cat .npmrc
+          fi
           
-          echo "All dependencies installed successfully"
-          echo "Installed packages in root:"
-          npm list --depth=0
-          echo "Installed packages in Backend:"
-          npm list --depth=0 --workspace=Backend
+          while [ $attempt -le $max_attempts ]; do
+            echo "Attempt $attempt of $max_attempts"
+            if timeout 300 npm ci --ignore-scripts --no-audit --no-fund --verbose; then
+              echo "Dependencies installed successfully on attempt $attempt"
+              break
+            else
+              if [ $attempt -eq $max_attempts ]; then
+                echo "Failed to install dependencies after $max_attempts attempts"
+                echo "Final debugging information:"
+                echo "Directory contents:"
+                ls -la
+                echo "Package.json contents:"
+                cat package.json || echo "No package.json found"
+                echo "npm cache info:"
+                npm config list || echo "Failed to get npm config"
+                exit 1
+              fi
+              echo "Attempt $attempt failed, waiting before retry..."
+              sleep $(( attempt * 30 ))
+              ((attempt++))
+            fi
+          done
+        working-directory: Backend
         env:
           CI: true
           HUSKY: 0
 
-      - name: Build Backend application
+      - name: Build with error handling
         run: |
-          echo "Starting Backend build process..."
-          cd Backend
+          echo "Starting build process..."
           npm run build
           echo "Build completed successfully"
-          
-          # Verify build output
-          echo "Build output contents:"
-          ls -la dist/
+        working-directory: Backend
         env:
           CI: true
           NODE_ENV: production
 
-      - name: Create production deployment package
+      - name: Prune dev dependencies
         run: |
-          echo "Creating production deployment package..."
-          
-          # Create clean deployment directory
-          mkdir -p deployment
-          
-          # Copy only production files from Backend
-          echo "Copying production files..."
-          cp -r Backend/dist deployment/
-          cp Backend/package.json deployment/
-          
-          # Create a minimal package.json for production
-          echo "Creating production package.json..."
-          cd deployment
-          
-          # Extract only production dependencies
-          node -e "
-            const pkg = require('./package.json');
-            const prodDeps = {};
-            
-            // Keep only production dependencies
-            if (pkg.dependencies) {
-              Object.keys(pkg.dependencies).forEach(key => {
-                if (!key.startsWith('@types/') && key !== 'tsx' && key !== 'typescript') {
-                  prodDeps[key] = pkg.dependencies[key];
-                }
-              });
-            }
-            
-            // Create new package.json
-            const newPkg = {
-              name: pkg.name,
-              version: pkg.version,
-              private: pkg.private,
-              type: pkg.type,
-              scripts: {
-                start: pkg.scripts.start
-              },
-              dependencies: prodDeps
-            };
-            
-            require('fs').writeFileSync('./package.json', JSON.stringify(newPkg, null, 2));
-            console.log('Production package.json created with dependencies:', Object.keys(prodDeps));
-          "
-          
-          # Install only production dependencies using npm install (not npm ci)
-          echo "Installing production dependencies..."
-          npm install --only=production --no-audit --no-fund
-          
-          echo "Deployment package created successfully"
-          echo "Final package contents:"
-          ls -la
-          echo "Final dependencies:"
-          npm list --depth=0
-        env:
-          CI: true
+          echo "Pruning development dependencies..."
+          npm prune --omit=dev --no-audit
+          echo "Development dependencies pruned successfully"
+        working-directory: Backend
 
-      - name: Upload artifact for deployment job
+      - name: Upload artifact for deployment job (Backend only)
         uses: actions/upload-artifact@v4
         with:
           name: backend-app
-          path: deployment
+          path: Backend
 
   deploy:
     runs-on: ubuntu-latest

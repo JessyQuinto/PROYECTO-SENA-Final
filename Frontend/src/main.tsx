@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import App from './modules/App';
-import { initPerformanceMonitoring } from './lib/performance.js';
+import { App } from './modules/App';
+import { initPerformanceMonitoring } from './lib/performance';
 import './lib/errorHandler';
 import { initializeSecurity } from './lib/csp';
 import './lib/serviceWorker'; // Initialize service worker
@@ -20,4 +20,4 @@ if (!rootElement) {
   throw new Error('Failed to find the root element');
 }
 
-createRoot(rootElement).render(<App />);
+createRoot(rootElement).render(React.createElement(App, null));

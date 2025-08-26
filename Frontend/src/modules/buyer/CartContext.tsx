@@ -1,9 +1,24 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useAuth } from '@/auth/AuthContext';
-import type { CartItem } from '@/types/domain';
+
+export interface CartItem {
+  productoId: string;
+  nombre: string;
+  precio: number;
+  cantidad: number;
+  imagenUrl?: string | null;
+  stock?: number;
+}
 
 interface CartContextValue {
   items: CartItem[];
+  total: number;
   add(item: CartItem): void;
   update(productoId: string, cantidad: number): void;
   remove(productoId: string): void;
@@ -19,32 +34,25 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [items, setItems] = useState<CartItem[]>([]);
   const { user } = useAuth();
-  
   const storageKey = user?.id ? `${STORAGE_KEY_BASE}_${user.id}` : null;
 
-  // Clear cart when user changes
   useEffect(() => {
+    // cargar carrito por usuario; si no hay usuario, mantener vacío
     if (!storageKey) {
       setItems([]);
       return;
     }
-    
     try {
       const raw = localStorage.getItem(storageKey);
-      if (raw) {
-        setItems(JSON.parse(raw));
-      } else {
-        setItems([]);
-      }
+      if (raw) setItems(JSON.parse(raw));
+      else setItems([]);
     } catch {
       setItems([]);
     }
   }, [storageKey]);
 
-  // Persist cart to localStorage
   useEffect(() => {
-    if (!storageKey) return;
-    
+    if (!storageKey) return; // no persistir sin usuario
     try {
       localStorage.setItem(storageKey, JSON.stringify(items));
     } catch {}
@@ -72,24 +80,28 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const update = (productoId: string, cantidad: number) => {
     setItems(prev =>
-      prev.map(item =>
-        item.productoId === productoId
-          ? { ...item, cantidad: Math.max(0, Math.min(cantidad, item.stock ?? Infinity)) }
-          : item
+      prev.map(i =>
+        i.productoId === productoId
+          ? {
+              ...i,
+              cantidad: Math.max(1, Math.min(cantidad, i.stock ?? Infinity)),
+            }
+          : i
       )
     );
   };
 
-  const remove = (productoId: string) => {
-    setItems(prev => prev.filter(item => item.productoId !== productoId));
-  };
+  const remove = (productoId: string) =>
+    setItems(prev => prev.filter(i => i.productoId !== productoId));
+  const clear = () => setItems([]);
 
-  const clear = () => {
-    setItems([]);
-  };
+  const total = useMemo(
+    () => items.reduce((sum, i) => sum + i.precio * i.cantidad, 0),
+    [items]
+  );
 
   return (
-    <CartContext.Provider value={{ items, add, update, remove, clear }}>
+    <CartContext.Provider value={{ items, total, add, update, remove, clear }}>
       {children}
     </CartContext.Provider>
   );
