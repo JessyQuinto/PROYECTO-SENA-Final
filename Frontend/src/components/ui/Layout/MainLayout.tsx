@@ -4,7 +4,7 @@ import Footer from './Footer';
 import MobileTabBar from './MobileTabBar';
 import GlobalModals from './GlobalModals';
 import CookieConsent from '@/components/ui/CookieConsent';
-import { useAuth } from '@/auth/AuthContext';
+import { useAuthState } from '@/hooks/useAuthState';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -15,7 +15,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   children,
   className = '',
 }) => {
-  const { isSigningOut } = useAuth();
+  const { isSigningOut } = useAuthState();
 
   return (
     <div className='min-h-screen bg-background text-foreground relative'>

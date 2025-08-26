@@ -148,17 +148,11 @@ export const SignOutButton: React.FC<{ className?: string }> = ({ className }) =
         return;
       }
 
-      // Add a small delay to ensure menu closes before signing out
-      setTimeout(async () => {
-        try {
-          await signOut();
-          console.log('[SignOutButton] Sign out completed successfully');
-        } catch (error) {
-          console.error('[SignOutButton] Sign out failed:', error);
-        }
-      }, 100);
+      // Ejecutar logout inmediatamente sin delay
+      await signOut();
+      console.log('[SignOutButton] Sign out completed successfully');
     } catch (error) {
-      console.error('[SignOutButton] Error in handleSignOut:', error);
+      console.error('[SignOutButton] Sign out failed:', error);
     }
   };
 

@@ -36,6 +36,18 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   const { user } = useAuth();
   const storageKey = user?.id ? `${STORAGE_KEY_BASE}_${user.id}` : null;
 
+  // Limpiar carrito inmediatamente cuando el usuario cierre sesión
+  useEffect(() => {
+    const handleLogout = () => {
+      setItems([]);
+    };
+
+    window.addEventListener('userLoggedOut', handleLogout);
+    return () => {
+      window.removeEventListener('userLoggedOut', handleLogout);
+    };
+  }, []);
+
   useEffect(() => {
     // cargar carrito por usuario; si no hay usuario, mantener vacío
     if (!storageKey) {

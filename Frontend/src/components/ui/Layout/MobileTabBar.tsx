@@ -1,12 +1,12 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '@/auth/AuthContext';
+import { useAuthState } from '@/hooks/useAuthState';
 import { useCart } from '@/modules/buyer/CartContext';
 import Icon from '@/components/ui/Icon';
 
 const MobileTabBar: React.FC = () => {
   const location = useLocation();
-  const { user, isSigningOut } = useAuth();
+  const { user, isSigningOut } = useAuthState();
   const { items } = useCart();
   const cartCount = items.reduce((sum, i) => sum + (i.cantidad || 0), 0);
 

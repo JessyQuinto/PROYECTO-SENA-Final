@@ -62,6 +62,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const MAX_RETRIES = 3;
   const RETRY_DELAY = 1000; // 1 second
 
+  // 🔑 FUNCIÓN CLAVE: Cambiar estado de UI INMEDIATAMENTE
+  const setUserStateImmediately = (newUser: SessionUser | null) => {
+    setUser(newUser);
+    if (newUser === null) {
+      setProfileLoading('');
+    }
+  };
+
   const isEmailConfirmed = (session: Session | null): boolean => {
     const u: any = session?.user;
     return !!(u?.email_confirmed_at || u?.confirmed_at || u?.email_confirmed);

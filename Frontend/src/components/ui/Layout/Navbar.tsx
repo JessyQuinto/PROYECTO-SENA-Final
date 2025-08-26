@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '@/auth/AuthContext';
+import { useAuthState } from '@/hooks/useAuthState';
 import { Button } from '@/components/ui/shadcn/button';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import { cn } from '@/lib/utils';
@@ -20,7 +20,7 @@ interface NavigationItem {
 }
 
 const Navbar: React.FC = () => {
-  const { user, loading, isSigningOut } = useAuth();
+  const { user, loading, isSigningOut } = useAuthState();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [navItems, setNavItems] = useState<NavigationItem[]>([]);
   const location = useLocation();

@@ -346,6 +346,31 @@ export function useCleanupListener(callback: (detail: any) => void) {
   }, [callback]);
 }
 
+/**
+ * Función para limpiar estado de usuario de forma atómica
+ * Esta función se exporta para ser usada en AuthContext
+ */
+export function clearUserStateAtomically(): void {
+  try {
+    // Limpiar localStorage de forma inmediata
+    cleanupUserState({
+      clearSessionStorage: true,
+      dispatchEvents: false,
+      preserveKeys: [
+        'theme_preference',
+        'language_preference',
+        'accessibility_settings',
+      ],
+      emergency: false,
+      verbose: false,
+    });
+  } catch (error) {
+    logger.error('[StateCleanup] Error in clearUserStateAtomically:', error);
+    // En caso de error, hacer limpieza de emergencia
+    emergencyCleanup();
+  }
+}
+
 // Re-export for convenience
 export { cleanupUserState as cleanup };
 export default cleanupUserState;
