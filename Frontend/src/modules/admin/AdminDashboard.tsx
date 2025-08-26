@@ -351,13 +351,13 @@ const AdminDashboard: React.FC = () => {
       title='Panel de Administración'
       subtitle='Gestiona vendedores, productos y supervisa las métricas del marketplace'
     >
-      {/* Header Actions */}
-      <div className='flex justify-between items-center mb-6'>
-        <h1 className='text-2xl font-bold text-gray-900'>Dashboard</h1>
+      {/* Header Actions - Mobile Optimized */}
+      <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6'>
+        <h1 className='text-xl md:text-2xl font-bold text-gray-900'>Dashboard</h1>
         <button
           onClick={loadDashboardData}
           disabled={loading}
-          className='btn btn-outline btn-sm'
+          className='btn btn-outline btn-sm w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-2'
           title='Actualizar datos'
         >
           <Icon
@@ -365,27 +365,27 @@ const AdminDashboard: React.FC = () => {
             name='HugeiconsReload'
             className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`}
           />
-          {loading ? 'Actualizando...' : 'Actualizar'}
+          <span className='text-sm'>{loading ? 'Actualizando...' : 'Actualizar'}</span>
         </button>
       </div>
       {/* Estadísticas */}
       {stats && (
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8'>
+        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6 mb-6 sm:mb-8'>
           <div className='card'>
-            <div className='card-body'>
+            <div className='card-body p-4 sm:p-6'>
               <div className='flex items-center'>
-                <div className='p-3 rounded-lg bg-blue-100 text-blue-600'>
+                <div className='p-2 sm:p-3 rounded-lg bg-blue-100 text-blue-600 flex-shrink-0'>
                   <Icon
                     category='Administrador'
                     name='Users'
-                    className='w-6 h-6'
+                    className='w-5 h-5 sm:w-6 sm:h-6'
                   />
                 </div>
-                <div className='ml-4'>
-                  <p className='text-sm font-medium text-gray-500'>
+                <div className='ml-3 sm:ml-4 min-w-0'>
+                  <p className='text-xs sm:text-sm font-medium text-gray-500 truncate'>
                     Total Vendedores
                   </p>
-                  <p className='text-2xl font-bold text-gray-900'>
+                  <p className='text-xl sm:text-2xl font-bold text-gray-900'>
                     {stats.totalVendedores}
                   </p>
                 </div>
@@ -394,20 +394,20 @@ const AdminDashboard: React.FC = () => {
           </div>
 
           <div className='card'>
-            <div className='card-body'>
+            <div className='card-body p-4 sm:p-6'>
               <div className='flex items-center'>
-                <div className='p-3 rounded-lg bg-yellow-100 text-yellow-600'>
+                <div className='p-2 sm:p-3 rounded-lg bg-yellow-100 text-yellow-600 flex-shrink-0'>
                   <Icon
                     category='Pedidos'
                     name='CarbonPendingFilled'
-                    className='w-6 h-6'
+                    className='w-5 h-5 sm:w-6 sm:h-6'
                   />
                 </div>
-                <div className='ml-4'>
-                  <p className='text-sm font-medium text-gray-500'>
+                <div className='ml-3 sm:ml-4 min-w-0'>
+                  <p className='text-xs sm:text-sm font-medium text-gray-500 truncate'>
                     Pendientes
                   </p>
-                  <p className='text-2xl font-bold text-gray-900'>
+                  <p className='text-xl sm:text-2xl font-bold text-gray-900'>
                     {stats.vendedoresPendientes}
                   </p>
                 </div>
@@ -416,20 +416,20 @@ const AdminDashboard: React.FC = () => {
           </div>
 
           <div className='card'>
-            <div className='card-body'>
+            <div className='card-body p-4 sm:p-6'>
               <div className='flex items-center'>
-                <div className='p-3 rounded-lg bg-green-100 text-green-600'>
+                <div className='p-2 sm:p-3 rounded-lg bg-green-100 text-green-600 flex-shrink-0'>
                   <Icon
                     category='Catálogo y producto'
                     name='BxsPackage'
-                    className='w-6 h-6'
+                    className='w-5 h-5 sm:w-6 sm:h-6'
                   />
                 </div>
-                <div className='ml-4'>
-                  <p className='text-sm font-medium text-gray-500'>
+                <div className='ml-3 sm:ml-4 min-w-0'>
+                  <p className='text-xs sm:text-sm font-medium text-gray-500 truncate'>
                     Total Productos
                   </p>
-                  <p className='text-2xl font-bold text-gray-900'>
+                  <p className='text-xl sm:text-2xl font-bold text-gray-900'>
                     {stats.totalProductos}
                   </p>
                 </div>
@@ -438,20 +438,20 @@ const AdminDashboard: React.FC = () => {
           </div>
 
           <div className='card'>
-            <div className='card-body'>
+            <div className='card-body p-4 sm:p-6'>
               <div className='flex items-center'>
-                <div className='p-3 rounded-lg bg-purple-100 text-purple-600'>
+                <div className='p-2 sm:p-3 rounded-lg bg-purple-100 text-purple-600 flex-shrink-0'>
                   <Icon
                     category='Pedidos'
                     name='MaterialSymbolsOrdersOutlineRounded'
-                    className='w-6 h-6'
+                    className='w-5 h-5 sm:w-6 sm:h-6'
                   />
                 </div>
-                <div className='ml-4'>
-                  <p className='text-sm font-medium text-gray-500'>
+                <div className='ml-3 sm:ml-4 min-w-0'>
+                  <p className='text-xs sm:text-sm font-medium text-gray-500 truncate'>
                     Total Pedidos
                   </p>
-                  <p className='text-2xl font-bold text-gray-900'>
+                  <p className='text-xl sm:text-2xl font-bold text-gray-900'>
                     {stats.totalPedidos}
                   </p>
                 </div>
@@ -459,21 +459,21 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className='card'>
-            <div className='card-body'>
+          <div className='card sm:col-span-2 lg:col-span-1'>
+            <div className='card-body p-4 sm:p-6'>
               <div className='flex items-center'>
-                <div className='p-3 rounded-lg bg-indigo-100 text-indigo-600'>
+                <div className='p-2 sm:p-3 rounded-lg bg-indigo-100 text-indigo-600 flex-shrink-0'>
                   <Icon
                     category='Carrito y checkout'
                     name='VaadinWallet'
-                    className='w-6 h-6'
+                    className='w-5 h-5 sm:w-6 sm:h-6'
                   />
                 </div>
-                <div className='ml-4'>
-                  <p className='text-sm font-medium text-gray-500'>
+                <div className='ml-3 sm:ml-4 min-w-0'>
+                  <p className='text-xs sm:text-sm font-medium text-gray-500 truncate'>
                     Ventas del Mes
                   </p>
-                  <p className='text-2xl font-bold text-gray-900'>
+                  <p className='text-xl sm:text-2xl font-bold text-gray-900'>
                     ${stats.ventasDelMes}
                   </p>
                 </div>
@@ -483,46 +483,46 @@ const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Vendedores Pendientes */}
-      <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
+      {/* Vendedores Pendientes - Mobile Optimized */}
+      <div className='grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8'>
         <div className='card'>
           <div className='card-header'>
-            <h2 className='text-lg font-semibold text-gray-900'>
+            <h2 className='text-base sm:text-lg font-semibold text-gray-900'>
               Vendedores Pendientes de Aprobación
             </h2>
           </div>
-          <div className='card-body'>
+          <div className='card-body p-4 sm:p-6'>
             {pendingVendors.length === 0 ? (
-              <p className='text-gray-500 text-center py-4'>
+              <p className='text-gray-500 text-center py-6 sm:py-4 text-sm sm:text-base'>
                 No hay vendedores pendientes
               </p>
             ) : (
-              <div className='space-y-4'>
+              <div className='space-y-3 sm:space-y-4'>
                 {pendingVendors.map(vendor => (
                   <div
                     key={vendor.id}
-                    className='flex items-center justify-between p-4 border border-gray-200 rounded-lg'
+                    className='flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border border-gray-200 rounded-lg gap-3 sm:gap-4'
                   >
-                    <div>
-                      <h3 className='font-medium text-gray-900'>
+                    <div className='flex-1 min-w-0'>
+                      <h3 className='font-medium text-gray-900 text-sm sm:text-base truncate'>
                         {vendor.nombre_completo || vendor.email}
                       </h3>
-                      <p className='text-sm text-gray-500'>{vendor.email}</p>
+                      <p className='text-xs sm:text-sm text-gray-500 truncate'>{vendor.email}</p>
                       <p className='text-xs text-gray-400'>
                         Registrado:{' '}
                         {new Date(vendor.created_at).toLocaleDateString()}
                       </p>
                     </div>
-                    <div className='flex space-x-2'>
+                    <div className='flex flex-col sm:flex-row gap-2 sm:gap-2 w-full sm:w-auto'>
                       <button
                         onClick={() => approveVendor(vendor.id)}
                         disabled={processingVendor === vendor.id}
-                        className='btn btn-accent btn-sm'
+                        className='btn btn-accent btn-sm min-h-[44px] flex items-center justify-center gap-2 text-sm'
                       >
                         {processingVendor === vendor.id ? (
                           <>
                             <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' />
-                            Procesando...
+                            <span>Procesando...</span>
                           </>
                         ) : (
                           'Aprobar'
@@ -531,12 +531,12 @@ const AdminDashboard: React.FC = () => {
                       <button
                         onClick={() => rejectVendor(vendor.id)}
                         disabled={processingVendor === vendor.id}
-                        className='btn btn-danger btn-sm'
+                        className='btn btn-danger btn-sm min-h-[44px] flex items-center justify-center gap-2 text-sm'
                       >
                         {processingVendor === vendor.id ? (
                           <>
                             <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' />
-                            Procesando...
+                            <span>Procesando...</span>
                           </>
                         ) : (
                           'Rechazar'
@@ -550,61 +550,61 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Acciones Rápidas */}
+        {/* Acciones Rápidas - Mobile Optimized */}
         <div className='card'>
           <div className='card-header'>
-            <h2 className='text-lg font-semibold text-gray-900'>
+            <h2 className='text-base sm:text-lg font-semibold text-gray-900'>
               Acciones Rápidas
             </h2>
           </div>
-          <div className='card-body'>
-            <div className='space-y-4'>
+          <div className='card-body p-4 sm:p-6'>
+            <div className='grid grid-cols-1 gap-3 sm:space-y-4'>
               <button
-                className='w-full btn btn-primary justify-start'
+                className='w-full btn btn-primary justify-start min-h-[44px] flex items-center gap-3 text-sm sm:text-base p-3 sm:p-4'
                 onClick={() => navigate('/admin/categorias')}
               >
                 <Icon
                   category='Navegación principal'
                   name='MdiGrid'
-                  className='w-5 h-5 mr-2'
+                  className='w-5 h-5 flex-shrink-0'
                 />
-                Crear Nueva Categoría
+                <span>Crear Nueva Categoría</span>
               </button>
 
               <button
-                className='w-full btn btn-outline justify-start'
+                className='w-full btn btn-outline justify-start min-h-[44px] flex items-center gap-3 text-sm sm:text-base p-3 sm:p-4'
                 onClick={() => navigate('/admin/metricas')}
               >
                 <Icon
                   category='Administrador'
                   name='BarChart3'
-                  className='w-5 h-5 mr-2'
+                  className='w-5 h-5 flex-shrink-0'
                 />
-                Ver Métricas Detalladas
+                <span>Ver Métricas Detalladas</span>
               </button>
 
               <button
-                className='w-full btn btn-outline justify-start'
+                className='w-full btn btn-outline justify-start min-h-[44px] flex items-center gap-3 text-sm sm:text-base p-3 sm:p-4'
                 onClick={() => navigate('/admin/usuarios')}
               >
                 <Icon
                   category='Administrador'
                   name='Users'
-                  className='w-5 h-5 mr-2'
+                  className='w-5 h-5 flex-shrink-0'
                 />
-                Gestionar Usuarios
+                <span>Gestionar Usuarios</span>
               </button>
 
               <button
-                className='w-full btn btn-outline justify-start'
+                className='w-full btn btn-outline justify-start min-h-[44px] flex items-center gap-3 text-sm sm:text-base p-3 sm:p-4'
                 onClick={() => navigate('/admin/moderacion')}
               >
                 <Icon
                   category='Administrador'
                   name='Gavel'
-                  className='w-5 h-5 mr-2'
+                  className='w-5 h-5 flex-shrink-0'
                 />
-                Moderación de Contenido
+                <span>Moderación de Contenido</span>
               </button>
             </div>
           </div>
