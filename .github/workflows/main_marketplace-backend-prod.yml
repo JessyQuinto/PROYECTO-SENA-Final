@@ -19,10 +19,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set working directory
-        run: echo "Using Backend/ as working directory"
-        working-directory: Backend
-
       - name: Set up Node.js version
         uses: actions/setup-node@v4
         with:
@@ -31,67 +27,45 @@ jobs:
           cache-dependency-path: Backend/package-lock.json
           registry-url: 'https://registry.npmjs.org/'
 
-      - name: Isolate Backend from workspace
+      - name: Verify Backend structure
         run: |
-          echo "Preparing Backend for standalone deployment..."
-          echo "Current directory contents:"
-          ls -la
-          # Remove workspace references that might cause conflicts
-          rm -f package.json package-lock.json .npmrc || true
-          echo "Files removed. Backend directory contents:"
+          echo "Verifying Backend directory structure..."
+          echo "Current directory: $(pwd)"
+          echo "Backend directory contents:"
           ls -la Backend/
-          echo "Backend isolated successfully"
+          echo "Backend package.json exists: $(test -f Backend/package.json && echo 'YES' || echo 'NO')"
+          echo "Backend package-lock.json exists: $(test -f Backend/package-lock.json && echo 'YES' || echo 'NO')"
+          echo "Backend src directory exists: $(test -d Backend/src && echo 'YES' || echo 'NO')"
         working-directory: .
 
-      - name: Install dependencies with retry
+      - name: Install dependencies
         run: |
           set -e
-          max_attempts=3
-          attempt=1
-          
+          echo "Installing dependencies in Backend directory..."
           echo "Current working directory: $(pwd)"
           echo "Node.js version: $(node --version)"
           echo "npm version: $(npm --version)"
-          echo "Package.json exists: $(test -f package.json && echo 'yes' || echo 'no')"
-          echo ".npmrc exists: $(test -f .npmrc && echo 'yes' || echo 'no')"
           
-          if [ -f .npmrc ]; then
-            echo "Contents of .npmrc:"
-            cat .npmrc
-          fi
+          # Install dependencies
+          npm ci --ignore-scripts --no-audit --no-fund
           
-          while [ $attempt -le $max_attempts ]; do
-            echo "Attempt $attempt of $max_attempts"
-            if timeout 300 npm ci --ignore-scripts --no-audit --no-fund --verbose; then
-              echo "Dependencies installed successfully on attempt $attempt"
-              break
-            else
-              if [ $attempt -eq $max_attempts ]; then
-                echo "Failed to install dependencies after $max_attempts attempts"
-                echo "Final debugging information:"
-                echo "Directory contents:"
-                ls -la
-                echo "Package.json contents:"
-                cat package.json || echo "No package.json found"
-                echo "npm cache info:"
-                npm config list || echo "Failed to get npm config"
-                exit 1
-              fi
-              echo "Attempt $attempt failed, waiting before retry..."
-              sleep $(( attempt * 30 ))
-              ((attempt++))
-            fi
-          done
+          echo "Dependencies installed successfully"
+          echo "Installed packages:"
+          npm list --depth=0
         working-directory: Backend
         env:
           CI: true
           HUSKY: 0
 
-      - name: Build with error handling
+      - name: Build application
         run: |
           echo "Starting build process..."
           npm run build
           echo "Build completed successfully"
+          
+          # Verify build output
+          echo "Build output contents:"
+          ls -la dist/
         working-directory: Backend
         env:
           CI: true
@@ -102,9 +76,13 @@ jobs:
           echo "Pruning development dependencies..."
           npm prune --omit=dev --no-audit
           echo "Development dependencies pruned successfully"
+          
+          # Show final package size
+          echo "Final production dependencies:"
+          npm list --depth=0
         working-directory: Backend
 
-      - name: Upload artifact for deployment job (Backend only)
+      - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: backend-app
