@@ -85,11 +85,25 @@ const LoginPage: React.FC = () => {
         Accede a tu cuenta para continuar
       </p>
 
-      <form onSubmit={form.handleSubmit} className='space-y-6'>
+      <form onSubmit={form.handleSubmit} className='space-y-6' noValidate>
+        {/* Screen reader announcement area for form errors */}
+        <div 
+          className='sr-only' 
+          role='status' 
+          aria-live='polite' 
+          aria-atomic='true'
+        >
+          {Object.keys(form.errors).length > 0 && (
+            <span>
+              Hay {Object.keys(form.errors).length} error{Object.keys(form.errors).length > 1 ? 'es' : ''} en el formulario. Por favor revisa los campos marcados.
+            </span>
+          )}
+        </div>
         {/* Email Field */}
         <div className='space-y-2'>
           <Label htmlFor='email' className='text-sm font-medium'>
             Correo electrónico
+            <span className='text-destructive ml-1' aria-label='campo requerido'>*</span>
           </Label>
           <Input
             id='email'
@@ -97,9 +111,20 @@ const LoginPage: React.FC = () => {
             placeholder='tu@email.com'
             {...form.getInputProps('email')}
             className={form.hasError('email') ? 'border-red-500' : ''}
+            aria-required='true'
+            aria-describedby={form.hasError('email') ? 'email-error' : 'email-hint'}
+            autoComplete='email'
           />
+          <div id='email-hint' className='sr-only'>
+            Ingresa tu dirección de correo electrónico para iniciar sesión
+          </div>
           {form.hasError('email') && (
-            <p className='text-red-500 text-sm mt-1'>
+            <p 
+              id='email-error'
+              className='text-red-500 text-sm mt-1'
+              role='alert'
+              aria-live='polite'
+            >
               {form.getFieldState('email').error}
             </p>
           )}
@@ -109,6 +134,7 @@ const LoginPage: React.FC = () => {
         <div className='space-y-2'>
           <Label htmlFor='password' className='text-sm font-medium'>
             Contraseña
+            <span className='text-destructive ml-1' aria-label='campo requerido'>*</span>
           </Label>
           <Input
             id='password'
@@ -118,9 +144,20 @@ const LoginPage: React.FC = () => {
             className={
               form.hasError('password') ? 'border-red-500' : ''
             }
+            aria-required='true'
+            aria-describedby={form.hasError('password') ? 'password-error' : 'password-hint'}
+            autoComplete='current-password'
           />
+          <div id='password-hint' className='sr-only'>
+            Ingresa tu contraseña para iniciar sesión
+          </div>
           {form.hasError('password') && (
-            <p className='text-red-500 text-sm mt-1'>
+            <p 
+              id='password-error'
+              className='text-red-500 text-sm mt-1'
+              role='alert'
+              aria-live='polite'
+            >
               {form.getFieldState('password').error}
             </p>
           )}
@@ -131,16 +168,24 @@ const LoginPage: React.FC = () => {
           type='submit'
           className='w-full py-3 text-base'
           disabled={form.isSubmitting || loading}
+          aria-describedby='submit-status'
         >
           {form.isSubmitting || loading ? (
             <div className='flex items-center gap-2'>
-              <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
-              Iniciando sesión...
+              <div 
+                className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin'
+                role='status'
+                aria-label='Iniciando sesión'
+              ></div>
+              <span aria-live='polite'>Iniciando sesión...</span>
             </div>
           ) : (
             'Iniciar sesión'
           )}
         </Button>
+        <div id='submit-status' className='sr-only' aria-live='polite'>
+          {form.isSubmitting || loading ? 'Procesando inicio de sesión' : ''}
+        </div>
       </form>
 
       {/* Links */}

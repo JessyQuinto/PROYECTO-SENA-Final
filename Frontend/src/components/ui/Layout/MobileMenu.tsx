@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthContext';
 import { useCart } from '@/modules/buyer/CartContext';
@@ -27,6 +27,7 @@ interface MobileMenuProps {
   items: NavigationItem[];
   user: User | null;
   currentPath: string;
+  id?: string;
 }
 
 export const MobileMenu: React.FC<MobileMenuProps> = ({
@@ -35,13 +36,70 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   items,
   user,
   currentPath,
+  id = 'mobile-navigation-menu',
 }) => {
   const { signOut } = useAuth();
   const { items: cartItems } = useCart();
+  const menuRef = useRef<HTMLDivElement>(null);
+  const firstFocusableRef = useRef<HTMLElement>(null);
+  
   const cartCount = cartItems.reduce(
     (sum, item) => sum + (item.cantidad || 0),
     0
   );
+
+  // Handle keyboard navigation and accessibility
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    if (!isOpen) return;
+    
+    if (event.key === 'Escape') {
+      onClose();
+      return;
+    }
+    
+    if (event.key === 'Tab') {
+      const focusableElements = menuRef.current?.querySelectorAll(
+        'a, button, [tabindex]:not([tabindex="-1"])'
+      );
+      
+      if (!focusableElements || focusableElements.length === 0) return;
+      
+      const firstElement = focusableElements[0] as HTMLElement;
+      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+      
+      if (event.shiftKey) {
+        if (document.activeElement === firstElement) {
+          event.preventDefault();
+          lastElement.focus();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          event.preventDefault();
+          firstElement.focus();
+        }
+      }
+    }
+  }, [isOpen, onClose]);
+
+  // Set up focus management and keyboard handlers
+  useEffect(() => {
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      
+      // Focus first focusable element when menu opens
+      const timer = setTimeout(() => {
+        const firstFocusable = menuRef.current?.querySelector(
+          'a, button, [tabindex]:not([tabindex="-1"])'
+        ) as HTMLElement;
+        firstFocusable?.focus();
+      }, 100);
+      
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+        clearTimeout(timer);
+      };
+    }
+  }, [isOpen, handleKeyDown]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -57,7 +115,13 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className='md:hidden border-t bg-card'>
+    <div 
+      ref={menuRef}
+      id={id}
+      className='md:hidden border-t bg-card'
+      role='region'
+      aria-label='Menú de navegación móvil'
+    >
       <div className='px-4 py-4 space-y-3'>
         {/* Theme toggle */}
         <div className='flex items-center justify-between py-2'>
@@ -70,11 +134,15 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
           <Link
             to='/carrito'
             onClick={onClose}
-            className='flex items-center justify-between rounded-md px-3 py-2 text-base font-medium transition-colors hover:bg-accent hover:text-accent-foreground'
+            className='flex items-center justify-between rounded-md px-3 py-2 text-base font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+            aria-label={`Ir al carrito${cartCount > 0 ? ` (${cartCount} artículos)` : ''}`}
           >
             <span>Carrito</span>
             {cartCount > 0 && (
-              <span className='flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-medium text-destructive-foreground'>
+              <span 
+                className='flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-medium text-destructive-foreground'
+                aria-label={`${cartCount} artículos en el carrito`}
+              >
                 {cartCount}
               </span>
             )}
@@ -82,7 +150,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
         )}
 
         {/* Navigation items */}
-        <div className='space-y-1'>
+        <nav className='space-y-1' role='navigation' aria-label='Elementos de navegación'>
           {items.map(item => {
             const isActive = currentPath === item.path;
             return (
@@ -92,16 +160,18 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                 onClick={onClose}
                 className={cn(
                   'block rounded-md px-3 py-2 text-base font-medium transition-colors',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                   isActive
                     ? 'bg-accent text-accent-foreground'
                     : 'text-foreground hover:bg-accent hover:text-accent-foreground'
                 )}
+                aria-current={isActive ? 'page' : undefined}
               >
                 {item.label}
               </Link>
             );
           })}
-        </div>
+        </nav>
 
         {/* User section */}
         {user ? (
@@ -139,7 +209,12 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                   </div>
                 </div>
               </div>
-              <Button variant='outline' size='sm' onClick={handleSignOut}>
+              <Button 
+                variant='outline' 
+                size='sm' 
+                onClick={handleSignOut}
+                aria-label='Cerrar sesión'
+              >
                 Salir
               </Button>
             </div>

@@ -96,7 +96,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const inputElement = (
       <div className='relative flex items-center'>
         {leftIcon && (
-          <div className='absolute left-3 flex items-center pointer-events-none text-muted-foreground'>
+          <div className='absolute left-3 flex items-center pointer-events-none text-muted-foreground z-10'>
             {leftIcon}
           </div>
         )}
@@ -105,7 +105,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           className={cn(
             inputVariants({ variant: effectiveVariant, size, className }),
             leftIcon && 'pl-10',
-            rightIcon && 'pr-10'
+            rightIcon && 'pr-10',
+            error && 'pr-8' // Extra space for error icon when no rightIcon
           )}
           ref={ref}
           id={inputId}
@@ -116,8 +117,46 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           aria-required={required}
           {...props}
         />
+        {/* Error icon */}
+        {error && !rightIcon && (
+          <div className='absolute right-3 flex items-center pointer-events-none text-destructive z-10'>
+            <svg
+              className='h-4 w-4'
+              fill='none'
+              stroke='currentColor'
+              viewBox='0 0 24 24'
+              aria-hidden='true'
+            >
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth={2}
+                d='M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+              />
+            </svg>
+          </div>
+        )}
+        {/* Success icon */}
+        {success && !rightIcon && !error && (
+          <div className='absolute right-3 flex items-center pointer-events-none text-green-600 z-10'>
+            <svg
+              className='h-4 w-4'
+              fill='none'
+              stroke='currentColor'
+              viewBox='0 0 24 24'
+              aria-hidden='true'
+            >
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth={2}
+                d='M5 13l4 4L19 7'
+              />
+            </svg>
+          </div>
+        )}
         {rightIcon && (
-          <div className='absolute right-3 flex items-center pointer-events-none text-muted-foreground'>
+          <div className='absolute right-3 flex items-center pointer-events-none text-muted-foreground z-10'>
             {rightIcon}
           </div>
         )}
@@ -145,7 +184,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             <div
               id={helperId || errorId}
               className={cn(
-                'text-xs',
+                'text-xs mt-1 flex items-start gap-1',
                 error || errorMessage
                   ? 'text-destructive'
                   : 'text-muted-foreground'
@@ -153,7 +192,40 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               role={error || errorMessage ? 'alert' : undefined}
               aria-live={error || errorMessage ? 'polite' : undefined}
             >
-              {errorMessage || helperText}
+              {error || errorMessage ? (
+                <svg
+                  className='h-3 w-3 mt-0.5 flex-shrink-0'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                  aria-hidden='true'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+                  />
+                </svg>
+              ) : success ? (
+                <svg
+                  className='h-3 w-3 mt-0.5 flex-shrink-0 text-green-600'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                  aria-hidden='true'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M5 13l4 4L19 7'
+                  />
+                </svg>
+              ) : null}
+              <span className='leading-none'>
+                {errorMessage || helperText}
+              </span>
             </div>
           )}
         </div>

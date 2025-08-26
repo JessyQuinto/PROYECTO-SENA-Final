@@ -245,17 +245,24 @@ export const RegisterPage: React.FC = () => {
                 </div>
 
                 {/* Role Selection */}
-                <div className='mb-6'>
-                  <Label className='block mb-3'>Tipo de cuenta</Label>
-                  <div className='grid grid-cols-2 gap-3'>
+                <fieldset className='mb-6'>
+                  <legend className='block mb-3 text-sm font-medium'>Tipo de cuenta</legend>
+                  <div 
+                    className='grid grid-cols-2 gap-3'
+                    role='radiogroup'
+                    aria-labelledby='role-selection-legend'
+                  >
                     <button
                       type='button'
                       onClick={() => setRole('comprador')}
-                      className={`p-4 rounded-lg border-2 transition-all ${
+                      className={`p-4 rounded-lg border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                         role === 'comprador'
                           ? 'border-primary bg-primary/5 text-primary'
-                          : 'border-gray-200 hover:border-gray-300'
+                          : 'border-gray-200 hover:border-gray-300 focus:border-primary'
                       }`}
+                      role='radio'
+                      aria-checked={role === 'comprador'}
+                      aria-describedby='comprador-desc'
                     >
                       <div className='text-center'>
                         <svg
@@ -263,6 +270,7 @@ export const RegisterPage: React.FC = () => {
                           fill='none'
                           stroke='currentColor'
                           viewBox='0 0 24 24'
+                          aria-hidden='true'
                         >
                           <path
                             strokeLinecap='round'
@@ -272,7 +280,7 @@ export const RegisterPage: React.FC = () => {
                           />
                         </svg>
                         <div className='font-medium'>Comprador</div>
-                        <div className='text-sm opacity-80'>
+                        <div id='comprador-desc' className='text-sm opacity-80'>
                           Comprar productos artesanales
                         </div>
                       </div>
@@ -280,11 +288,14 @@ export const RegisterPage: React.FC = () => {
                     <button
                       type='button'
                       onClick={() => setRole('vendedor')}
-                      className={`p-4 rounded-lg border-2 transition-all ${
+                      className={`p-4 rounded-lg border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                         role === 'vendedor'
                           ? 'border-primary bg-primary/5 text-primary'
-                          : 'border-gray-200 hover:border-gray-300'
+                          : 'border-gray-200 hover:border-gray-300 focus:border-primary'
                       }`}
+                      role='radio'
+                      aria-checked={role === 'vendedor'}
+                      aria-describedby='vendedor-desc'
                     >
                       <div className='text-center'>
                         <svg
@@ -292,6 +303,7 @@ export const RegisterPage: React.FC = () => {
                           fill='none'
                           stroke='currentColor'
                           viewBox='0 0 24 24'
+                          aria-hidden='true'
                         >
                           <path
                             strokeLinecap='round'
@@ -301,15 +313,28 @@ export const RegisterPage: React.FC = () => {
                           />
                         </svg>
                         <div className='font-medium'>Vendedor</div>
-                        <div className='text-sm opacity-80'>
+                        <div id='vendedor-desc' className='text-sm opacity-80'>
                           Vender productos artesanales
                         </div>
                       </div>
                     </button>
                   </div>
-                </div>
+                </fieldset>
 
-                <form onSubmit={form.handleSubmit} className='space-y-6'>
+                <form onSubmit={form.handleSubmit} className='space-y-6' noValidate>
+                  {/* Screen reader announcement area for form errors */}
+                  <div 
+                    className='sr-only' 
+                    role='status' 
+                    aria-live='polite' 
+                    aria-atomic='true'
+                  >
+                    {Object.keys(form.errors).length > 0 && (
+                      <span>
+                        Hay {Object.keys(form.errors).length} error{Object.keys(form.errors).length > 1 ? 'es' : ''} en el formulario. Por favor revisa los campos marcados.
+                      </span>
+                    )}
+                  </div>
                   {/* Sección 1: Información Personal */}
                   <div className='space-y-4'>
                     <div className='border-b pb-2'>
@@ -322,7 +347,9 @@ export const RegisterPage: React.FC = () => {
                     </div>
 
                     <div>
-                      <Label htmlFor='nombre'>Nombre completo *</Label>
+                      <Label htmlFor='nombre'>Nombre completo
+                        <span className='text-destructive ml-1' aria-label='campo requerido'>*</span>
+                      </Label>
                       <Input
                         id='nombre'
                         type='text'
@@ -335,17 +362,18 @@ export const RegisterPage: React.FC = () => {
                         className={
                           form.hasError('nombre') ? 'border-red-500' : ''
                         }
+                        error={form.hasError('nombre')}
+                        errorMessage={form.hasError('nombre') ? form.getFieldState('nombre').error : undefined}
+                        aria-required='true'
+                        autoComplete='name'
                       />
-                      {form.hasError('nombre') && (
-                        <p className='text-red-500 text-sm mt-1'>
-                          {form.getFieldState('nombre').error}
-                        </p>
-                      )}
                     </div>
 
                     <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                       <div>
-                        <Label htmlFor='email'>Correo electrónico *</Label>
+                        <Label htmlFor='email'>Correo electrónico
+                          <span className='text-destructive ml-1' aria-label='campo requerido'>*</span>
+                        </Label>
                         <Input
                           id='email'
                           type='email'
@@ -358,15 +386,16 @@ export const RegisterPage: React.FC = () => {
                           className={
                             form.hasError('email') ? 'border-red-500' : ''
                           }
+                          error={form.hasError('email')}
+                          errorMessage={form.hasError('email') ? form.getFieldState('email').error : undefined}
+                          aria-required='true'
+                          autoComplete='email'
                         />
-                        {form.hasError('email') && (
-                          <p className='text-red-500 text-sm mt-1'>
-                            {form.getFieldState('email').error}
-                          </p>
-                        )}
                       </div>
                       <div>
-                        <Label htmlFor='telefono'>Teléfono *</Label>
+                        <Label htmlFor='telefono'>Teléfono
+                          <span className='text-destructive ml-1' aria-label='campo requerido'>*</span>
+                        </Label>
                         <Input
                           id='telefono'
                           type='tel'
@@ -379,12 +408,11 @@ export const RegisterPage: React.FC = () => {
                           className={
                             form.hasError('telefono') ? 'border-red-500' : ''
                           }
+                          error={form.hasError('telefono')}
+                          errorMessage={form.hasError('telefono') ? form.getFieldState('telefono').error : undefined}
+                          aria-required='true'
+                          autoComplete='tel'
                         />
-                        {form.hasError('telefono') && (
-                          <p className='text-red-500 text-sm mt-1'>
-                            {form.getFieldState('telefono').error}
-                          </p>
-                        )}
                       </div>
                     </div>
                   </div>

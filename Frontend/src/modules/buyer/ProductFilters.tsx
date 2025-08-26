@@ -2,6 +2,7 @@ import React from 'react';
 import { Input } from '@/components/ui/shadcn/input';
 import { Button } from '@/components/ui/shadcn/button';
 import { Card, CardContent } from '@/components/ui/shadcn/card';
+import { Label } from '@/components/ui/shadcn/label';
 import Icon from '@/components/ui/Icon';
 
 interface Category {
@@ -47,6 +48,8 @@ const ProductFilters: React.FC<ProductFiltersProps> = React.memo(
     return (
       <div
         className={`lg:col-span-1 ${showFiltersMobile ? '' : 'hidden'} lg:block ${className}`}
+        role='complementary'
+        aria-label='Filtros de productos'
       >
         <Card>
           <CardContent className='p-4 sm:p-4 p-3'>
@@ -55,25 +58,31 @@ const ProductFilters: React.FC<ProductFiltersProps> = React.memo(
                 category='Catálogo y producto'
                 name='IonFilter'
                 className='w-4 h-4'
+                aria-hidden='true'
               />
               Filtros
             </h3>
 
             {/* Categories Filter */}
-            <div className='mb-4'>
-              <h4 className='font-medium mb-2 flex items-center gap-2'>
+            <fieldset className='mb-4'>
+              <legend className='font-medium mb-2 flex items-center gap-2'>
                 <Icon
                   category='Catálogo y producto'
                   name='LucideTags'
                   className='w-4 h-4'
+                  aria-hidden='true'
                 />
                 Categorías
-              </h4>
-              <div className='space-y-2 max-h-40 overflow-y-auto'>
+              </legend>
+              <div 
+                className='space-y-2 max-h-40 overflow-y-auto'
+                role='group'
+                aria-label='Seleccionar categorías de productos'
+              >
                 {categories.map(category => (
                   <label
                     key={category.id}
-                    className='flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded'
+                    className='flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded focus-within:bg-gray-50'
                   >
                     <input
                       type='checkbox'
@@ -81,64 +90,89 @@ const ProductFilters: React.FC<ProductFiltersProps> = React.memo(
                       onChange={e =>
                         handleCategoryChange(category.id, e.target.checked)
                       }
-                      className='rounded'
+                      className='rounded focus:ring-2 focus:ring-ring focus:ring-offset-2'
+                      aria-describedby={`category-${category.id}-desc`}
                     />
                     <span className='select-none'>{category.nombre}</span>
+                    <span id={`category-${category.id}-desc`} className='sr-only'>
+                      {selectedCategories.includes(category.id) ? 'Seleccionado' : 'No seleccionado'}
+                    </span>
                   </label>
                 ))}
               </div>
-            </div>
+            </fieldset>
 
             {/* Price Range Filter */}
-            <div className='mb-4'>
-              <h4 className='font-medium mb-2 flex items-center gap-2'>
+            <fieldset className='mb-4'>
+              <legend className='font-medium mb-2 flex items-center gap-2'>
                 <Icon
                   category='Carrito y checkout'
                   name='VaadinWallet'
                   className='w-4 h-4'
+                  aria-hidden='true'
                 />
                 Rango de precios
-              </h4>
+              </legend>
               <div className='space-y-2'>
                 <div>
-                  <label className='text-sm text-gray-600 block mb-1'>
+                  <Label 
+                    htmlFor='price-min'
+                    className='text-sm text-gray-600 block mb-1'
+                  >
                     Mínimo
-                  </label>
+                  </Label>
                   <Input
+                    id='price-min'
                     type='number'
                     value={priceMin}
                     onChange={e => onPriceMinChange(Number(e.target.value))}
                     className='w-full'
                     min='0'
                     placeholder='Precio mínimo'
+                    aria-label='Precio mínimo en pesos colombianos'
+                    aria-describedby='price-min-hint'
                   />
+                  <div id='price-min-hint' className='sr-only'>
+                    Ingresa el precio mínimo para filtrar productos
+                  </div>
                 </div>
                 <div>
-                  <label className='text-sm text-gray-600 block mb-1'>
+                  <Label 
+                    htmlFor='price-max'
+                    className='text-sm text-gray-600 block mb-1'
+                  >
                     Máximo
-                  </label>
+                  </Label>
                   <Input
+                    id='price-max'
                     type='number'
                     value={priceMax}
                     onChange={e => onPriceMaxChange(Number(e.target.value))}
                     className='w-full'
                     min='0'
                     placeholder='Precio máximo'
+                    aria-label='Precio máximo en pesos colombianos'
+                    aria-describedby='price-max-hint'
                   />
+                  <div id='price-max-hint' className='sr-only'>
+                    Ingresa el precio máximo para filtrar productos
+                  </div>
                 </div>
               </div>
-            </div>
+            </fieldset>
 
             {/* Clear Filters Button */}
             <Button
               variant='outline'
               onClick={onClearFilters}
               className='w-full flex items-center gap-2 sm:py-2 py-2'
+              aria-label='Limpiar todos los filtros aplicados'
             >
               <Icon
                 category='Estados y Feedback'
                 name='HugeiconsReload'
                 className='w-4 h-4'
+                aria-hidden='true'
               />
               Limpiar filtros
             </Button>

@@ -10,14 +10,26 @@ const cardVariants = cva(
   {
     variants: {
       variant: {
-        default: 'border-border',
+        default: 'border-border shadow-sm',
         outlined: 'border-2 border-border shadow-none',
-        elevated: 'border-border/50 shadow-lg',
+        elevated: 'border-border/50 shadow-lg hover:shadow-xl',
         ghost: 'border-transparent bg-transparent shadow-none',
         interactive: [
-          'border-border cursor-pointer',
-          'hover:shadow-md hover:border-border-secondary',
+          'border-border cursor-pointer shadow-sm',
+          'hover:shadow-md hover:border-border-secondary hover:-translate-y-1',
           'active:scale-[0.99] active:transition-transform active:duration-75',
+          'focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2',
+        ],
+        product: [
+          'border-border cursor-pointer shadow-sm',
+          'hover:shadow-lg hover:border-primary/20 hover:-translate-y-2',
+          'active:scale-[0.98] active:transition-transform active:duration-100',
+          'transition-all duration-300 ease-out',
+        ],
+        feature: [
+          'border-border/50 bg-gradient-to-br from-card to-card/50',
+          'shadow-md hover:shadow-lg',
+          'transition-all duration-300',
         ],
       },
       elevation: {
@@ -163,21 +175,30 @@ CardTitle.displayName = 'CardTitle';
 const CardDescription = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement> & {
-    size?: 'sm' | 'md' | 'lg';
+    size?: 'xs' | 'sm' | 'md' | 'lg';
+    variant?: 'default' | 'muted' | 'subtle';
   }
->(({ className, size = 'md', ...props }, ref) => {
+>(({ className, size = 'md', variant = 'default', ...props }, ref) => {
   const sizeClasses = {
+    xs: 'text-xs',
     sm: 'text-xs',
     md: 'text-sm',
     lg: 'text-base',
+  };
+
+  const variantClasses = {
+    default: 'text-muted-foreground',
+    muted: 'text-muted-foreground/80',
+    subtle: 'text-muted-foreground/60',
   };
 
   return (
     <div
       ref={ref}
       className={cn(
-        'text-muted-foreground leading-relaxed',
+        'leading-relaxed',
         sizeClasses[size],
+        variantClasses[variant],
         className
       )}
       {...props}

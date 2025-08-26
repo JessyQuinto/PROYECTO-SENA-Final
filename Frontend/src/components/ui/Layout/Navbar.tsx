@@ -107,19 +107,25 @@ const Navbar: React.FC = () => {
   const isActivePage = useCallback((path: string) => location.pathname === path, [location.pathname]);
 
   return (
-    <nav className='bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40'>
+    <nav 
+      className='bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40'
+      role='navigation'
+      aria-label='Navegación principal'
+    >
       <div className='container mx-auto px-4'>
         <div className='flex items-center justify-between h-16'>
           {/* Logo */}
           <Link
             to='/'
-            className='flex items-center space-x-2 text-xl font-bold text-primary'
+            className='flex items-center space-x-2 text-xl font-bold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md'
+            aria-label='Ir a página de inicio - Tesoros Chocó'
           >
             <svg
               className='h-8 w-8'
               viewBox='0 0 24 24'
               fill='none'
               stroke='currentColor'
+              aria-hidden='true'
             >
               <path
                 strokeLinecap='round'
@@ -170,14 +176,16 @@ const Navbar: React.FC = () => {
                 {/* Mobile auth icons */}
                 <Link
                   to='/login'
-                  className='flex sm:hidden h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
+                  className='flex sm:hidden h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
                   aria-label='Iniciar sesión'
+                  title='Iniciar sesión'
                 >
                   <svg
                     className='h-5 w-5'
                     viewBox='0 0 24 24'
                     fill='none'
                     stroke='currentColor'
+                    aria-hidden='true'
                   >
                     <path
                       strokeLinecap='round'
@@ -189,14 +197,16 @@ const Navbar: React.FC = () => {
                 </Link>
                 <Link
                   to='/register'
-                  className='flex sm:hidden h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
+                  className='flex sm:hidden h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
                   aria-label='Crear cuenta'
+                  title='Crear cuenta'
                 >
                   <svg
                     className='h-5 w-5'
                     viewBox='0 0 24 24'
                     fill='none'
                     stroke='currentColor'
+                    aria-hidden='true'
                   >
                     <path
                       strokeLinecap='round'
@@ -215,8 +225,9 @@ const Navbar: React.FC = () => {
               size='icon'
               className='md:hidden'
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-label='Toggle menu'
+              aria-label={isMobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
               aria-expanded={isMobileMenuOpen}
+              aria-controls='mobile-navigation-menu'
             >
               {isMobileMenuOpen ? (
                 <svg
@@ -258,6 +269,7 @@ const Navbar: React.FC = () => {
           onClose={() => setIsMobileMenuOpen(false)}
           user={user}
           currentPath={location.pathname}
+          id='mobile-navigation-menu'
         />
       </div>
     </nav>
