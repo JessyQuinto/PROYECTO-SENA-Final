@@ -1145,84 +1145,98 @@
     @apply inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin;
   }
 
-  /* Mobile Tab Bar */
+  /* Mobile Tab Bar - Optimizado para UX móvil */
   .mobile-tabbar {
     position: fixed;
     inset-inline: 0;
     inset-block-end: 0;
     z-index: 40;
-    /* Fallback for older browsers */
-    background: rgba(255, 255, 255, 0.92);
-    /* Theme-aware translucent surface (adapts to light/dark) */
-    background: color-mix(in oklab, var(--color-card) 92%, transparent);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    /* Fondo translúcido mejorado */
+    background: color-mix(in oklab, var(--color-card) 95%, transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border-top: 1px solid var(--color-border);
     color: var(--color-foreground);
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
   }
+  
   .mobile-tabbar-list {
-    /* Use flex so items always distribute evenly regardless of count */
     display: flex;
     align-items: stretch;
+    height: 68px; /* Altura optimizada para touch */
   }
+  
   .mobile-tabbar-list > li {
     flex: 1 1 0;
   }
+  
   .mobile-tabbar-item {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.25rem;
-    padding: 0.75rem 0.5rem;
+    padding: 0.5rem 0.25rem;
     width: 100%;
-    color: var(--color-marron-cacao);
+    height: 100%;
+    color: var(--color-text-secondary);
     text-decoration: none;
     font-size: 0.75rem;
-    /* Normalize buttons to look like links */
     background: transparent;
     border: 0;
     appearance: none;
     -webkit-appearance: none;
     outline: none;
-    /* Improved touch targets */
+    /* Mejoradas interacciones táctiles */
     min-height: 60px;
     touch-action: manipulation;
-    transition: all 0.2s ease;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
   }
+  
   .mobile-tabbar-item .label {
-    font-size: 0.7rem;
-    opacity: 0.8;
+    font-size: 0.65rem;
     font-weight: 500;
+    line-height: 1;
+    margin-top: 2px;
   }
+  
   .mobile-tabbar-item.active {
-    color: var(--color-terracotta-suave);
-    transform: translateY(-1px);
+    color: var(--color-primary);
   }
-  .mobile-tabbar-item.active .label {
-    opacity: 1;
-    font-weight: 700;
+  
+  .mobile-tabbar-item.active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 2px;
+    background: var(--color-primary);
+    border-radius: 1px;
   }
+  
   .mobile-tabbar-item:active {
-    background: color-mix(in oklab, var(--color-card) 88%, black);
-    transform: translateY(0);
+    background: color-mix(in oklab, var(--color-card) 90%, black);
+    transform: scale(0.95);
   }
+  
   .badge-count {
     position: absolute;
-    top: -6px;
-    right: -10px;
-    background: #ef4444;
+    top: -2px;
+    right: -8px;
+    background: var(--color-error);
     color: white;
     font-size: 10px;
     line-height: 1;
     padding: 3px 6px;
-    border-radius: 999px;
-    min-width: 18px;
+    border-radius: 10px;
+    min-width: 16px;
     text-align: center;
-    box-shadow: var(--shadow-soft);
     font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   }
+  
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
@@ -1425,16 +1439,22 @@
 
 /* Mobile-specific responsive enhancements */
 @media (max-width: 767px) {
-  /* Improve button spacing on mobile */
+  /* Optimización del header para móvil */
+  header {
+    height: 48px;
+  }
+
+  /* Mejorar espaciado de botones en móvil */
   .btn {
     min-height: 44px;
     padding: 0.75rem 1rem;
     font-size: 0.9rem;
+    border-radius: 8px;
   }
 
   .btn-sm {
     min-height: 40px;
-    padding: 0.5rem 0.75rem;
+    padding: 0.625rem 0.875rem;
     font-size: 0.85rem;
   }
 
@@ -1444,63 +1464,100 @@
     font-size: 1rem;
   }
 
-  /* Improve form inputs on mobile */
+  /* Optimizar inputs para móvil */
   input, textarea, select {
     min-height: 44px;
-    font-size: 16px; /* Prevents zoom on iOS */
+    font-size: 16px; /* Previene zoom en iOS */
+    padding: 0.75rem;
+    border-radius: 8px;
   }
 
-  /* Better modal sizing on mobile */
+  /* Mejorar modales en móvil */
   .modal {
-    margin: 1rem;
-    max-height: calc(100vh - 2rem);
+    margin: 0.5rem;
+    max-height: calc(100vh - 1rem);
+    border-radius: 12px;
   }
 
-  /* Improve table responsiveness */
+  /* Mejor responsividad de tablas */
   .table-responsive {
     font-size: 0.85rem;
   }
 
-  /* Better spacing for mobile cards */
+  /* Espaciado optimizado para cards móviles */
   .card {
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
+    border-radius: 12px;
   }
 
-  /* Improve navigation spacing */
+  /* Mejorar navegación */
   .nav-link {
     padding: 0.75rem 1rem;
+    min-height: 44px;
   }
+
+  /* Optimizar contenedores principales */
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Mejorar tipografía móvil */
+  h1 { font-size: 1.75rem; }
+  h2 { font-size: 1.5rem; }
+  h3 { font-size: 1.25rem; }
+  h4 { font-size: 1.125rem; }
+  
+  /* Optimizar espaciado vertical */
+  .space-y-6 > * + * { margin-top: 1rem; }
+  .space-y-8 > * + * { margin-top: 1.5rem; }
+  
+  /* Mejorar grid responsivo */
+  .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+  .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* Tablet-specific enhancements */
 @media (min-width: 768px) and (max-width: 1023px) {
-  /* Optimize for tablet viewing */
   .container {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
+  }
+  
+  /* Optimizar grids para tablet */
+  .mobile-grid-responsive {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 /* Touch device optimizations */
 @media (hover: none) and (pointer: coarse) {
-  /* Remove hover effects on touch devices */
+  /* Remover efectos hover en dispositivos táctiles */
   .hover\:scale-105:hover {
     transform: none;
   }
 
-  /* Increase touch targets */
+  /* Aumentar targets táctiles */
   button, a, [role="button"] {
     min-height: 44px;
     min-width: 44px;
   }
 
-  /* Improve dropdown menus for touch */
+  /* Mejorar dropdowns para touch */
   .dropdown-menu {
     font-size: 1rem;
+    padding: 0.5rem 0;
   }
 
   .dropdown-item {
     padding: 0.75rem 1rem;
+    min-height: 44px;
+  }
+  
+  /* Mejorar feedback táctil */
+  button:active, [role="button"]:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
   }
 }
 :root.nord-dark .card-pattern::before {

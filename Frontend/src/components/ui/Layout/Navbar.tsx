@@ -113,15 +113,15 @@ const Navbar: React.FC = () => {
       aria-label='Navegación principal'
     >
       <div className='container mx-auto px-3 sm:px-4'>
-        <div className='flex items-center justify-between h-14 md:h-16'>
-          {/* Logo */}
+        <div className='flex items-center justify-between h-12 sm:h-14 md:h-16'>
+          {/* Logo compacto para móvil */}
           <Link
             to='/'
-            className='flex items-center space-x-2 text-lg md:text-xl font-bold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md'
+            className='flex items-center space-x-1 sm:space-x-2 text-base sm:text-lg md:text-xl font-bold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md'
             aria-label='Ir a página de inicio - Tesoros Chocó'
           >
             <svg
-              className='h-6 w-6 md:h-8 md:w-8'
+              className='h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8'
               viewBox='0 0 24 24'
               fill='none'
               stroke='currentColor'
@@ -134,54 +134,68 @@ const Navbar: React.FC = () => {
                 d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'
               />
             </svg>
-            <span className='hidden sm:inline'>Tesoros Chocó</span>
+            <span className='hidden xs:inline text-sm sm:text-base md:text-lg'>Tesoros Chocó</span>
           </Link>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation - Solo visible en desktop */}
           <div className='hidden md:flex items-center space-x-6'>
             <NavigationMenu items={navItems} currentPath={location.pathname} />
           </div>
 
-          {/* Right side items - Reorganized order */}
-          <div className='flex items-center space-x-2 md:space-x-4'>
-            {/* 1. User Avatar (Logo with animation + Name) */}
-            {user && !isSigningOut && <UserAvatar user={user} />}
-
-            {/* 2. Cart dropdown */}
-            {user?.role === 'comprador' && !isSigningOut && <CartDropdown />}
-
-            {/* 3. Theme toggle */}
+          {/* Sección derecha reorganizada */}
+          <div className='flex items-center space-x-1 sm:space-x-2 md:space-x-4'>
+            {/* Solo Theme Toggle visible en móvil - el resto se mueve al menú */}
             <ThemeToggle />
 
-            {/* 4. Sign out button */}
-            {user && !isSigningOut && <SignOutButton />}
+            {/* Desktop: Elementos completos */}
+            <div className='hidden md:flex items-center space-x-4'>
+              {user && !isSigningOut && <UserAvatar user={user} />}
+              {user?.role === 'comprador' && !isSigningOut && <CartDropdown />}
+              {user && !isSigningOut && <SignOutButton />}
+            </div>
 
-            {/* Auth buttons for non-authenticated users */}
-            {!user && (
-              <div className='flex items-center space-x-2'>
-                {/* Desktop auth buttons */}
-                <div className='hidden sm:flex items-center space-x-2'>
-                  <Link to='/login'>
-                    <Button variant='ghost' size='sm'>
-                      Iniciar Sesión
-                    </Button>
-                  </Link>
-                  <Link to='/register'>
-                    <Button size='sm'>
-                      Registrarse
-                    </Button>
+            {/* Mobile: Solo hamburger menu y auth rápido */}
+            <div className='flex md:hidden items-center space-x-1'>
+              {/* Auth buttons for non-authenticated users - solo iconos */}
+              {!user && (
+                <div className='flex items-center space-x-1'>
+                  <Link
+                    to='/login'
+                    className='flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+                    aria-label='Iniciar sesión'
+                    title='Iniciar sesión'
+                  >
+                    <svg
+                      className='h-4 w-4'
+                      viewBox='0 0 24 24'
+                      fill='none'
+                      stroke='currentColor'
+                      aria-hidden='true'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1'
+                      />
+                    </svg>
                   </Link>
                 </div>
+              )}
 
-                {/* Mobile auth icons */}
-                <Link
-                  to='/login'
-                  className='flex sm:hidden h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
-                  aria-label='Iniciar sesión'
-                  title='Iniciar sesión'
-                >
+              {/* Hamburger Menu Button */}
+              <Button
+                variant='ghost'
+                size='icon'
+                className='h-8 w-8 md:hidden'
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label={isMobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+                aria-expanded={isMobileMenuOpen}
+                aria-controls='mobile-navigation-menu'
+              >
+                {isMobileMenuOpen ? (
                   <svg
-                    className='h-5 w-5'
+                    className='h-4 w-4'
                     viewBox='0 0 24 24'
                     fill='none'
                     stroke='currentColor'
@@ -191,87 +205,55 @@ const Navbar: React.FC = () => {
                       strokeLinecap='round'
                       strokeLinejoin='round'
                       strokeWidth={2}
-                      d='M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1'
+                      d='M6 18L18 6M6 6l12 12'
                     />
                   </svg>
+                ) : (
+                  <svg
+                    className='h-4 w-4'
+                    viewBox='0 0 24 24'
+                    fill='none'
+                    stroke='currentColor'
+                    aria-hidden='true'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M4 6h16M4 12h16M4 18h16'
+                    />
+                  </svg>
+                )}
+              </Button>
+            </div>
+
+            {/* Desktop auth buttons - movidos aquí para mejor organización */}
+            {!user && (
+              <div className='hidden md:flex items-center space-x-2'>
+                <Link to='/login'>
+                  <Button variant='ghost' size='sm'>
+                    Iniciar Sesión
+                  </Button>
                 </Link>
-                <Link
-                  to='/register'
-                  className='flex sm:hidden h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
-                  aria-label='Crear cuenta'
-                  title='Crear cuenta'
-                >
-                  <svg
-                    className='h-5 w-5'
-                    viewBox='0 0 24 24'
-                    fill='none'
-                    stroke='currentColor'
-                    aria-hidden='true'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'
-                    />
-                  </svg>
+                <Link to='/register'>
+                  <Button size='sm'>
+                    Registrarse
+                  </Button>
                 </Link>
               </div>
             )}
-
-            {/* Mobile menu button */}
-            <Button
-              variant='ghost'
-              size='icon'
-              className='md:hidden'
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-label={isMobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
-              aria-expanded={isMobileMenuOpen}
-              aria-controls='mobile-navigation-menu'
-            >
-              {isMobileMenuOpen ? (
-                <svg
-                  className='h-5 w-5'
-                  viewBox='0 0 24 24'
-                  fill='none'
-                  stroke='currentColor'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M6 18L18 6M6 6l12 12'
-                  />
-                </svg>
-              ) : (
-                <svg
-                  className='h-5 w-5'
-                  viewBox='0 0 24 24'
-                  fill='none'
-                  stroke='currentColor'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M4 6h16M4 12h16M4 18h16'
-                  />
-                </svg>
-              )}
-            </Button>
           </div>
         </div>
-
-        {/* Mobile menu */}
-        <MobileMenu
-          items={navItems}
-          isOpen={isMobileMenuOpen}
-          onClose={() => setIsMobileMenuOpen(false)}
-          user={user}
-          currentPath={location.pathname}
-          id='mobile-navigation-menu'
-        />
       </div>
+
+      {/* Mobile Menu - Renderizado condicionalmente */}
+      <MobileMenu
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+        items={navItems}
+        user={user}
+        currentPath={location.pathname}
+      />
     </nav>
   );
 };
