@@ -1,18 +1,19 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuthState } from '@/hooks/useAuthState';
+import { useAuth } from '@/auth/AuthContext';
 import { useCart } from '@/modules/buyer/CartContext';
 import Icon from '@/components/ui/Icon';
 
 const MobileTabBar: React.FC = () => {
   const location = useLocation();
-  const { user, isSigningOut } = useAuthState();
+  // 🔑 USAR EL HOOK UNIFICADO para estado consistente
+  const { user, isSigningOut } = useAuth();
   const { items } = useCart();
   const cartCount = items.reduce((sum, i) => sum + (i.cantidad || 0), 0);
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Durante el cierre de sesión, comportarse como visitante para evitar parpadeos
+  // 🔑 CLAVE: Durante el cierre de sesión, comportarse como visitante para evitar parpadeos
   const effectiveUser = isSigningOut ? null : user;
   const isBuyer = effectiveUser?.role === 'comprador';
   const vendorState = (user as any)?.vendedor_estado as
@@ -111,38 +112,36 @@ const MobileTabBar: React.FC = () => {
 
   return (
     <nav
-      className='mobile-tabbar md:hidden'
-      role='navigation'
-      aria-label='Navegación inferior'
+      className='mobile-tabbar md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50'
+      aria-label='Navegación móvil'
     >
-      <ul className='mobile-tabbar-list'>
-        {normalized.map(t => (
-          <li key={`${t.path}|${t.label}`}>
-            <Link
-              to={t.path}
-              className={`mobile-tabbar-item ${isActive(t.path) ? 'active' : ''}`}
-            >
-              <div className='relative'>
-                <Icon
-                  category={t.icon.category}
-                  name={t.icon.name}
-                  className='w-6 h-6'
-                />
-                {t.showBadge && cartCount > 0 && (
-                  <span
-                    className='badge-count'
-                    aria-label={`${cartCount} artículos en el carrito`}
-                  >
-                    {cartCount}
-                  </span>
-                )}
-              </div>
-              <span className='label'>{t.label}</span>
-            </Link>
-          </li>
+      <div className='flex items-center justify-around h-16 px-2'>
+        {normalized.map((tab, index) => (
+          <Link
+            key={index}
+            to={tab.path}
+            onClick={tab.onClick}
+            className={`flex flex-col items-center justify-center flex-1 h-full min-w-0 px-2 py-1 text-xs font-medium transition-colors ${
+              isActive(tab.path)
+                ? 'text-primary bg-primary/10 rounded-lg'
+                : 'text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg'
+            }`}
+            aria-current={isActive(tab.path) ? 'page' : undefined}
+          >
+            <Icon
+              category={tab.icon.category}
+              name={tab.icon.name}
+              className='h-5 w-5 mb-1'
+            />
+            <span className='text-center leading-tight'>{tab.label}</span>
+            {tab.showBadge && cartCount > 0 && (
+              <span className='absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs font-medium text-destructive-foreground'>
+                {cartCount}
+              </span>
+            )}
+          </Link>
         ))}
-      </ul>
-      <div className='safe-bottom' />
+      </div>
     </nav>
   );
 };

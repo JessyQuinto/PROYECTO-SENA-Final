@@ -37,10 +37,33 @@ export function useCachedData<T>(
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  
+  // 🔑 PROTECCIÓN contra ejecución durante logout
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // 🔑 ESCUCHAR eventos de logout para deshabilitar cache
+  useEffect(() => {
+    const handleAuthChange = (event: CustomEvent) => {
+      if (event.detail?.type === 'logout_started') {
+        setIsLoggingOut(true);
+        setData(null);
+        setLoading(false);
+        setError(null);
+      } else if (event.detail?.type === 'logout_completed') {
+        setIsLoggingOut(false);
+      }
+    };
+
+    window.addEventListener('authStateChanged', handleAuthChange as EventListener);
+    return () => {
+      window.removeEventListener('authStateChanged', handleAuthChange as EventListener);
+    };
+  }, []);
 
   const fetchData = useCallback(
     async (forceRefresh = false) => {
-      if (!enabled) return;
+      // 🔑 NO ejecutar durante logout
+      if (!enabled || isLoggingOut) return;
 
       try {
         setLoading(true);
@@ -62,18 +85,20 @@ export function useCachedData<T>(
         setLoading(false);
       }
     },
-    [key, fetcher, ttl, enabled, onError]
+    [key, ttl, enabled, isLoggingOut] // 🔑 INCLUIR isLoggingOut en dependencias
   );
 
   const refresh = useCallback(() => fetchData(true), [fetchData]);
 
   const invalidate = useCallback(() => {
+    if (isLoggingOut) return; // 🔑 NO invalidar durante logout
     cache.delete(key);
     setData(null);
-  }, [key]);
+  }, [key, isLoggingOut]);
 
   useEffect(() => {
-    if (!enabled) return;
+    // 🔑 NO ejecutar durante logout
+    if (!enabled || isLoggingOut) return;
 
     const cachedData = cache.get<T>(key);
     if (cachedData) {
@@ -81,8 +106,11 @@ export function useCachedData<T>(
       if (!refreshOnMount) return;
     }
 
-    fetchData(refreshOnMount);
-  }, [key, enabled, refreshOnMount, fetchData]);
+    // 🔑 SOLO llamar fetchData si es necesario y evitar bucles
+    if (refreshOnMount || !cachedData) {
+      fetchData(refreshOnMount);
+    }
+  }, [key, enabled, refreshOnMount, isLoggingOut]); // 🔑 INCLUIR isLoggingOut
 
   return { data, loading, error, refresh, invalidate };
 }

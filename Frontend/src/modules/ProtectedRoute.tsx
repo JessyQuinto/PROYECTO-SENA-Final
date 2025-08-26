@@ -8,9 +8,10 @@ interface Props {
 }
 
 export const ProtectedRoute: React.FC<Props> = ({ children, roles }) => {
+  // 🔑 USAR EL HOOK UNIFICADO para estado consistente
   const { user, loading, isSigningOut } = useAuth();
 
-  // Durante el cierre de sesión, evitar renderizar contenido protegido
+  // 🔑 CLAVE: Durante el cierre de sesión, evitar renderizar contenido protegido
   if (isSigningOut) return <Navigate to='/' replace />;
 
   if (loading) return <p>Cargando sesión...</p>;

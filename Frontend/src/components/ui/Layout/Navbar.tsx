@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuthState } from '@/hooks/useAuthState';
+import { useAuth } from '@/auth/AuthContext';
 import { Button } from '@/components/ui/shadcn/button';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import { cn } from '@/lib/utils';
@@ -20,7 +20,8 @@ interface NavigationItem {
 }
 
 const Navbar: React.FC = () => {
-  const { user, loading, isSigningOut } = useAuthState();
+  // 🔑 USAR EL HOOK ORIGINAL de AuthContext
+  const { user, loading, isSigningOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [navItems, setNavItems] = useState<NavigationItem[]>([]);
   const location = useLocation();
@@ -45,7 +46,7 @@ const Navbar: React.FC = () => {
 
   // Filter navigation items based on user authentication and role
   const filterNavItems = useCallback(() => {
-    // Si está en proceso de cerrar sesión, mostrar solo items públicos
+    // 🔑 CLAVE: Si está en proceso de cerrar sesión, mostrar solo items públicos
     if (isSigningOut) {
       return navigationItems.filter(item => item.public);
     }
@@ -67,76 +68,51 @@ const Navbar: React.FC = () => {
   // Update navigation items when user or loading state changes
   useEffect(() => {
     setNavItems(filterNavItems());
-  }, [user, loading, filterNavItems]);
+  }, [filterNavItems]);
 
-  // Listen for logout events and update navigation
+  // 🔑 ESCUCHAR CAMBIOS DE ESTADO DE AUTH para actualizar navegación
   useEffect(() => {
-    const handleStorageChange = (e: StorageEvent | Event) => {
-      console.log(
-        '[Navbar] Storage/logout event detected, updating navigation'
-      );
-      // No actualizar inmediatamente si está en transición
-      if (!isSigningOut) {
+    const handleAuthChange = (event: CustomEvent) => {
+      if (event.detail?.type === 'logout_started') {
+        console.log('[Navbar] Auth state changed, updating navigation');
         setNavItems(filterNavItems());
       }
-      setIsMobileMenuOpen(false);
     };
 
-    const handleLogout = (e: CustomEvent) => {
-      console.log('[Navbar] Custom logout event detected:', e.detail);
-      // Mostrar solo items públicos inmediatamente
-      setNavItems(navigationItems.filter(item => item.public));
-      setIsMobileMenuOpen(false);
-    };
-
-    // Listen to both storage events and custom logout events
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('userLoggedOut', handleLogout as EventListener);
-    window.addEventListener('userStateCleanup', handleLogout as EventListener);
-
+    window.addEventListener('authStateChanged', handleAuthChange as EventListener);
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener(
-        'userLoggedOut',
-        handleLogout as EventListener
-      );
-      window.removeEventListener(
-        'userStateCleanup',
-        handleLogout as EventListener
-      );
+      window.removeEventListener('authStateChanged', handleAuthChange as EventListener);
     };
-  }, [filterNavItems, isSigningOut, navigationItems]);
-
-  const isActivePage = (path: string) => location.pathname === path;
+  }, [filterNavItems]);
 
   return (
-    <nav className='bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40'>
+    <nav className='sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
       <div className='container mx-auto px-4'>
-        <div className='flex items-center justify-between h-16'>
-          {/* Logo */}
-          <Link
-            to='/'
-            className='flex items-center space-x-2 text-xl font-bold text-primary'
-          >
-            <svg
-              className='h-8 w-8'
-              viewBox='0 0 24 24'
-              fill='none'
-              stroke='currentColor'
-            >
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth={2}
-                d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'
+        <div className='flex h-16 items-center justify-between'>
+          {/* Left side - Logo and Navigation */}
+          <div className='flex items-center space-x-8'>
+            {/* Logo */}
+            <Link to='/' className='flex items-center space-x-2'>
+              <img
+                src='/logo.svg'
+                alt='Tesoros Chocó'
+                className='h-8 w-8'
               />
-            </svg>
-            <span className='hidden sm:inline'>Tesoros Chocó</span>
-          </Link>
+              <span className='hidden font-bold sm:inline-block'>
+                Tesoros Chocó
+              </span>
+            </Link>
 
-          {/* Desktop Navigation */}
-          <div className='hidden md:flex items-center space-x-6'>
-            <NavigationMenu items={navItems} currentPath={location.pathname} />
+            {/* Desktop Navigation */}
+            <div className='hidden md:flex items-center space-x-6'>
+              {navItems.map((item) => (
+                <NavigationMenu
+                  key={item.path}
+                  items={[item]}
+                  currentPath={location.pathname}
+                />
+              ))}
+            </div>
           </div>
 
           {/* Right side items - Reorganized order */}
@@ -173,39 +149,20 @@ const Navbar: React.FC = () => {
                 {/* Mobile auth icons */}
                 <Link
                   to='/login'
-                  className='flex sm:hidden h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
-                  aria-label='Iniciar sesión'
+                  className='sm:hidden p-2 hover:bg-accent rounded-md'
+                  aria-label='Iniciar Sesión'
                 >
                   <svg
                     className='h-5 w-5'
-                    viewBox='0 0 24 24'
                     fill='none'
                     stroke='currentColor'
+                    viewBox='0 0 24 24'
                   >
                     <path
                       strokeLinecap='round'
                       strokeLinejoin='round'
                       strokeWidth={2}
                       d='M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1'
-                    />
-                  </svg>
-                </Link>
-                <Link
-                  to='/register'
-                  className='flex sm:hidden h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground'
-                  aria-label='Crear cuenta'
-                >
-                  <svg
-                    className='h-5 w-5'
-                    viewBox='0 0 24 24'
-                    fill='none'
-                    stroke='currentColor'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'
                     />
                   </svg>
                 </Link>

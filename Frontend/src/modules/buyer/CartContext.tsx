@@ -1,24 +1,17 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth } from '@/auth/AuthContext';
 
-export interface CartItem {
+interface CartItem {
   productoId: string;
   nombre: string;
   precio: number;
   cantidad: number;
-  imagenUrl?: string | null;
+  imagen_url?: string;
   stock?: number;
 }
 
 interface CartContextValue {
   items: CartItem[];
-  total: number;
   add(item: CartItem): void;
   update(productoId: string, cantidad: number): void;
   remove(productoId: string): void;
@@ -33,20 +26,32 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [items, setItems] = useState<CartItem[]>([]);
-  const { user } = useAuth();
+  // 🔑 USAR EL HOOK UNIFICADO para estado consistente
+  const { user, isSigningOut } = useAuth();
   const storageKey = user?.id ? `${STORAGE_KEY_BASE}_${user.id}` : null;
 
-  // Limpiar carrito inmediatamente cuando el usuario cierre sesión
+  // 🔑 LIMPIAR CARRITO INMEDIATAMENTE cuando el usuario cierre sesión
   useEffect(() => {
-    const handleLogout = () => {
-      setItems([]);
+    const handleAuthChange = (event: CustomEvent) => {
+      if (event.detail?.type === 'logout_started') {
+        console.log('[CartContext] Logout started, clearing cart immediately');
+        setItems([]);
+      }
     };
 
-    window.addEventListener('userLoggedOut', handleLogout);
+    window.addEventListener('authStateChanged', handleAuthChange as EventListener);
     return () => {
-      window.removeEventListener('userLoggedOut', handleLogout);
+      window.removeEventListener('authStateChanged', handleAuthChange as EventListener);
     };
   }, []);
+
+  // 🔑 LIMPIAR CARRITO cuando isSigningOut cambie a true
+  useEffect(() => {
+    if (isSigningOut) {
+      console.log('[CartContext] User signing out, clearing cart');
+      setItems([]);
+    }
+  }, [isSigningOut]);
 
   useEffect(() => {
     // cargar carrito por usuario; si no hay usuario, mantener vacío
@@ -92,28 +97,24 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const update = (productoId: string, cantidad: number) => {
     setItems(prev =>
-      prev.map(i =>
-        i.productoId === productoId
-          ? {
-              ...i,
-              cantidad: Math.max(1, Math.min(cantidad, i.stock ?? Infinity)),
-            }
-          : i
+      prev.map(item =>
+        item.productoId === productoId
+          ? { ...item, cantidad: Math.max(0, Math.min(cantidad, item.stock ?? Infinity)) }
+          : item
       )
     );
   };
 
-  const remove = (productoId: string) =>
-    setItems(prev => prev.filter(i => i.productoId !== productoId));
-  const clear = () => setItems([]);
+  const remove = (productoId: string) => {
+    setItems(prev => prev.filter(item => item.productoId !== productoId));
+  };
 
-  const total = useMemo(
-    () => items.reduce((sum, i) => sum + i.precio * i.cantidad, 0),
-    [items]
-  );
+  const clear = () => {
+    setItems([]);
+  };
 
   return (
-    <CartContext.Provider value={{ items, total, add, update, remove, clear }}>
+    <CartContext.Provider value={{ items, add, update, remove, clear }}>
       {children}
     </CartContext.Provider>
   );

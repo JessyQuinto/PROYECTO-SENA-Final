@@ -5,7 +5,6 @@ import {
   useState,
   ReactNode,
   useRef,
-  useCallback,
 } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
@@ -48,14 +47,12 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false); // Nuevo estado para transición
   const signingOutRef = useRef(false);
-  
   useEffect(() => {
     signingOutRef.current = isSigningOut;
   }, [isSigningOut]);
-
-  const toast = useToast();
+  const toast = useToast(); // Usar la versión simple que no depende de useAuth
   const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL as
     | string
     | undefined;
@@ -66,92 +63,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const RETRY_DELAY = 1000; // 1 second
 
   // 🔑 FUNCIÓN CLAVE: Cambiar estado de UI INMEDIATAMENTE
-  const setUserStateImmediately = useCallback((newUser: SessionUser | null) => {
+  const setUserStateImmediately = (newUser: SessionUser | null) => {
     setUser(newUser);
     if (newUser === null) {
       setProfileLoading('');
-    }
-  }, []);
-
-  // 🔑 FUNCIÓN CLAVE: Logout con estado inmediato
-  const signOut = async () => {
-    if (isSigningOut) {
-      return;
-    }
-
-    try {
-      setIsSigningOut(true);
-      
-      // 🚀 1️⃣ UI cambia al instante - esto es clave para evitar parpadeo
-      setUserStateImmediately(null);
-      
-      // 🚀 2️⃣ Limpiar localStorage inmediatamente (no async)
-      cleanupUserState({
-        clearSessionStorage: true,
-        dispatchEvents: false, // No disparar eventos aún
-        preserveKeys: [
-          'theme_preference',
-          'language_preference',
-          'accessibility_settings',
-        ],
-        emergency: false,
-        verbose: false,
-      });
-
-      // 🚀 3️⃣ Backend en segundo plano (no bloquear UI)
-      const supabaseSignOut = supabase ? supabase.auth.signOut() : Promise.resolve();
-      
-      // 🚀 4️⃣ Validar limpieza inmediatamente
-      const validation = validateCleanup();
-      if (!validation.clean) {
-        const { emergencyCleanup } = await import('@/lib/stateCleanup');
-        emergencyCleanup();
-      }
-
-      // 🚀 5️⃣ Esperar backend (pero UI ya está limpia)
-      await supabaseSignOut;
-
-      // 🚀 6️⃣ Solo después, disparar eventos y navegar
-      window.dispatchEvent(
-        new CustomEvent('userLoggedOut', {
-          detail: {
-            timestamp: Date.now(),
-            source: 'authContext-signout',
-          },
-        })
-      );
-
-      // Navegar sin recargar
-      try {
-        const target = '/';
-        if (window.location.pathname !== target) {
-          window.history.replaceState({}, document.title, target);
-        }
-      } finally {
-        setIsSigningOut(false);
-      }
-    } catch (error) {
-      console.error('[AuthContext] Error during signOut:', error);
-
-      // 🚨 Asegurar que la UI esté limpia incluso si hay error
-      setUserStateImmediately(null);
-      setIsSigningOut(false);
-
-      try {
-        const { emergencyCleanup } = await import('@/lib/stateCleanup');
-        emergencyCleanup();
-        window.dispatchEvent(
-          new CustomEvent('userLoggedOut', {
-            detail: {
-              timestamp: Date.now(),
-              emergency: true,
-              source: 'authContext-error',
-            },
-          })
-        );
-      } catch (cleanupError) {
-        console.error('[AuthContext] Emergency cleanup failed:', cleanupError);
-      }
     }
   };
 
@@ -369,6 +284,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
+      // 🔑 RESETEAR estado antes de intentar login
+      setLoading(true);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -378,11 +296,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) {
         console.error('[AuthContext] Auth error:', error);
+        setLoading(false);
         return { error: error.message };
       }
 
       if (!data.user) {
         console.error('[AuthContext] No user data returned');
+        setLoading(false);
         return { error: 'No se pudo obtener datos del usuario' };
       }
 
@@ -393,19 +313,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!isEmailConfirmed(sessionNow)) {
         console.log('[AuthContext] Email not confirmed, signing out');
         await supabase.auth.signOut();
+        setLoading(false);
         return { error: 'Debes confirmar tu correo antes de iniciar sesión' };
       }
 
-      // Cargar perfil del usuario
-      if (profileLoading !== data.user.id) {
-        console.log('[AuthContext] Loading profile for user:', data.user.id);
-        await loadProfile(data.user.id);
-      }
+      // 🔑 CARGAR PERFIL INMEDIATAMENTE después de autenticación exitosa
+      console.log('[AuthContext] Loading profile for user:', data.user.id);
+      await loadProfile(data.user.id);
 
       console.log('[AuthContext] Sign in completed successfully');
       return { error: undefined };
     } catch (error) {
       console.error('[AuthContext] Unexpected error in signIn:', error);
+      setLoading(false);
       return { error: 'Error inesperado durante el inicio de sesión' };
     }
   };
@@ -500,6 +420,87 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     return { error: undefined };
+  };
+
+  const signOut = async () => {
+    if (isSigningOut) {
+      return;
+    }
+
+    try {
+      setIsSigningOut(true);
+      
+      // 🚀 1️⃣ UI cambia al instante - esto es clave para evitar parpadeo
+      setUserStateImmediately(null);
+      
+      // 🚀 2️⃣ Limpiar localStorage inmediatamente (no async)
+      cleanupUserState({
+        clearSessionStorage: true,
+        dispatchEvents: false, // No disparar eventos aún
+        preserveKeys: [
+          'theme_preference',
+          'language_preference',
+          'accessibility_settings',
+        ],
+        emergency: false,
+        verbose: false,
+      });
+
+      // 🚀 3️⃣ Backend en segundo plano (no bloquear UI)
+      const supabaseSignOut = supabase ? supabase.auth.signOut() : Promise.resolve();
+      
+      // 🚀 4️⃣ Validar limpieza inmediatamente
+      const validation = validateCleanup();
+      if (!validation.clean) {
+        const { emergencyCleanup } = await import('@/lib/stateCleanup');
+        emergencyCleanup();
+      }
+
+      // 🚀 5️⃣ Esperar backend (pero UI ya está limpia)
+      await supabaseSignOut;
+
+      // 🚀 6️⃣ Solo después, disparar eventos y navegar
+      window.dispatchEvent(
+        new CustomEvent('userLoggedOut', {
+          detail: {
+            timestamp: Date.now(),
+            source: 'authContext-signout',
+          },
+        })
+      );
+
+      // Navegar sin recargar
+      try {
+        const target = '/';
+        if (window.location.pathname !== target) {
+          window.history.replaceState({}, document.title, target);
+        }
+      } finally {
+        setIsSigningOut(false);
+      }
+    } catch (error) {
+      console.error('[AuthContext] Error during signOut:', error);
+
+      // 🚨 Asegurar que la UI esté limpia incluso si hay error
+      setUserStateImmediately(null);
+      setIsSigningOut(false);
+
+      try {
+        const { emergencyCleanup } = await import('@/lib/stateCleanup');
+        emergencyCleanup();
+        window.dispatchEvent(
+          new CustomEvent('userLoggedOut', {
+            detail: {
+              timestamp: Date.now(),
+              emergency: true,
+              source: 'authContext-error',
+            },
+          })
+        );
+      } catch (cleanupError) {
+        console.error('[AuthContext] Emergency cleanup failed:', cleanupError);
+      }
+    }
   };
 
   const refreshProfile = async () => {

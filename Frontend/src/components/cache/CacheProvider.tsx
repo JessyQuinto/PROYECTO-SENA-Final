@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { useCacheWarming, useCacheManager } from '@/hooks/useCache';
 import { cache } from '@/lib/cache';
 
@@ -34,11 +34,22 @@ export const CacheProvider: React.FC<CacheProviderProps> = ({
   const [isReady, setIsReady] = useState(false);
   const cacheManager = useCacheManager();
   const cacheWarming = useCacheWarming();
+  
+  // 🔑 PROTECCIÓN contra inicialización múltiple
+  const isInitializing = useRef(false);
+  const hasInitialized = useRef(false);
 
   useEffect(() => {
     let mounted = true;
 
     const initializeCache = async () => {
+      // 🔑 EVITAR inicialización múltiple
+      if (isInitializing.current || hasInitialized.current) {
+        return;
+      }
+
+      isInitializing.current = true;
+
       try {
         // Initialize cache system
         console.log('🗂️ Initializing cache system...');
@@ -52,6 +63,7 @@ export const CacheProvider: React.FC<CacheProviderProps> = ({
 
         if (mounted) {
           setIsReady(true);
+          hasInitialized.current = true;
           console.log('🚀 Cache system ready');
         }
       } catch (error) {
@@ -59,6 +71,8 @@ export const CacheProvider: React.FC<CacheProviderProps> = ({
         if (mounted) {
           setIsReady(true); // Still set ready to not block the app
         }
+      } finally {
+        isInitializing.current = false;
       }
     };
 
@@ -68,6 +82,26 @@ export const CacheProvider: React.FC<CacheProviderProps> = ({
       mounted = false;
     };
   }, [enableAutoWarming, warmOnMount, cacheWarming]);
+
+  // 🔑 ESCUCHAR eventos de logout para limpiar cache
+  useEffect(() => {
+    const handleAuthChange = (event: CustomEvent) => {
+      if (event.detail?.type === 'logout_started') {
+        console.log('[CacheProvider] Logout started, clearing cache...');
+        try {
+          cache.clear();
+          hasInitialized.current = false; // Permitir reinicialización
+        } catch (error) {
+          console.warn('[CacheProvider] Error clearing cache:', error);
+        }
+      }
+    };
+
+    window.addEventListener('authStateChanged', handleAuthChange as EventListener);
+    return () => {
+      window.removeEventListener('authStateChanged', handleAuthChange as EventListener);
+    };
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
