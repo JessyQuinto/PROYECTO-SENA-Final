@@ -19,9 +19,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set working directory
-        run: echo "Using Backend/ as working directory"
-        working-directory: Backend
+      - name: Debug workspace structure
+        run: |
+          echo "🔍 Debugging workspace structure..."
+          echo "Current directory: $(pwd)"
+          echo "Directory contents:"
+          ls -la
+          echo "Backend directory contents:"
+          ls -la Backend/
+          echo "Backend package.json:"
+          cat Backend/package.json
 
       - name: Set up Node.js version
         uses: actions/setup-node@v4
@@ -29,82 +36,72 @@ jobs:
           node-version: '22.x'
           cache: npm
           cache-dependency-path: Backend/package-lock.json
-          registry-url: 'https://registry.npmjs.org/'
 
-      - name: Isolate Backend from workspace
+      - name: Clear npm cache and install dependencies
         run: |
-          echo "Preparing Backend for standalone deployment..."
-          echo "Current directory contents:"
-          ls -la
-          # Remove workspace references that might cause conflicts
-          rm -f package.json package-lock.json .npmrc || true
-          echo "Files removed. Backend directory contents:"
-          ls -la Backend/
-          echo "Backend isolated successfully"
-        working-directory: .
-
-      - name: Install dependencies with retry
-        run: |
-          set -e
-          max_attempts=3
-          attempt=1
-          
-          echo "Current working directory: $(pwd)"
-          echo "Node.js version: $(node --version)"
+          echo "Clearing npm cache and installing dependencies..."
+          cd Backend
+          echo "Current directory: $(pwd)"
+          echo "Node version: $(node --version)"
           echo "npm version: $(npm --version)"
-          echo "Package.json exists: $(test -f package.json && echo 'yes' || echo 'no')"
-          echo ".npmrc exists: $(test -f .npmrc && echo 'yes' || echo 'no')"
           
-          if [ -f .npmrc ]; then
-            echo "Contents of .npmrc:"
-            cat .npmrc
+          # Clear npm cache to avoid any conflicts
+          npm cache clean --force
+          
+          # Try to install dependencies, if it fails, regenerate package-lock.json
+          if ! npm ci --ignore-scripts --no-audit --no-fund --verbose; then
+            echo "npm ci failed, trying to regenerate package-lock.json..."
+            rm -f package-lock.json
+            npm install --ignore-scripts --no-audit --no-fund --verbose
           fi
           
-          while [ $attempt -le $max_attempts ]; do
-            echo "Attempt $attempt of $max_attempts"
-            if timeout 300 npm ci --ignore-scripts --no-audit --no-fund --verbose; then
-              echo "Dependencies installed successfully on attempt $attempt"
-              break
-            else
-              if [ $attempt -eq $max_attempts ]; then
-                echo "Failed to install dependencies after $max_attempts attempts"
-                echo "Final debugging information:"
-                echo "Directory contents:"
-                ls -la
-                echo "Package.json contents:"
-                cat package.json || echo "No package.json found"
-                echo "npm cache info:"
-                npm config list || echo "Failed to get npm config"
-                exit 1
-              fi
-              echo "Attempt $attempt failed, waiting before retry..."
-              sleep $(( attempt * 30 ))
-              ((attempt++))
-            fi
-          done
-        working-directory: Backend
+          echo "Dependencies installed successfully"
         env:
           CI: true
           HUSKY: 0
 
-      - name: Build with error handling
+      - name: Clean and build the optimized application
         run: |
-          echo "Starting build process..."
-          npm run build
+          echo "Cleaning and building the optimized application..."
+          cd Backend
+          echo "Current directory: $(pwd)"
+          echo "Available scripts:"
+          npm run
+          echo "Cleaning previous build..."
+          rm -rf dist || true
+          echo "Starting optimized build..."
+          npm run build:optimized
           echo "Build completed successfully"
-        working-directory: Backend
         env:
           CI: true
           NODE_ENV: production
 
+      - name: Verify build output
+        run: |
+          echo "Verifying build output..."
+          cd Backend
+          if [ -f "dist/index.optimized.js" ]; then
+            echo "✅ Build output verified: index.optimized.js exists"
+            ls -la dist/
+            echo "Build file size:"
+            du -h dist/index.optimized.js
+          else
+            echo "❌ Build output verification failed: index.optimized.js not found"
+            echo "Dist directory contents:"
+            ls -la dist/ || echo "Dist directory does not exist"
+            echo "Current directory contents:"
+            ls -la
+            exit 1
+          fi
+
       - name: Prune dev dependencies
         run: |
           echo "Pruning development dependencies..."
+          cd Backend
           npm prune --omit=dev --no-audit
           echo "Development dependencies pruned successfully"
-        working-directory: Backend
 
-      - name: Upload artifact for deployment job (Backend only)
+      - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: backend-app

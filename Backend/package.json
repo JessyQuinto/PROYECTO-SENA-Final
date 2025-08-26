@@ -7,7 +7,8 @@
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.optimized.js",
     "build": "tsc -p tsconfig.json",
-    "build:optimized": "tsc src/index.optimized.ts --outDir dist --target ES2020 --module NodeNext --moduleResolution NodeNext --esModuleInterop --skipLibCheck"
+    "build:optimized": "tsc --project tsconfig.optimized.json",
+    "build:clean": "rm -rf dist && npm run build:optimized"
   },
   "dependencies": {
     "express": "^4.19.0",
