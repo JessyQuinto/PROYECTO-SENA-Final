@@ -20,15 +20,17 @@ export const supabase =
   url && anonKey
     ? createClient(url, anonKey, {
         auth: {
-          autoRefreshToken: false, // 🔑 DESHABILITAR refresh automático para evitar parpadeos
-          persistSession: true,    // Mantener persistencia para login
-          detectSessionInUrl: true,
+          // 🔑 CONFIGURACIÓN OPTIMIZADA para evitar parpadeos
+          autoRefreshToken: true,     // ✅ HABILITAR para consistencia
+          persistSession: true,       // ✅ Mantener persistencia
+          detectSessionInUrl: true,   // ✅ Detectar tokens en URL
           storage: {
-            // 🔑 STORAGE PERSONALIZADO para control total del estado
+            // 🔑 STORAGE PERSONALIZADO con control total
             getItem: (key: string) => {
               try {
-                // 🔑 VERIFICAR si estamos en proceso de logout
-                if (window.__LOGOUT_IN_PROGRESS__) {
+                // 🔑 VERIFICAR flag global de logout
+                if (typeof window !== 'undefined' && (window as any).__LOGOUT_IN_PROGRESS__) {
+                  console.log('[supabase] Blocking storage access during logout:', key);
                   return null; // 🔑 NO devolver datos durante logout
                 }
                 return localStorage.getItem(key);
@@ -39,8 +41,10 @@ export const supabase =
             setItem: (key: string, value: string) => {
               try {
                 // 🔑 NO guardar datos durante logout
-                if (!window.__LOGOUT_IN_PROGRESS__) {
+                if (typeof window !== 'undefined' && !(window as any).__LOGOUT_IN_PROGRESS__) {
                   localStorage.setItem(key, value);
+                } else {
+                  console.log('[supabase] Blocking storage write during logout:', key);
                 }
               } catch {}
             },

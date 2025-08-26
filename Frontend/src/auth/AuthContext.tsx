@@ -205,31 +205,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } catch {}
     })();
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event: AuthChangeEvent, session: Session | null) => {
-        // Ignorar cambios durante cierre de sesión para evitar renders intermedios
-        if (signingOutRef.current) {
+      async (event: AuthChangeEvent, session: Session | null) => {
+        // 🔑 CLAVE: Verificar múltiples flags para prevenir race conditions
+        if (signingOutRef.current || isSigningOut || (typeof window !== 'undefined' && (window as any).__LOGOUT_IN_PROGRESS__)) {
+          console.log('[AuthContext] Ignoring auth state change during logout:', event);
           return;
         }
+        
+        console.log('[AuthContext] Auth state change:', event, session?.user?.id);
+        
         if (session?.user) {
           // Seguridad: si email no confirmado, cerrar sesión y avisar
           if (!isEmailConfirmed(session)) {
-            supabase.auth.signOut().finally(() => {
-              setUser(null);
-              toast.error('Confirma tu correo para iniciar sesión', {
-                action: 'login',
-              });
-              setLoading(false);
+            console.log('[AuthContext] Email not confirmed, signing out');
+            await supabase.auth.signOut();
+            setUser(null);
+            toast.error('Confirma tu correo para iniciar sesión', {
+              action: 'login',
             });
+            setLoading(false);
             return;
           }
+          
           // Intentar obtener perfil desde tabla users para reflejar cambios admin.
           // Only load if not already loading for this user
           if (profileLoading !== session.user.id) {
-            loadProfile(session.user.id);
+            await loadProfile(session.user.id);
           }
         } else {
-          setUser(null);
-          setLoading(false);
+          // 🔑 CLAVE: Solo cambiar estado si no estamos en proceso de logout
+          if (!signingOutRef.current && !isSigningOut) {
+            console.log('[AuthContext] Session ended, clearing user state');
+            setUser(null);
+            setLoading(false);
+          }
         }
       }
     );

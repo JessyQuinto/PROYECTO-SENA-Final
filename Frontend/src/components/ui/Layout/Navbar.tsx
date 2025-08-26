@@ -90,6 +90,9 @@ const Navbar: React.FC = () => {
     };
   }, [filterNavItems]);
 
+  const effectiveUser = user || null;
+  const isSigningOutOrLogoutInProgress = isSigningOut || isLogoutInProgress;
+
   return (
     <nav className='sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
       <div className='container mx-auto px-4'>
@@ -123,19 +126,19 @@ const Navbar: React.FC = () => {
           {/* Right side items - Reorganized order */}
           <div className='flex items-center space-x-4'>
             {/* 1. User Avatar (Logo with animation + Name) */}
-            {user && !isSigningOut && <UserAvatar user={user} />}
+            {effectiveUser && !isSigningOutOrLogoutInProgress && <UserAvatar user={effectiveUser} />}
 
             {/* 2. Cart dropdown */}
-            {user?.role === 'comprador' && !isSigningOut && <CartDropdown />}
+            {effectiveUser?.role === 'comprador' && !isSigningOutOrLogoutInProgress && <CartDropdown />}
 
             {/* 3. Theme toggle */}
             <ThemeToggle />
 
             {/* 4. Sign out button */}
-            {user && !isSigningOut && <SignOutButton />}
+            {effectiveUser && !isSigningOutOrLogoutInProgress && <SignOutButton />}
 
             {/* Auth buttons for non-authenticated users */}
-            {!user && (
+            {!effectiveUser && (
               <div className='flex items-center space-x-2'>
                 {/* Desktop auth buttons */}
                 <div className='hidden sm:flex items-center space-x-2'>
@@ -221,7 +224,7 @@ const Navbar: React.FC = () => {
           items={navItems}
           isOpen={isMobileMenuOpen}
           onClose={() => setIsMobileMenuOpen(false)}
-          user={user}
+          user={effectiveUser}
           currentPath={location.pathname}
         />
       </div>

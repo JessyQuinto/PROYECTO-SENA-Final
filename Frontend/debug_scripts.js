@@ -368,26 +368,35 @@ function debugComponentState() {
   console.log('=== END COMPONENT STATE DEBUG ===\n');
 }
 
-// === USAGE INSTRUCTIONS ===
-console.log(`
-🔧 DEBUG SCRIPTS LOADED
-=======================
+// === DEBUG FUNCTIONS AVAILABLE ===
+// Run these in the browser console to debug various issues
 
-Available functions:
-• debugLocalStorage() - Audit localStorage keys and test functionality
-• debugLogoutSequence() - Monitor logout process and storage changes
-• forceCleanUserData() - Emergency cleanup of all user data
-• debugCookieConsent() - Test cookie consent localStorage functionality
-• resetCookieConsent() - Reset consent to show banner again
-• testCookieButtons() - Test cookie consent button functionality
-• debugComponentState() - Monitor component re-renders and DOM changes
+// 🔑 AUTH & LOGOUT DEBUGGING
+window.debugLogoutSequence = debugLogoutSequence;        // Debug logout sequence and storage
+window.debugAuthStateChanges = debugAuthStateChanges;    // Monitor auth state changes
+window.verifyNoFlickering = verifyNoFlickering;          // Verify no flickering during logout
+window.forceCleanUserData = forceCleanUserData;          // Force clean all user data
 
-Quick test sequence:
-1. debugLocalStorage() - Check current state
-2. Login to your app
-3. debugLogoutSequence() - Then click logout
-4. resetCookieConsent() - Test cookie banner
-5. testCookieButtons() - Test button functionality
+// 🍪 COOKIE & STORAGE DEBUGGING
+window.debugLocalStorage = debugLocalStorage;            // Audit localStorage contents
+window.debugCookieConsent = debugCookieConsent;          // Debug cookie consent issues
+window.debugStorageEvents = debugStorageEvents;          // Monitor storage events
 
-For emergency cleanup: forceCleanUserData()
-`);
+// 📱 APP DEBUGGING
+window.debugAppState = debugAppState;                    // Check app configuration
+window.debugThemeSystem = debugThemeSystem;              // Debug theme switching
+window.debugServiceWorker = debugServiceWorker;          // Check service worker status
+
+console.log('🔧 Debug functions loaded. Available commands:');
+console.log('  - debugLogoutSequence()     - Debug logout sequence');
+console.log('  - debugAuthStateChanges()   - Monitor auth state changes');
+console.log('  - verifyNoFlickering()      - Verify no flickering');
+console.log('  - forceCleanUserData()      - Force clean user data');
+console.log('  - debugLocalStorage()       - Audit localStorage');
+console.log('  - debugCookieConsent()      - Debug cookie consent');
+console.log('  - debugAppState()           - Check app config');
+console.log('  - debugThemeSystem()        - Debug theme system');
+console.log('  - debugServiceWorker()      - Check SW status');
+console.log('');
+console.log('💡 Tip: Use debugLogoutSequence() before clicking logout to monitor the process');
+console.log('💡 Tip: Use verifyNoFlickering() to detect any UI flickering during logout');
