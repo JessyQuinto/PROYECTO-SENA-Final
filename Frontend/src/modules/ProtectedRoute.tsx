@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthContext';
+import { useLogoutFlag } from '@/hooks/useLogoutFlag';
 
 interface Props {
   children: React.ReactElement;
@@ -10,9 +11,12 @@ interface Props {
 export const ProtectedRoute: React.FC<Props> = ({ children, roles }) => {
   // 🔑 USAR EL HOOK UNIFICADO para estado consistente
   const { user, loading, isSigningOut } = useAuth();
+  
+  // 🔑 CLAVE: Usar hook personalizado para detectar logout
+  const isLogoutInProgress = useLogoutFlag();
 
   // 🔑 CLAVE: Durante el cierre de sesión, evitar renderizar contenido protegido
-  if (isSigningOut) return <Navigate to='/' replace />;
+  if (isSigningOut || isLogoutInProgress) return <Navigate to='/' replace />;
 
   if (loading) return <p>Cargando sesión...</p>;
   if (!user) return <Navigate to='/' replace />;

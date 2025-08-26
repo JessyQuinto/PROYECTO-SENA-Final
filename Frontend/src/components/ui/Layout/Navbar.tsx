@@ -10,6 +10,7 @@ import NavigationMenu from './NavigationMenu.tsx';
 import UserMenu, { UserAvatar, SignOutButton } from './UserMenu.tsx';
 import CartDropdown from './CartDropdown.tsx';
 import MobileMenu from './MobileMenu.tsx';
+import { useLogoutFlag } from '@/hooks/useLogoutFlag';
 
 interface NavigationItem {
   path: string;
@@ -22,6 +23,10 @@ interface NavigationItem {
 const Navbar: React.FC = () => {
   // 🔑 USAR EL HOOK ORIGINAL de AuthContext
   const { user, loading, isSigningOut } = useAuth();
+  
+  // 🔑 CLAVE: Usar hook personalizado para detectar logout
+  const isLogoutInProgress = useLogoutFlag();
+  
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [navItems, setNavItems] = useState<NavigationItem[]>([]);
   const location = useLocation();
@@ -47,7 +52,7 @@ const Navbar: React.FC = () => {
   // Filter navigation items based on user authentication and role
   const filterNavItems = useCallback(() => {
     // 🔑 CLAVE: Si está en proceso de cerrar sesión, mostrar solo items públicos
-    if (isSigningOut) {
+    if (isSigningOut || isLogoutInProgress) {
       return navigationItems.filter(item => item.public);
     }
     
@@ -63,7 +68,7 @@ const Navbar: React.FC = () => {
         return false;
       return true;
     });
-  }, [user, loading, isSigningOut]);
+  }, [user, loading, isSigningOut, isLogoutInProgress]);
 
   // Update navigation items when user or loading state changes
   useEffect(() => {

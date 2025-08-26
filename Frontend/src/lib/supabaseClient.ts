@@ -20,13 +20,45 @@ export const supabase =
   url && anonKey
     ? createClient(url, anonKey, {
         auth: {
-          autoRefreshToken: true,
-          persistSession: true,
+          autoRefreshToken: false, // 🔑 DESHABILITAR refresh automático para evitar parpadeos
+          persistSession: true,    // Mantener persistencia para login
           detectSessionInUrl: true,
+          storage: {
+            // 🔑 STORAGE PERSONALIZADO para control total del estado
+            getItem: (key: string) => {
+              try {
+                // 🔑 VERIFICAR si estamos en proceso de logout
+                if (window.__LOGOUT_IN_PROGRESS__) {
+                  return null; // 🔑 NO devolver datos durante logout
+                }
+                return localStorage.getItem(key);
+              } catch {
+                return null;
+              }
+            },
+            setItem: (key: string, value: string) => {
+              try {
+                // 🔑 NO guardar datos durante logout
+                if (!window.__LOGOUT_IN_PROGRESS__) {
+                  localStorage.setItem(key, value);
+                }
+              } catch {}
+            },
+            removeItem: (key: string) => {
+              try {
+                localStorage.removeItem(key);
+              } catch {}
+            },
+          },
         },
         global: { headers: { 'x-application-name': 'tesoros-choco-frontend' } },
       })
     : (undefined as any);
+
+// 🔑 EXPONER FLAG GLOBAL para control de logout
+if (typeof window !== 'undefined') {
+  (window as any).__LOGOUT_IN_PROGRESS__ = false;
+}
 
 // Exponer referencia global para comprobaciones puntuales en UI (solo navegador)
 try {

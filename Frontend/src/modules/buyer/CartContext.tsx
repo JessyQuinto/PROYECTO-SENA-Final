@@ -1,14 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth } from '@/auth/AuthContext';
-
-interface CartItem {
-  productoId: string;
-  nombre: string;
-  precio: number;
-  cantidad: number;
-  imagen_url?: string;
-  stock?: number;
-}
+import { useLogoutFlag } from '@/hooks/useLogoutFlag';
+import type { CartItem } from '@/types/domain';
 
 interface CartContextValue {
   items: CartItem[];
@@ -28,6 +21,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   const [items, setItems] = useState<CartItem[]>([]);
   // 🔑 USAR EL HOOK UNIFICADO para estado consistente
   const { user, isSigningOut } = useAuth();
+  
+  // 🔑 CLAVE: Usar hook personalizado para detectar logout
+  const isLogoutInProgress = useLogoutFlag();
+  
   const storageKey = user?.id ? `${STORAGE_KEY_BASE}_${user.id}` : null;
 
   // 🔑 LIMPIAR CARRITO INMEDIATAMENTE cuando el usuario cierre sesión
@@ -45,13 +42,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     };
   }, []);
 
-  // 🔑 LIMPIAR CARRITO cuando isSigningOut cambie a true
+  // 🔑 LIMPIAR CARRITO cuando isSigningOut o isLogoutInProgress cambien
   useEffect(() => {
-    if (isSigningOut) {
+    if (isSigningOut || isLogoutInProgress) {
       console.log('[CartContext] User signing out, clearing cart');
       setItems([]);
     }
-  }, [isSigningOut]);
+  }, [isSigningOut, isLogoutInProgress]);
 
   useEffect(() => {
     // cargar carrito por usuario; si no hay usuario, mantener vacío

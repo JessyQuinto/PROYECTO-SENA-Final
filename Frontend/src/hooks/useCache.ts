@@ -64,6 +64,12 @@ export function useCachedData<T>(
     async (forceRefresh = false) => {
       // 🔑 NO ejecutar durante logout
       if (!enabled || isLoggingOut) return;
+      
+      // 🔑 CLAVE: Verificar flag global de logout
+      if (typeof window !== 'undefined' && (window as any).__LOGOUT_IN_PROGRESS__) {
+        console.log('[useCachedData] Ignoring fetch during logout:', key);
+        return;
+      }
 
       try {
         setLoading(true);

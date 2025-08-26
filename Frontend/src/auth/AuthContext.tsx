@@ -430,10 +430,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setIsSigningOut(true);
       
-      // 🚀 1️⃣ UI cambia al instante - esto es clave para evitar parpadeo
+      // 🔑 1️⃣ SETEAR FLAG GLOBAL para bloquear Supabase storage
+      if (typeof window !== 'undefined') {
+        (window as any).__LOGOUT_IN_PROGRESS__ = true;
+      }
+      
+      // 🚀 2️⃣ UI cambia al instante - esto es clave para evitar parpadeo
       setUserStateImmediately(null);
       
-      // 🚀 2️⃣ Limpiar localStorage inmediatamente (no async)
+      // 🚀 3️⃣ Limpiar localStorage inmediatamente (no async)
       cleanupUserState({
         clearSessionStorage: true,
         dispatchEvents: false, // No disparar eventos aún
@@ -446,20 +451,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         verbose: false,
       });
 
-      // 🚀 3️⃣ Backend en segundo plano (no bloquear UI)
+      // 🚀 4️⃣ Backend en segundo plano (no bloquear UI)
       const supabaseSignOut = supabase ? supabase.auth.signOut() : Promise.resolve();
       
-      // 🚀 4️⃣ Validar limpieza inmediatamente
+      // 🚀 5️⃣ Validar limpieza inmediatamente
       const validation = validateCleanup();
       if (!validation.clean) {
         const { emergencyCleanup } = await import('@/lib/stateCleanup');
         emergencyCleanup();
       }
 
-      // 🚀 5️⃣ Esperar backend (pero UI ya está limpia)
+      // 🚀 6️⃣ Esperar backend (pero UI ya está limpia)
       await supabaseSignOut;
 
-      // 🚀 6️⃣ Solo después, disparar eventos y navegar
+      // 🔑 7️⃣ RESETEAR FLAG GLOBAL después del logout
+      if (typeof window !== 'undefined') {
+        (window as any).__LOGOUT_IN_PROGRESS__ = false;
+      }
+
+      // 🚀 8️⃣ Solo después, disparar eventos y navegar
       window.dispatchEvent(
         new CustomEvent('userLoggedOut', {
           detail: {
@@ -484,6 +494,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // 🚨 Asegurar que la UI esté limpia incluso si hay error
       setUserStateImmediately(null);
       setIsSigningOut(false);
+      
+      // 🔑 RESETEAR FLAG GLOBAL en caso de error
+      if (typeof window !== 'undefined') {
+        (window as any).__LOGOUT_IN_PROGRESS__ = false;
+      }
 
       try {
         const { emergencyCleanup } = await import('@/lib/stateCleanup');
