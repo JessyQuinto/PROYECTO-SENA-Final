@@ -199,12 +199,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     })();
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event: AuthChangeEvent, session: Session | null) => {
-        // Ignorar cambios durante cierre de sesión para evitar renders intermedios
+        // Ignore changes during sign out to prevent intermediate renders
         if (signingOutRef.current) {
           return;
         }
+        
         if (session?.user) {
-          // Seguridad: si email no confirmado, cerrar sesión y avisar
+          // Security: if email not confirmed, sign out and notify
           if (!isEmailConfirmed(session)) {
             supabase.auth.signOut().finally(() => {
               setUser(null);
@@ -215,14 +216,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             });
             return;
           }
-          // Intentar obtener perfil desde tabla users para reflejar cambios admin.
+          // Try to get profile from users table to reflect admin changes
           // Only load if not already loading for this user
           if (profileLoading !== session.user.id) {
             loadProfile(session.user.id);
           }
         } else {
-          setUser(null);
-          setLoading(false);
+          // No session - ensure clean state
+          if (!signingOutRef.current) {
+            setUser(null);
+            setLoading(false);
+          }
         }
       }
     );
@@ -417,18 +421,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       setIsSigningOut(true);
-      // No activar loading global para evitar re-render completo
-
-      // Limpiar estado de React inmediatamente para evitar parpadeo
+      
+      // Immediately clear React state to prevent flashing
       setUser(null);
       setProfileLoading('');
 
-      // Cerrar sesión en Supabase
-      if (supabase) {
-        await supabase.auth.signOut();
-      }
+      // Dispatch early logout event for immediate UI updates
+      window.dispatchEvent(
+        new CustomEvent('userLogoutStart', {
+          detail: {
+            timestamp: Date.now(),
+            source: 'authContext-signout-start',
+          },
+        })
+      );
 
-      // Usar el sistema centralizado de limpieza de estado
+      // Use centralized state cleanup system
       cleanupUserState({
         clearSessionStorage: true,
         dispatchEvents: true,
@@ -441,13 +449,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         verbose: false,
       });
 
-      // Validar que la limpieza fue exitosa
+      // Close Supabase session
+      if (supabase) {
+        await supabase.auth.signOut();
+      }
+
+      // Validate cleanup was successful
       const validation = validateCleanup();
       if (!validation.clean) {
         emergencyCleanup();
       }
 
-      // Notificar a la UI y navegar sin recargar
+      // Notify UI components and navigate
       window.dispatchEvent(new Event('storage'));
       window.dispatchEvent(
         new CustomEvent('userLoggedOut', {
@@ -458,22 +471,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         })
       );
 
+      // Navigate to home page if not already there
       try {
         const target = '/';
         if (window.location.pathname !== target) {
           window.history.replaceState({}, document.title, target);
         }
-      } finally {
-        // Mantener loading en false; cerrar transición
-        setIsSigningOut(false);
+      } catch (navigationError) {
+        console.warn('[AuthContext] Navigation warning:', navigationError);
       }
     } catch (error) {
       console.error('[AuthContext] Error during signOut:', error);
 
-      // Asegurar limpieza y desbloqueo de transición
+      // Ensure cleanup and state reset even on error
       setUser(null);
       setProfileLoading('');
-      setIsSigningOut(false);
 
       try {
         emergencyCleanup();
@@ -490,6 +502,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } catch (cleanupError) {
         console.error('[AuthContext] Emergency cleanup failed:', cleanupError);
       }
+    } finally {
+      // Always reset signing out state
+      setIsSigningOut(false);
     }
   }, []);
 

@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '@/modules/buyer/CartContext';
-import { useAuth } from '@/auth/AuthContext';
+import { useLogoutState } from '@/hooks/useLogoutHandler';
 import { Button } from '@/components/ui/shadcn/button';
 import { cn } from '@/lib/utils';
 
 export const CartDropdown: React.FC = () => {
   const { items, total, remove, update } = useCart();
-  const { isSigningOut } = useAuth();
+  const { isSigningOut } = useLogoutState();
   const [isOpen, setIsOpen] = useState(false);
   const cartCount = items.reduce((sum, item) => sum + (item.cantidad || 0), 0);
 
-  // Cerrar dropdown automáticamente si está cerrando sesión
+  // Close dropdown automatically when signing out
   React.useEffect(() => {
     if (isSigningOut && isOpen) {
       setIsOpen(false);

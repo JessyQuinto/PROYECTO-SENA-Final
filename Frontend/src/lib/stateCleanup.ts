@@ -32,7 +32,7 @@ export interface CleanupResult {
  */
 export const KEY_PATTERNS = {
   USER_DATA: ['user_', 'profile_', 'preferences_'],
-  CART_DATA: ['cart_'],
+  CART_DATA: ['cart_', 'tc_cart_'],
   AUTH_DATA: ['sb-', 'supabase', 'auth_'],
   SESSION_DATA: ['session_', 'temp_'],
   SYSTEM_DATA: ['theme', 'language', 'locale'],
@@ -57,6 +57,17 @@ export const ALWAYS_REMOVE_KEYS = [
   'user_session',
   'last_visited',
   'user_profile',
+] as const;
+
+/**
+ * Key patterns that should always be removed (partial matches)
+ */
+export const ALWAYS_REMOVE_PATTERNS = [
+  'tc_cart_v1_',
+  'sb-',
+  'supabase-auth-token',
+  'user_',
+  'cart_data_',
 ] as const;
 
 /**
@@ -106,12 +117,17 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
         return true;
       }
 
+      // Always remove keys matching specific patterns
+      if (ALWAYS_REMOVE_PATTERNS.some(pattern => key.includes(pattern))) {
+        return !preserveKeys.includes(key);
+      }
+
       // In emergency mode, be more aggressive
       if (emergency) {
         // Remove anything that looks user-related
         if (
           KEY_PATTERNS.USER_DATA.some(pattern => key.startsWith(pattern)) ||
-          KEY_PATTERNS.CART_DATA.some(pattern => key.startsWith(pattern)) ||
+          KEY_PATTERNS.CART_DATA.some(pattern => key.includes(pattern)) ||
           KEY_PATTERNS.AUTH_DATA.some(pattern => key.includes(pattern))
         ) {
           return !preserveKeys.includes(key);
@@ -120,7 +136,7 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
         // Normal mode - be more selective
         if (
           KEY_PATTERNS.USER_DATA.some(pattern => key.startsWith(pattern)) ||
-          KEY_PATTERNS.CART_DATA.some(pattern => key.startsWith(pattern))
+          KEY_PATTERNS.CART_DATA.some(pattern => key.includes(pattern))
         ) {
           return !preserveKeys.includes(key);
         }

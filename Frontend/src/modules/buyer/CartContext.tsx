@@ -4,8 +4,10 @@ import React, {
   useEffect,
   useMemo,
   useState,
+  useCallback,
 } from 'react';
 import { useAuth } from '@/auth/AuthContext';
+import { useCleanupListener } from '@/lib/stateCleanup';
 
 export interface CartItem {
   productoId: string;
@@ -33,8 +35,22 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [items, setItems] = useState<CartItem[]>([]);
-  const { user } = useAuth();
+  const { user, isSigningOut } = useAuth();
   const storageKey = user?.id ? `${STORAGE_KEY_BASE}_${user.id}` : null;
+
+  // Clear cart immediately when logout starts
+  useEffect(() => {
+    if (isSigningOut) {
+      setItems([]);
+    }
+  }, [isSigningOut]);
+
+  // Listen for cleanup events and clear cart
+  useCleanupListener(
+    useCallback(() => {
+      setItems([]);
+    }, [])
+  );
 
   useEffect(() => {
     // cargar carrito por usuario; si no hay usuario, mantener vacío
