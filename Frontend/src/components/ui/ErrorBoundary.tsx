@@ -279,22 +279,43 @@ const DefaultErrorFallback: React.FC<DefaultErrorFallbackProps> = ({
   );
 };
 
-// Specialized error boundaries for different use cases
+// Factory function for creating type-safe specialized error boundaries
+export function createErrorBoundary(
+  level: 'page' | 'section' | 'component',
+  defaultProps?: Partial<ErrorBoundaryProps>
+) {
+  const BoundaryComponent: React.FC<{ 
+    children: ReactNode;
+    fallback?: React.ComponentType<{ error: AppError; onRetry: () => void }>;
+    onError?: (error: AppError, errorInfo: ErrorInfo) => void;
+  }> = ({ children, fallback, onError }) => (
+    <ErrorBoundary 
+      level={level} 
+      fallback={fallback}
+      onError={onError}
+      {...defaultProps}
+    >
+      {children}
+    </ErrorBoundary>
+  );
+  
+  BoundaryComponent.displayName = `${level.charAt(0).toUpperCase() + level.slice(1)}ErrorBoundary`;
+  return BoundaryComponent;
+}
 
-// Page-level error boundary
-export const PageErrorBoundary: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => <ErrorBoundary level='page'>{children}</ErrorBoundary>;
+// Pre-configured error boundaries using factory function
+export const PageErrorBoundary = createErrorBoundary('page');
+export const SectionErrorBoundary = createErrorBoundary('section');
+export const ComponentErrorBoundary = createErrorBoundary('component');
 
-// Section-level error boundary
-export const SectionErrorBoundary: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => <ErrorBoundary level='section'>{children}</ErrorBoundary>;
-
-// Component-level error boundary
-export const ComponentErrorBoundary: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => <ErrorBoundary level='component'>{children}</ErrorBoundary>;
+// Additional pre-configured boundaries with specific behaviors
+export const IsolatedErrorBoundary = createErrorBoundary('component', { isolate: true });
+export const SilentErrorBoundary = createErrorBoundary('component', { 
+  onError: (error) => {
+    // Silent error logging without user notification
+    console.warn('Silent error caught:', error);
+  }
+});
 
 // HOC for wrapping components with error boundary
 export function withErrorBoundary<P extends object>(
