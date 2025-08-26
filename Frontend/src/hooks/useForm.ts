@@ -23,8 +23,8 @@ export const useForm = <T extends Record<string, any>>(
 ) => {
   const { initialValues, validationSchema, onSubmit, onError } = options;
 
-  // Inicializar estado del formulario
-  const [formState, setFormState] = useState<FormState<T>>(() => {
+  // Memoize the initial state creation to prevent recreation
+  const initialFormState = useMemo(() => {
     const state: Partial<FormState<T>> = {};
     Object.keys(initialValues).forEach(key => {
       state[key as keyof T] = {
@@ -34,7 +34,10 @@ export const useForm = <T extends Record<string, any>>(
       };
     });
     return state as FormState<T>;
-  });
+  }, [initialValues]);
+
+  // Inicializar estado del formulario
+  const [formState, setFormState] = useState<FormState<T>>(initialFormState);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isValid, setIsValid] = useState(true);
@@ -84,13 +87,19 @@ export const useForm = <T extends Record<string, any>>(
     }));
   }, []);
 
-  // Validar un campo específico
+  // Validar un campo específico - optimized
   const validateField = useCallback(
     (field: keyof T): boolean => {
       if (!validationSchema) return true;
 
+      // Use current form state to get fresh values instead of stale closure
+      const currentValues: Partial<T> = {};
+      Object.keys(formState).forEach(key => {
+        currentValues[key as keyof T] = formState[key as keyof T].value;
+      });
+
       try {
-        validationSchema.parse(values);
+        validationSchema.parse(currentValues as T);
         setFormState(prev => ({
           ...prev,
           [field]: {
@@ -118,15 +127,21 @@ export const useForm = <T extends Record<string, any>>(
         return true;
       }
     },
-    [validationSchema, values]
+    [validationSchema, formState]
   );
 
-  // Validar todo el formulario
+  // Validar todo el formulario - optimized
   const validateForm = useCallback((): boolean => {
     if (!validationSchema) return true;
 
+    // Get fresh values from current form state
+    const currentValues: Partial<T> = {};
+    Object.keys(formState).forEach(key => {
+      currentValues[key as keyof T] = formState[key as keyof T].value;
+    });
+
     try {
-      validationSchema.parse(values);
+      validationSchema.parse(currentValues as T);
       // Limpiar todos los errores
       setFormState(prev => {
         const newState = { ...prev };
@@ -166,7 +181,7 @@ export const useForm = <T extends Record<string, any>>(
       }
       return false;
     }
-  }, [validationSchema, values, onError]);
+  }, [validationSchema, formState, onError]);
 
   // Manejar cambio de campo
   const handleChange = useCallback(
@@ -219,23 +234,13 @@ export const useForm = <T extends Record<string, any>>(
     [validateForm, onSubmit, values]
   );
 
-  // Resetear formulario
+  // Resetear formulario - optimized to use memoized initial state
   const reset = useCallback(() => {
-    setFormState(prev => {
-      const newState = { ...prev };
-      Object.keys(newState).forEach(key => {
-        newState[key as keyof T] = {
-          value: initialValues[key as keyof T],
-          error: undefined,
-          touched: false,
-        };
-      });
-      return newState;
-    });
+    setFormState(initialFormState);
     setIsValid(true);
     setIsSubmitting(false);
     setSubmitAttempted(false);
-  }, [initialValues]);
+  }, [initialFormState]);
 
   // Obtener estado de un campo específico
   const getFieldState = useCallback(

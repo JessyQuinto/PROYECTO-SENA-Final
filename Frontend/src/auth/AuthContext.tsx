@@ -5,6 +5,7 @@ import {
   useState,
   ReactNode,
   useRef,
+  useCallback,
 } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
@@ -67,7 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return !!(u?.email_confirmed_at || u?.confirmed_at || u?.email_confirmed);
   };
 
-  const loadProfile = async (uid: string, retryCount = 0) => {
+  const loadProfile = useCallback(async (uid: string, retryCount = 0) => {
     if (!supabase) return;
 
     // Prevent duplicate calls for the same user
@@ -157,7 +158,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
       return;
     }
-  };
+  }, [profileLoading]);
 
   useEffect(() => {
     if (!supabase) {
@@ -267,7 +268,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [toast]);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     console.log('[AuthContext] signIn called with email:', email);
 
     if (!supabase) {
@@ -315,9 +316,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error('[AuthContext] Unexpected error in signIn:', error);
       return { error: 'Error inesperado durante el inicio de sesión' };
     }
-  };
+  }, [profileLoading]);
 
-  const signUp = async (
+  const signUp = useCallback(async (
     email: string,
     password: string,
     role: 'comprador' | 'vendedor',
@@ -407,9 +408,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     return { error: undefined };
-  };
+  }, [backendUrl]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     if (isSigningOut) {
       return;
     }
@@ -492,15 +493,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error('[AuthContext] Emergency cleanup failed:', cleanupError);
       }
     }
-  };
+  }, []);
 
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
     if (!supabase) return;
     const session = (await supabase.auth.getSession()).data.session;
     if (session?.user?.id && profileLoading !== session.user.id) {
       await loadProfile(session.user.id);
     }
-  };
+  }, [profileLoading]);
 
   return (
     <AuthContext.Provider

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthContext';
 import { Button } from '@/components/ui/shadcn/button';
@@ -25,8 +25,8 @@ const Navbar: React.FC = () => {
   const [navItems, setNavItems] = useState<NavigationItem[]>([]);
   const location = useLocation();
 
-  // Navigation items definition
-  const navigationItems: NavigationItem[] = [
+  // Memoize navigation items to prevent recreation
+  const navigationItems: NavigationItem[] = useMemo(() => [
     { path: '/', label: 'Inicio', public: true },
     { path: '/productos', label: 'Productos', public: true },
     { path: '/perfil', label: 'Mi perfil', roles: ['comprador'] },
@@ -41,9 +41,9 @@ const Navbar: React.FC = () => {
       label: 'Administración',
       roles: ['admin'],
     },
-  ];
+  ], []);
 
-  // Filter navigation items based on user authentication and role
+  // Filter navigation items based on user authentication and role - memoized
   const filterNavItems = useCallback(() => {
     // Si está en proceso de cerrar sesión, mostrar solo items públicos
     if (isSigningOut) {
@@ -62,15 +62,17 @@ const Navbar: React.FC = () => {
         return false;
       return true;
     });
-  }, [user, loading, isSigningOut]);
+  }, [user, loading, isSigningOut, navigationItems]);
 
-  // Update navigation items when user or loading state changes
-  useEffect(() => {
-    setNavItems(filterNavItems());
-  }, [user, loading, filterNavItems]);
+  // Memoize filtered navigation items
+  const filteredNavItems = useMemo(() => filterNavItems(), [filterNavItems]);
 
-  // Listen for logout events and update navigation
+  // Consolidated effect for navigation updates and event listeners
   useEffect(() => {
+    // Update navigation items when auth state changes
+    setNavItems(filteredNavItems);
+
+    // Event handlers
     const handleStorageChange = (e: StorageEvent | Event) => {
       console.log(
         '[Navbar] Storage/logout event detected, updating navigation'
@@ -89,25 +91,20 @@ const Navbar: React.FC = () => {
       setIsMobileMenuOpen(false);
     };
 
-    // Listen to both storage events and custom logout events
+    // Add event listeners
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('userLoggedOut', handleLogout as EventListener);
     window.addEventListener('userStateCleanup', handleLogout as EventListener);
 
     return () => {
+      // Cleanup event listeners
       window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener(
-        'userLoggedOut',
-        handleLogout as EventListener
-      );
-      window.removeEventListener(
-        'userStateCleanup',
-        handleLogout as EventListener
-      );
+      window.removeEventListener('userLoggedOut', handleLogout as EventListener);
+      window.removeEventListener('userStateCleanup', handleLogout as EventListener);
     };
-  }, [filterNavItems, isSigningOut, navigationItems]);
+  }, [filteredNavItems, filterNavItems, isSigningOut, navigationItems]);
 
-  const isActivePage = (path: string) => location.pathname === path;
+  const isActivePage = useCallback((path: string) => location.pathname === path, [location.pathname]);
 
   return (
     <nav className='bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40'>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { performanceMonitor, PerformanceData } from '@/lib/performance';
 
 interface PerformanceMetrics {
@@ -14,18 +14,18 @@ export const usePerformanceMonitoring = () => {
     isLoading: true,
   });
 
+  // Memoized update metrics function
+  const updateMetrics = useCallback(() => {
+    setPerformanceData({
+      coreWebVitalsScore: performanceMonitor.getCoreWebVitalsScore(),
+      metrics: performanceMonitor.getMetrics(),
+      isLoading: false,
+    });
+  }, []);
+
   useEffect(() => {
     // Initialize performance monitoring
     performanceMonitor.init();
-
-    // Set up periodic updates
-    const updateMetrics = () => {
-      setPerformanceData({
-        coreWebVitalsScore: performanceMonitor.getCoreWebVitalsScore(),
-        metrics: performanceMonitor.getMetrics(),
-        isLoading: false,
-      });
-    };
 
     // Initial update
     updateMetrics();
@@ -36,29 +36,31 @@ export const usePerformanceMonitoring = () => {
     return () => {
       clearInterval(interval);
     };
-  }, []);
+  }, [updateMetrics]);
 
   return performanceData;
 };
 
-// Hook for monitoring specific component performance
+// Hook for monitoring specific component performance - optimized
 export const useComponentPerformance = (componentName: string) => {
+  const logSlowRender = useCallback((duration: number) => {
+    if (import.meta.env.DEV && duration > 16) {
+      // Log if component takes more than 16ms (one frame at 60fps)
+      console.warn(
+        `🐌 Slow component render: ${componentName} took ${duration.toFixed(2)}ms`
+      );
+    }
+  }, [componentName]);
+
   useEffect(() => {
     const startTime = performance.now();
 
     return () => {
       const endTime = performance.now();
       const duration = endTime - startTime;
-
-      // Log component render time
-      if (import.meta.env.DEV && duration > 16) {
-        // Log if component takes more than 16ms (one frame at 60fps)
-        console.warn(
-          `🐌 Slow component render: ${componentName} took ${duration.toFixed(2)}ms`
-        );
-      }
+      logSlowRender(duration);
     };
-  }, [componentName]);
+  }, [logSlowRender]);
 };
 
 // Hook for monitoring route changes

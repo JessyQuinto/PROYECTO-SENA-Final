@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { usePerformanceMonitoring } from '@/hooks/usePerformance';
 import { PERFORMANCE_THRESHOLDS } from '@/lib/performance';
 import { Card } from '@/components/ui/shadcn/card';
@@ -10,7 +10,7 @@ interface MetricCardProps {
   threshold?: { good: number; poor: number };
 }
 
-const MetricCard: React.FC<MetricCardProps> = ({
+const MetricCard: React.FC<MetricCardProps> = React.memo(({
   title,
   value,
   unit,
@@ -46,7 +46,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
       </div>
     </Card>
   );
-};
+});
 
 const PerformanceDashboard: React.FC = () => {
   const { coreWebVitalsScore, metrics, isLoading } = usePerformanceMonitoring();
@@ -55,15 +55,15 @@ const PerformanceDashboard: React.FC = () => {
   // Don't show in production
   if (import.meta.env.PROD) return null;
 
-  // Get latest metrics for each type
-  const getLatestMetric = (metricName: string) => {
+  // Get latest metrics for each type - memoized to prevent recalculation
+  const getLatestMetric = useCallback((metricName: string) => {
     const metric = metrics
       .filter(m => m.metric === metricName)
       .sort((a, b) => b.timestamp - a.timestamp)[0];
     return metric ? metric.value : 0;
-  };
+  }, [metrics]);
 
-  const coreWebVitals = [
+  const coreWebVitals = useMemo(() => [
     {
       title: 'Largest Contentful Paint',
       value: getLatestMetric('LCP'),
@@ -94,7 +94,7 @@ const PerformanceDashboard: React.FC = () => {
       unit: 'ms',
       threshold: PERFORMANCE_THRESHOLDS.TTFB,
     },
-  ];
+  ], [getLatestMetric]);
 
   if (isLoading) return null;
 
@@ -180,4 +180,4 @@ const PerformanceDashboard: React.FC = () => {
   );
 };
 
-export default PerformanceDashboard;
+export default React.memo(PerformanceDashboard);
