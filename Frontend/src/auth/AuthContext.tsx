@@ -11,7 +11,7 @@ import { supabase } from '@/lib/supabaseClient';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import type { UserRole, VendedorEstado } from '@/types/domain';
 import { useToast } from '@/hooks/useToast';
-import { cleanupUserState, validateCleanup } from '@/lib/stateCleanup';
+import { cleanupUserState, validateCleanup, emergencyCleanup } from '@/lib/stateCleanup';
 
 interface SessionUser {
   id: string;
@@ -444,7 +444,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Validar que la limpieza fue exitosa
       const validation = validateCleanup();
       if (!validation.clean) {
-        const { emergencyCleanup } = await import('@/lib/stateCleanup');
         emergencyCleanup();
       }
 
@@ -477,7 +476,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsSigningOut(false);
 
       try {
-        const { emergencyCleanup } = await import('@/lib/stateCleanup');
         emergencyCleanup();
         window.dispatchEvent(new Event('storage'));
         window.dispatchEvent(

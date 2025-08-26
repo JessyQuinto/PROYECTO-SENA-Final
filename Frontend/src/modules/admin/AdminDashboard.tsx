@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { useToastWithAuth } from '@/hooks/useToast';
 import AdminLayout from './AdminLayout';
 import Icon from '@/components/ui/Icon';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 interface DashboardStats {
   totalVendedores: number;
@@ -57,11 +58,11 @@ const AdminDashboard: React.FC = () => {
 
       if (vendedoresResult.data && productosResult.data && pedidosResult.data) {
         const vendedoresPendientes = vendedoresResult.data.filter(
-          v => v.vendedor_estado === 'pendiente'
+          (v: any) => v.vendedor_estado === 'pendiente'
         );
 
         const ventasDelMes = (pedidosMesResult.data || []).reduce(
-          (acc, o: any) => acc + Number(o.total || 0),
+          (acc: number, o: any) => acc + Number(o.total || 0),
           0
         );
 
@@ -251,9 +252,7 @@ const AdminDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className='container py-8'>
-        <div className='flex items-center justify-center h-64'>
-          <div className='loading-spinner w-8 h-8'></div>
-        </div>
+        <LoadingSpinner size='lg' text='Cargando panel de administración...' />
       </div>
     );
   }
