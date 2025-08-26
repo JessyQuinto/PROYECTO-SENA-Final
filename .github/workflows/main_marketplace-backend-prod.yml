@@ -71,26 +71,65 @@ jobs:
           CI: true
           NODE_ENV: production
 
-      - name: Prepare Backend for deployment
+      - name: Create production deployment package
         run: |
-          echo "Preparing Backend for deployment..."
-          cd Backend
+          echo "Creating production deployment package..."
           
-          # Remove dev dependencies from Backend only
-          echo "Removing dev dependencies from Backend..."
-          npm prune --omit=dev --no-audit
-          
-          echo "Backend prepared successfully"
-          echo "Final Backend dependencies:"
-          npm list --depth=0
-          
-          # Copy Backend to a clean directory for deployment
-          cd ..
+          # Create clean deployment directory
           mkdir -p deployment
-          cp -r Backend/* deployment/
           
-          echo "Deployment package prepared:"
-          ls -la deployment/
+          # Copy only production files from Backend
+          echo "Copying production files..."
+          cp -r Backend/dist deployment/
+          cp Backend/package.json deployment/
+          cp Backend/package-lock.json deployment/
+          
+          # Create a minimal package.json for production
+          echo "Creating production package.json..."
+          cd deployment
+          
+          # Extract only production dependencies
+          node -e "
+            const pkg = require('./package.json');
+            const prodDeps = {};
+            
+            // Keep only production dependencies
+            if (pkg.dependencies) {
+              Object.keys(pkg.dependencies).forEach(key => {
+                if (!key.startsWith('@types/') && key !== 'tsx' && key !== 'typescript') {
+                  prodDeps[key] = pkg.dependencies[key];
+                }
+              });
+            }
+            
+            // Create new package.json
+            const newPkg = {
+              name: pkg.name,
+              version: pkg.version,
+              private: pkg.private,
+              type: pkg.type,
+              scripts: {
+                start: pkg.scripts.start
+              },
+              dependencies: prodDeps
+            };
+            
+            require('fs').writeFileSync('./package.json', JSON.stringify(newPkg, null, 2));
+            console.log('Production package.json created with dependencies:', Object.keys(prodDeps));
+          "
+          
+          # Install only production dependencies
+          echo "Installing production dependencies..."
+          npm ci --only=production --no-audit --no-fund
+          
+          # Clean up
+          rm package-lock.json
+          
+          echo "Deployment package created successfully"
+          echo "Final package contents:"
+          ls -la
+          echo "Final dependencies:"
+          npm list --depth=0
         env:
           CI: true
 
