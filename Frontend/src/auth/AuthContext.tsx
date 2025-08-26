@@ -6,6 +6,7 @@ import {
   ReactNode,
   useRef,
   useCallback,
+  useMemo,
 } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
@@ -50,6 +51,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [isSigningOut, setIsSigningOut] = useState(false); // Nuevo estado para transición
   const signingOutRef = useRef(false);
+  const profileLoadingRef = useRef<string | null>(null);
+  
   useEffect(() => {
     signingOutRef.current = isSigningOut;
   }, [isSigningOut]);
@@ -62,6 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profileLoading, setProfileLoading] = useState<string | null>(null);
   const MAX_RETRIES = 3;
   const RETRY_DELAY = 1000; // 1 second
+  const PROFILE_CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache for profile data
 
   const isEmailConfirmed = (session: Session | null): boolean => {
     const u: any = session?.user;
@@ -72,7 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!supabase) return;
 
     // Prevent duplicate calls for the same user
-    if (profileLoading === uid) {
+    if (profileLoadingRef.current === uid) {
       return;
     }
 
@@ -83,6 +87,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
+    profileLoadingRef.current = uid;
     setProfileLoading(uid);
 
     try {
@@ -117,6 +122,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           console.warn('[auth] Max retries reached for network errors');
         }
 
+        profileLoadingRef.current = null;
         setProfileLoading(null);
         setLoading(false);
         return;
@@ -127,12 +133,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (data.bloqueado) {
           await supabase.auth.signOut();
           setUser(null);
+          profileLoadingRef.current = null;
           setProfileLoading(null);
           setLoading(false);
           return;
         }
 
-        setUser({
+        const userData = {
           id: data.id,
           email: data.email || undefined,
           nombre: (data as any).nombre_completo || undefined,
@@ -140,8 +147,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           vendedor_estado:
             data.vendedor_estado as SessionUser['vendedor_estado'],
           bloqueado: !!data.bloqueado,
-        });
+        };
 
+        setUser(userData);
+        profileLoadingRef.current = null;
         setProfileLoading(null);
         setLoading(false);
         return;
@@ -149,16 +158,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       // Si no existe perfil, no lo creamos desde cliente para evitar conflictos de FK/RLS.
       // El perfil debe crearlo el backend en /auth/post-signup usando service role.
+      profileLoadingRef.current = null;
       setProfileLoading(null);
       setLoading(false);
       return;
     } catch (error) {
       console.error('[auth] Unexpected error in loadProfile:', error);
+      profileLoadingRef.current = null;
       setProfileLoading(null);
       setLoading(false);
       return;
     }
-  }, [profileLoading]);
+  }, []);  // Remove dependency on profileLoading state
 
   useEffect(() => {
     if (!supabase) {
@@ -218,7 +229,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
           // Try to get profile from users table to reflect admin changes
           // Only load if not already loading for this user
-          if (profileLoading !== session.user.id) {
+          if (profileLoadingRef.current !== session.user.id) {
             loadProfile(session.user.id);
           }
         } else {
@@ -256,7 +267,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             return;
           }
           // Only load if not already loading for this user
-          if (profileLoading !== session.user.id) {
+          if (profileLoadingRef.current !== session.user.id) {
             await loadProfile(session.user.id);
           }
         } else {
@@ -309,7 +320,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       // Cargar perfil del usuario
-      if (profileLoading !== data.user.id) {
+      if (profileLoadingRef.current !== data.user.id) {
         console.log('[AuthContext] Loading profile for user:', data.user.id);
         await loadProfile(data.user.id);
       }
@@ -320,7 +331,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error('[AuthContext] Unexpected error in signIn:', error);
       return { error: 'Error inesperado durante el inicio de sesión' };
     }
-  }, [profileLoading]);
+  }, [loadProfile]);  // Remove profileLoading dependency
 
   const signUp = useCallback(async (
     email: string,
@@ -511,15 +522,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const refreshProfile = useCallback(async () => {
     if (!supabase) return;
     const session = (await supabase.auth.getSession()).data.session;
-    if (session?.user?.id && profileLoading !== session.user.id) {
+    if (session?.user?.id && profileLoadingRef.current !== session.user.id) {
       await loadProfile(session.user.id);
     }
-  }, [profileLoading]);
+  }, [loadProfile]);
+
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(
+    () => ({
+      user,
+      loading,
+      isSigningOut,
+      signIn,
+      signUp,
+      signOut,
+      refreshProfile,
+    }),
+    [user, loading, isSigningOut, signIn, signUp, signOut, refreshProfile]
+  );
 
   return (
-    <AuthContext.Provider
-      value={{ user, loading, isSigningOut, signIn, signUp, signOut, refreshProfile }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

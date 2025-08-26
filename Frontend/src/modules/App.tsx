@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, memo } from 'react';
 import { AuthProvider } from '@/auth/AuthContext';
 import { BrowserRouter, Routes, Route, FutureConfig } from 'react-router-dom';
 import MainLayout from '@/components/ui/Layout/MainLayout';
@@ -46,32 +46,53 @@ const BuyerProfile = lazy(() => import('./buyer/BuyerProfile'));
 const BuyerProfilesManager = lazy(() => import('./buyer/ProfilesManager'));
 
 // Enhanced loading component with skeleton
-const AppLoadingSkeleton = () => (
+const AppLoadingSkeleton = memo(() => (
   <LoadingPageSkeleton 
     showNavigation={true} 
     layout='dashboard' 
     itemCount={6}
   />
-);
+));
+AppLoadingSkeleton.displayName = 'AppLoadingSkeleton';
 
-export const App: React.FC = () => (
+// Memoized core providers to prevent unnecessary re-renders
+const CoreProviders = memo(({ children }: { children: React.ReactNode }) => (
   <PageErrorBoundary>
     <ThemeProvider>
       <CacheProvider>
         <AuthProvider>
-          <BrowserRouter
-            future={
-              {
-                v7_startTransition: true,
-                v7_relativeSplatPath: true,
-              } as unknown as FutureConfig
-            }
-          >
-            <CartProvider>
-              <ToastProvider>
-                <MainLayout>
-                  <Suspense fallback={<AppLoadingSkeleton />}>
-                    <Routes>
+          {children}
+        </AuthProvider>
+      </CacheProvider>
+    </ThemeProvider>
+  </PageErrorBoundary>
+));
+CoreProviders.displayName = 'CoreProviders';
+
+// Memoized UI providers
+const UIProviders = memo(({ children }: { children: React.ReactNode }) => (
+  <CartProvider>
+    <ToastProvider>
+      <MainLayout>
+        {children}
+        <Toaster position='top-right' richColors closeButton />
+      </MainLayout>
+    </ToastProvider>
+  </CartProvider>
+));
+UIProviders.displayName = 'UIProviders';
+
+export const App: React.FC = memo(() => (
+  <CoreProviders>
+    <BrowserRouter
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      } as unknown as FutureConfig}
+    >
+      <UIProviders>
+        <Suspense fallback={<AppLoadingSkeleton />}>
+          <Routes>
                       {/* Public routes */}
                       <Route path='/' element={<Home />} />
                       <Route path='/productos' element={<ProductCatalog />} />
@@ -239,13 +260,8 @@ export const App: React.FC = () => (
                       />
                     </Routes>
                   </Suspense>
-                </MainLayout>
-                <Toaster position='top-right' richColors closeButton />
-              </ToastProvider>
-            </CartProvider>
-          </BrowserRouter>
-        </AuthProvider>
-      </CacheProvider>
-    </ThemeProvider>
-  </PageErrorBoundary>
-);
+                </UIProviders>
+              </BrowserRouter>
+            </CoreProviders>
+          ));
+          App.displayName = 'App';

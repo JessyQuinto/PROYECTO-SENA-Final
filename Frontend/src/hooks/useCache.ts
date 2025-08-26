@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { cache, CACHE_KEYS, CACHE_TTL, cacheUtils } from '@/lib/cache';
 
@@ -18,7 +18,7 @@ interface UseCachedDataReturn<T> {
 }
 
 /**
- * Generic hook for cached data fetching
+ * Generic hook for cached data fetching with optimized re-render prevention
  */
 export function useCachedData<T>(
   key: string,
@@ -37,12 +37,14 @@ export function useCachedData<T>(
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const fetchingRef = useRef(false);
 
   const fetchData = useCallback(
     async (forceRefresh = false) => {
-      if (!enabled) return;
+      if (!enabled || fetchingRef.current) return;
 
       try {
+        fetchingRef.current = true;
         setLoading(true);
         setError(null);
 
@@ -60,6 +62,7 @@ export function useCachedData<T>(
         onError?.(error);
       } finally {
         setLoading(false);
+        fetchingRef.current = false;
       }
     },
     [key, fetcher, ttl, enabled, onError]
@@ -197,6 +200,84 @@ export function useCachedAppConfig(
     },
     { ttl: CACHE_TTL.LONG, ...options }
   );
+}
+
+/**
+ * Hook for batch cache operations - reduces multiple individual fetches
+ */
+export function useBatchCache<T>(
+  keys: string[],
+  fetchers: Array<() => Promise<T>>,
+  options: UseCachedDataOptions = {}
+) {
+  const [data, setData] = useState<Array<{ key: string; data: T | null }>>([]); 
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const fetchingRef = useRef(false);
+  
+  const { enabled = true, ttl = CACHE_TTL.MEDIUM } = options;
+
+  const batchFetch = useCallback(async () => {
+    if (!enabled || fetchingRef.current || keys.length !== fetchers.length) {
+      return;
+    }
+
+    try {
+      fetchingRef.current = true;
+      setLoading(true);
+      setError(null);
+
+      // Check which items are already cached
+      const batchResults = cache.getBatch<T>(keys);
+      const itemsToFetch: Array<{ index: number; key: string; fetcher: () => Promise<T> }> = [];
+
+      batchResults.forEach((result, index) => {
+        if (result.data === null) {
+          itemsToFetch.push({ index, key: keys[index], fetcher: fetchers[index] });
+        }
+      });
+
+      // Fetch missing items
+      if (itemsToFetch.length > 0) {
+        const fetchPromises = itemsToFetch.map(async ({ index, key, fetcher }) => {
+          try {
+            const fetchedData = await fetcher();
+            cache.set(key, fetchedData, ttl);
+            return { index, key, data: fetchedData };
+          } catch (err) {
+            console.warn(`Batch fetch failed for key ${key}:`, err);
+            return { index, key, data: null };
+          }
+        });
+
+        const fetchResults = await Promise.allSettled(fetchPromises);
+        
+        // Update the batch results with fetched data
+        fetchResults.forEach((result) => {
+          if (result.status === 'fulfilled' && result.value.data !== null) {
+            batchResults[result.value.index] = {
+              key: result.value.key,
+              data: result.value.data
+            };
+          }
+        });
+      }
+
+      setData(batchResults);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Batch fetch failed');
+      setError(error);
+    } finally {
+      setLoading(false);
+      fetchingRef.current = false;
+    }
+  }, [keys, fetchers, enabled, ttl]);
+
+  useEffect(() => {
+    batchFetch();
+  }, [batchFetch]);
+
+  return { data, loading, error, refresh: batchFetch };
 }
 
 /**

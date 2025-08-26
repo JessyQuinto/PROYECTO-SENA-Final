@@ -145,6 +145,43 @@ class CacheManager {
   }
 
   /**
+   * Batch get operation for multiple keys
+   */
+  getBatch<T>(keys: string[]): Array<{ key: string; data: T | null }> {
+    return keys.map(key => ({ key, data: this.get<T>(key) }));
+  }
+
+  /**
+   * Batch set operation for multiple items
+   */
+  setBatch<T>(items: Array<{ key: string; data: T; ttl?: number }>): void {
+    items.forEach(({ key, data, ttl }) => {
+      this.set(key, data, ttl);
+    });
+  }
+
+  /**
+   * Preload data for multiple keys
+   */
+  async preload<T>(
+    items: Array<{ key: string; fetcher: () => Promise<T>; ttl?: number }>
+  ): Promise<void> {
+    const promises = items.map(async ({ key, fetcher, ttl }) => {
+      const cached = this.get<T>(key);
+      if (cached === null) {
+        try {
+          const data = await fetcher();
+          this.set(key, data, ttl);
+        } catch (error) {
+          console.warn(`Cache preload failed for key ${key}:`, error);
+        }
+      }
+    });
+
+    await Promise.allSettled(promises);
+  }
+
+  /**
    * Get cache statistics
    */
   getStats() {
@@ -346,6 +383,51 @@ export const cacheUtils = {
     cache.deletePattern('^product_detail:');
     cache.deletePattern('^product_avg_rating:');
     cache.deletePattern('^product_story:');
+  },
+
+  /**
+   * Batch preload essential data for better performance
+   */
+  async preloadEssentials(): Promise<void> {
+    const preloadItems = [
+      {
+        key: CACHE_KEYS.CATEGORIES,
+        fetcher: async () => {
+          // This will be replaced with actual Supabase call in useCache hook
+          return [];
+        },
+        ttl: CACHE_TTL.LONG,
+      },
+      {
+        key: CACHE_KEYS.FEATURED_PRODUCTS,
+        fetcher: async () => {
+          // This will be replaced with actual Supabase call in useCache hook
+          return [];
+        },
+        ttl: CACHE_TTL.MEDIUM,
+      },
+    ];
+
+    await cache.preload(preloadItems);
+  },
+
+  /**
+   * Smart cache warming based on user behavior
+   */
+  async warmRelatedCache(productId: string): Promise<void> {
+    // Preload related product data when user views a product
+    const warmingItems = [
+      {
+        key: CACHE_KEYS.PRODUCT_AVERAGE_RATING(productId),
+        fetcher: async () => {
+          // This will be implemented in the component
+          return 0;
+        },
+        ttl: CACHE_TTL.MEDIUM,
+      },
+    ];
+
+    await cache.preload(warmingItems);
   },
 
   /**

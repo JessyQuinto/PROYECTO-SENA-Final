@@ -3,31 +3,40 @@ import { errorHandler } from '@/lib/errorHandler';
 import { AppError, ErrorSeverity } from '@/lib/errors';
 import { Button } from '@/components/ui/shadcn/button';
 import { Card } from '@/components/ui/shadcn/card';
+import { cleanupUserState, emergencyCleanup } from '@/lib/stateCleanup';
 
 interface ErrorBoundaryState {
   hasError: boolean;
   error: AppError | null;
   errorId: string | null;
+  retryCount: number;
+  isRecovering: boolean;
 }
 
 interface ErrorBoundaryProps {
   children: ReactNode;
-  fallback?: React.ComponentType<{ error: AppError; onRetry: () => void }>;
+  fallback?: React.ComponentType<{ error: AppError; onRetry: () => void; onReset: () => void }>;
   onError?: (error: AppError, errorInfo: ErrorInfo) => void;
   isolate?: boolean; // If true, only catches errors from direct children
   level?: 'page' | 'section' | 'component'; // Error boundary level for context
+  maxRetries?: number; // Maximum automatic retry attempts
+  enableRecovery?: boolean; // Enable automatic state recovery
 }
 
 export class ErrorBoundary extends Component<
   ErrorBoundaryProps,
   ErrorBoundaryState
 > {
+  private retryTimeoutId: NodeJS.Timeout | null = null;
+  
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = {
       hasError: false,
       error: null,
       errorId: null,
+      retryCount: 0,
+      isRecovering: false,
     };
   }
 
@@ -39,6 +48,8 @@ export class ErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    const { maxRetries = 3, enableRecovery = true } = this.props;
+    
     // Process the error through our error handler
     const appError = errorHandler.handleError(error, {
       component: 'ErrorBoundary',
@@ -46,13 +57,20 @@ export class ErrorBoundary extends Component<
       level: this.props.level || 'component',
       componentStack: errorInfo.componentStack,
       errorBoundary: true,
+      retryCount: this.state.retryCount,
     });
 
     // Update state with processed error
     this.setState({
       error: appError,
       errorId: appError.id,
+      retryCount: this.state.retryCount + 1,
     });
+
+    // Attempt automatic recovery for certain error types
+    if (enableRecovery && this.state.retryCount < maxRetries) {
+      this.attemptRecovery(appError);
+    }
 
     // Call custom error handler if provided
     if (this.props.onError) {
@@ -60,13 +78,88 @@ export class ErrorBoundary extends Component<
     }
   }
 
+  attemptRecovery = async (error: AppError) => {
+    const { enableRecovery = true } = this.props;
+    
+    if (!enableRecovery || this.state.isRecovering) return;
+    
+    this.setState({ isRecovering: true });
+    
+    try {
+      // Clear retry timeout if exists
+      if (this.retryTimeoutId) {
+        clearTimeout(this.retryTimeoutId);
+      }
+      
+      // Determine recovery strategy based on error type
+      const shouldCleanupState = error.message.toLowerCase().includes('state') ||
+                                error.message.toLowerCase().includes('context') ||
+                                error.severity === ErrorSeverity.CRITICAL;
+      
+      if (shouldCleanupState) {
+        console.warn('[ErrorBoundary] Attempting state cleanup recovery');
+        
+        // Perform state cleanup but preserve essential data
+        await cleanupUserState({
+          clearSessionStorage: false,
+          preserveKeys: [
+            'theme_preference',
+            'language_preference', 
+            'accessibility_settings',
+            'cookie_consent'
+          ],
+          emergency: false,
+          verbose: false
+        });
+      }
+      
+      // Delay retry to allow cleanup to complete
+      this.retryTimeoutId = setTimeout(() => {
+        this.handleRetry();
+      }, 1000);
+      
+    } catch (recoveryError) {
+      console.error('[ErrorBoundary] Recovery attempt failed:', recoveryError);
+      this.setState({ isRecovering: false });
+    }
+  };
+
   handleRetry = () => {
     this.setState({
       hasError: false,
       error: null,
       errorId: null,
+      isRecovering: false,
     });
   };
+
+  handleReset = async () => {
+    try {
+      // Perform emergency cleanup
+      await emergencyCleanup();
+      
+      // Reset component state
+      this.setState({
+        hasError: false,
+        error: null,
+        errorId: null,
+        retryCount: 0,
+        isRecovering: false,
+      });
+      
+      // Force page reload as last resort
+      window.location.reload();
+    } catch (error) {
+      console.error('[ErrorBoundary] Reset failed:', error);
+      window.location.reload();
+    }
+  };
+
+  componentWillUnmount() {
+    if (this.retryTimeoutId) {
+      clearTimeout(this.retryTimeoutId);
+    }
+  }
 
   render() {
     if (this.state.hasError && this.state.error) {
@@ -77,6 +170,7 @@ export class ErrorBoundary extends Component<
           <FallbackComponent
             error={this.state.error}
             onRetry={this.handleRetry}
+            onReset={this.handleReset}
           />
         );
       }
@@ -86,6 +180,10 @@ export class ErrorBoundary extends Component<
         <DefaultErrorFallback
           error={this.state.error}
           onRetry={this.handleRetry}
+          onReset={this.handleReset}
+          isRecovering={this.state.isRecovering}
+          retryCount={this.state.retryCount}
+          maxRetries={this.props.maxRetries || 3}
         />
       );
     }
@@ -98,11 +196,19 @@ export class ErrorBoundary extends Component<
 interface DefaultErrorFallbackProps {
   error: AppError;
   onRetry: () => void;
+  onReset: () => void;
+  isRecovering?: boolean;
+  retryCount?: number;
+  maxRetries?: number;
 }
 
 const DefaultErrorFallback: React.FC<DefaultErrorFallbackProps> = ({
   error,
   onRetry,
+  onReset,
+  isRecovering = false,
+  retryCount = 0,
+  maxRetries = 3,
 }) => {
   const isMinor = error.severity === ErrorSeverity.LOW;
   const isCritical = error.severity === ErrorSeverity.CRITICAL;
@@ -188,29 +294,73 @@ const DefaultErrorFallback: React.FC<DefaultErrorFallbackProps> = ({
 
           {/* Action Buttons */}
           <div className='flex flex-col sm:flex-row gap-3 w-full'>
-            <Button
-              onClick={onRetry}
-              variant='default'
-              className='flex-1'
-              leftIcon={
-                <svg
-                  className='h-4 w-4'
-                  viewBox='0 0 24 24'
-                  fill='none'
-                  stroke='currentColor'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
-                  />
-                </svg>
-              }
-            >
-              Intentar de nuevo
-            </Button>
-
+            {retryCount < maxRetries && (
+              <Button
+                onClick={onRetry}
+                variant='default'
+                className='flex-1'
+                disabled={isRecovering}
+                leftIcon={
+                  isRecovering ? (
+                    <svg
+                      className='h-4 w-4 animate-spin'
+                      viewBox='0 0 24 24'
+                      fill='none'
+                      stroke='currentColor'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
+                      />
+                    </svg>
+                  ) : (
+                    <svg
+                      className='h-4 w-4'
+                      viewBox='0 0 24 24'
+                      fill='none'
+                      stroke='currentColor'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
+                      />
+                    </svg>
+                  )
+                }
+              >
+                {isRecovering ? 'Recuperando...' : 'Reintentar'}
+              </Button>
+            )}
+            
+            {(retryCount >= maxRetries || isCritical) && (
+              <Button
+                onClick={onReset}
+                variant='destructive'
+                className='flex-1'
+                leftIcon={
+                  <svg
+                    className='h-4 w-4'
+                    viewBox='0 0 24 24'
+                    fill='none'
+                    stroke='currentColor'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M3 3l18 18M9 9l6 6M9 15l6-6'
+                    />
+                  </svg>
+                }
+              >
+                Resetear aplicación
+              </Button>
+            )}
+            
             <Button
               onClick={() => window.location.reload()}
               variant='outline'
@@ -273,6 +423,11 @@ const DefaultErrorFallback: React.FC<DefaultErrorFallbackProps> = ({
               </div>
             </details>
           )}
+          {retryCount > 0 && (
+            <div className='text-sm text-muted-foreground'>
+              Intentos: {retryCount}/{maxRetries}
+            </div>
+          )}
         </div>
       </Card>
     </div>
@@ -286,7 +441,7 @@ export function createErrorBoundary(
 ) {
   const BoundaryComponent: React.FC<{ 
     children: ReactNode;
-    fallback?: React.ComponentType<{ error: AppError; onRetry: () => void }>;
+    fallback?: React.ComponentType<{ error: AppError; onRetry: () => void; onReset: () => void }>;
     onError?: (error: AppError, errorInfo: ErrorInfo) => void;
   }> = ({ children, fallback, onError }) => (
     <ErrorBoundary 
