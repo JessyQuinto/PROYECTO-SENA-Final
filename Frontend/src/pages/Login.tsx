@@ -32,37 +32,28 @@ const LoginPage: React.FC = () => {
 
       // Validación manual simple
       if (!values.email) {
-        toast.error('El correo electrónico es obligatorio', {
-          action: 'login',
-        });
+        toast.error('El correo electrónico es obligatorio');
         return;
       }
       if (!values.password) {
-        toast.error('La contraseña es obligatoria', { action: 'login' });
+        toast.error('La contraseña es obligatoria');
         return;
       }
 
       if (!rateLimit.checkLimit()) {
-        toast.error(
-          'Demasiados intentos de inicio de sesión. Intenta más tarde.',
-          {
-            action: 'login',
-          }
-        );
+        toast.error('Demasiados intentos. Intenta más tarde.');
         return;
       }
 
       const result = await signIn(values.email, values.password);
       if (result.error) {
-        toast.error(result.error, {
-          action: 'login',
-        });
+        toast.error(result.error);
         return;
       }
 
       // Limpiar rate limit en login exitoso
       rateLimit.clearLimit();
-      toast.success('Inicio de sesión exitoso', {
+      toast.success('', {
         action: 'login',
       });
     },

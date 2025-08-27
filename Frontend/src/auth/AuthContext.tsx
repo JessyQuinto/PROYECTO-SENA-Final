@@ -197,9 +197,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               window.location.pathname
             );
           } catch {}
-          toast.success('Correo confirmado. Inicia sesión.', {
-            action: 'login',
-          });
+          toast.success('Correo confirmado. Inicia sesión.');
           setLoading(false);
           try {
             window.location.replace('/login');
@@ -220,9 +218,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (!isEmailConfirmed(session)) {
             supabase.auth.signOut().finally(() => {
               setUser(null);
-              toast.error('Confirma tu correo para iniciar sesión', {
-                action: 'login',
-              });
+              toast.error('Confirma tu correo para iniciar sesión');
               setLoading(false);
             });
             return;

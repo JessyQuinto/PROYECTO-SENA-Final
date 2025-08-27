@@ -25,24 +25,19 @@ export interface ToastOptions {
   durationMs?: number;
 }
 
-const ACTION_TEXT_MAP: Record<ToastAction, string> = {
-  register: 'Registro',
-  login: 'Inicio de sesión',
-  purchase: 'Compra',
-  sale: 'Venta',
-  update: 'Actualización',
-  delete: 'Eliminación',
-  approve: 'Aprobación',
-  reject: 'Rechazo',
-  ship: 'Envío',
-  cancel: 'Cancelación',
-  generic: 'Notificación',
-};
-
-const ROLE_TEXT_MAP: Record<NonNullable<AppRole>, string> = {
-  admin: 'Administrador',
-  vendedor: 'Vendedor',
-  comprador: 'Comprador',
+// Simplified action text map for cleaner notifications
+const SIMPLE_ACTION_TEXT_MAP: Record<ToastAction, { success: string; error: string; default: string }> = {
+  register: { success: 'Registro exitoso', error: 'Error en el registro', default: 'Registro' },
+  login: { success: 'Bienvenido', error: 'Error de inicio de sesión', default: 'Inicio de sesión' },
+  purchase: { success: 'Compra exitosa', error: 'Error en la compra', default: 'Compra' },
+  sale: { success: 'Venta realizada', error: 'Error en la venta', default: 'Venta' },
+  update: { success: 'Actualizado', error: 'Error al actualizar', default: 'Actualización' },
+  delete: { success: 'Eliminado', error: 'Error al eliminar', default: 'Eliminación' },
+  approve: { success: 'Aprobado', error: 'Error al aprobar', default: 'Aprobación' },
+  reject: { success: 'Rechazado', error: 'Error al rechazar', default: 'Rechazo' },
+  ship: { success: 'Enviado', error: 'Error en el envío', default: 'Envío' },
+  cancel: { success: 'Cancelado', error: 'Error al cancelar', default: 'Cancelación' },
+  generic: { success: 'Éxito', error: 'Error', default: 'Notificación' },
 };
 
 function getDefaultTitle(
@@ -50,12 +45,23 @@ function getDefaultTitle(
   action?: ToastAction,
   type?: ToastType
 ): string {
-  const actionText = action ? ACTION_TEXT_MAP[action] : 'Notificación';
-  const roleText = role ? ROLE_TEXT_MAP[role] : 'Usuario';
+  if (!action) {
+    return type === 'error' ? 'Error' : type === 'success' ? 'Éxito' : 'Notificación';
+  }
 
-  if (type === 'error') return `${actionText} (${roleText}) - Error`;
-  if (type === 'success') return `${actionText} (${roleText}) - Éxito`;
-  return `${actionText} (${roleText})`;
+  const actionTexts = SIMPLE_ACTION_TEXT_MAP[action];
+  
+  if (type === 'error') return actionTexts.error;
+  if (type === 'success') return actionTexts.success;
+  return actionTexts.default;
+}
+
+// Function to create personalized welcome messages
+export function createWelcomeMessage(userName?: string): string {
+  if (userName) {
+    return `Bienvenido, ${userName}`;
+  }
+  return 'Bienvenido';
 }
 
 export const useToast = () => {
@@ -125,7 +131,16 @@ export const useToastWithAuth = () => {
     (opts: ToastOptions) => {
       const role: AppRole = opts.role ?? (user?.role as AppRole);
       const type: ToastType = opts.type ?? 'info';
-      const title = opts.title ?? getDefaultTitle(role, opts.action, type);
+      
+      let title = opts.title;
+      
+      // Special handling for login success to create personalized welcome message
+      if (!title && opts.action === 'login' && type === 'success') {
+        title = createWelcomeMessage(user?.nombre);
+      } else if (!title) {
+        title = getDefaultTitle(role, opts.action, type);
+      }
+      
       const duration = opts.durationMs ?? (type === 'error' ? 6000 : 4000);
 
       switch (type) {
@@ -142,7 +157,7 @@ export const useToastWithAuth = () => {
           toast(title, { description: opts.message, duration });
       }
     },
-    [user?.role]
+    [user?.role, user?.nombre]
   );
 
   const success = useCallback(

@@ -8,6 +8,7 @@ import React, {
 import { useAuth } from '@/auth/AuthContext';
 import { toast } from 'sonner';
 import type { ToastType, AppRole, ToastAction } from '@/hooks/useToast';
+import { createWelcomeMessage } from '@/hooks/useToast';
 
 export interface ToastOptions {
   type?: ToastType;
@@ -28,34 +29,40 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | undefined>(undefined);
 
-function roleActionDefaultTitle(
+function getSimpleTitle(
   role: AppRole,
   action?: ToastOptions['action'],
-  type?: ToastType
+  type?: ToastType,
+  userName?: string
 ) {
-  const actionText: Record<NonNullable<ToastOptions['action']>, string> = {
-    register: 'Registro',
-    login: 'Inicio de sesión',
-    purchase: 'Compra',
-    sale: 'Venta',
-    update: 'Actualización',
-    delete: 'Eliminación',
-    approve: 'Aprobación',
-    reject: 'Rechazo',
-    ship: 'Envío',
-    cancel: 'Cancelación',
-    generic: 'Notificación',
+  // Special handling for login success to create personalized welcome message
+  if (action === 'login' && type === 'success') {
+    return createWelcomeMessage(userName);
+  }
+
+  const simpleActionTexts: Record<NonNullable<ToastOptions['action']>, { success: string; error: string; default: string }> = {
+    register: { success: 'Registro exitoso', error: 'Error en el registro', default: 'Registro' },
+    login: { success: 'Bienvenido', error: 'Error de inicio de sesión', default: 'Inicio de sesión' },
+    purchase: { success: 'Compra exitosa', error: 'Error en la compra', default: 'Compra' },
+    sale: { success: 'Venta realizada', error: 'Error en la venta', default: 'Venta' },
+    update: { success: 'Actualizado', error: 'Error al actualizar', default: 'Actualización' },
+    delete: { success: 'Eliminado', error: 'Error al eliminar', default: 'Eliminación' },
+    approve: { success: 'Aprobado', error: 'Error al aprobar', default: 'Aprobación' },
+    reject: { success: 'Rechazado', error: 'Error al rechazar', default: 'Rechazo' },
+    ship: { success: 'Enviado', error: 'Error en el envío', default: 'Envío' },
+    cancel: { success: 'Cancelado', error: 'Error al cancelar', default: 'Cancelación' },
+    generic: { success: 'Éxito', error: 'Error', default: 'Notificación' },
   };
-  const roleText: Record<NonNullable<AppRole>, string> = {
-    admin: 'Administrador',
-    vendedor: 'Vendedor',
-    comprador: 'Comprador',
-  } as any;
-  const base = action ? actionText[action] : 'Notificación';
-  const who = role ? roleText[role] : 'Usuario';
-  if (type === 'error') return `${base} (${who}) - Error`;
-  if (type === 'success') return `${base} (${who}) - Éxito`;
-  return `${base} (${who})`;
+
+  if (!action) {
+    return type === 'error' ? 'Error' : type === 'success' ? 'Éxito' : 'Notificación';
+  }
+
+  const actionTexts = simpleActionTexts[action];
+  
+  if (type === 'error') return actionTexts.error;
+  if (type === 'success') return actionTexts.success;
+  return actionTexts.default;
 }
 
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -68,7 +75,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
       const role: AppRole = opts.role ?? (user?.role as AppRole);
       const type: ToastType = opts.type ?? 'info';
       const title =
-        opts.title ?? roleActionDefaultTitle(role, opts.action, type);
+        opts.title ?? getSimpleTitle(role, opts.action, type, user?.nombre);
       const duration = opts.durationMs ?? (type === 'error' ? 6000 : 4000);
       if (type === 'error')
         toast.error(title, { description: opts.message, duration });
@@ -78,7 +85,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
         toast(title, { description: opts.message, duration });
       else toast(title, { description: opts.message, duration });
     },
-    [user?.role]
+    [user?.role, user?.nombre]
   );
 
   const success = useCallback(

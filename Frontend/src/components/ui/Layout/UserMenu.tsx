@@ -43,11 +43,12 @@ export const UserAvatar: React.FC<{ user: User; className?: string }> = ({ user,
           {/* Animated name container - positioned to the left of the avatar */}
           <div 
             className={cn(
-              'absolute right-full top-0 z-0 flex items-center transition-all duration-300 ease-in-out pr-2',
+              'absolute right-full top-0 z-30 flex items-center transition-all duration-300 ease-in-out pr-3',
               isNameVisible 
                 ? 'translate-x-0 opacity-100' 
-                : 'translate-x-4 opacity-0'
+                : 'translate-x-4 opacity-0 pointer-events-none'
             )}
+            style={{ pointerEvents: isNameVisible ? 'none' : 'none' }}
           >
             <span className='text-sm font-medium text-foreground whitespace-nowrap bg-background px-3 py-2 rounded-lg shadow-lg border border-border'>
               {user.nombre || user.email}
@@ -94,11 +95,12 @@ export const UserAvatar: React.FC<{ user: User; className?: string }> = ({ user,
           {/* Animated name container for mobile - positioned to the left of the avatar */}
           <div 
             className={cn(
-              'absolute right-full top-0 z-0 flex items-center transition-all duration-300 ease-in-out pr-2',
+              'absolute right-full top-0 z-30 flex items-center transition-all duration-300 ease-in-out pr-3',
               isNameVisible 
                 ? 'translate-x-0 opacity-100' 
-                : 'translate-x-4 opacity-0'
+                : 'translate-x-4 opacity-0 pointer-events-none'
             )}
+            style={{ pointerEvents: isNameVisible ? 'none' : 'none' }}
           >
             <span className='text-sm font-medium text-foreground whitespace-nowrap bg-background px-2 py-1.5 rounded-md shadow-md border border-border'>
               {user.nombre || user.email}
