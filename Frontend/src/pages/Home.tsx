@@ -172,151 +172,193 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Featured Products Section */}
+      {/* Products & CTA Combined Section */}
       <section className='py-16'>
         <div className='container'>
-          <div className='text-center mb-12'>
-            <h2 className='heading-lg mb-4'>Productos Destacados</h2>
-            <p className='text-lg opacity-80 max-w-2xl mx-auto text-balance'>
-              Descubre nuestras piezas más populares, seleccionadas por su
-              calidad y autenticidad.
-            </p>
-          </div>
-
+          {/* Products Section */}
           {loading ? (
-            <div className='flex justify-center'>
-              <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
+            <div className='text-center mb-16'>
+              <h2 className='heading-lg mb-4'>Productos Destacados</h2>
+              <div className='flex justify-center'>
+                <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
+              </div>
             </div>
           ) : error ? (
-            <div className='text-center text-red-600'>
-              Error al cargar productos: {error.message}
+            <div className='text-center mb-16'>
+              <h2 className='heading-lg mb-4'>Productos Destacados</h2>
+              <div className='text-red-600 mb-8'>
+                Error al cargar productos: {error.message}
+              </div>
+              <Link to='/productos'>
+                <Button size='lg' variant='outline'>
+                  Explorar Todos los Productos
+                </Button>
+              </Link>
             </div>
-          ) : (
-            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-              {(featuredProducts || []).map((product: FeaturedProduct) => (
-                <Card
-                  key={product.id}
-                  className='featured-card overflow-hidden hover:shadow-lg transition-shadow'
-                >
-                  <div className='aspect-square overflow-hidden bg-gray-100 flex items-center justify-center'>
-                    {product.imagen_url ? (
-                      <img
-                        src={product.imagen_url}
-                        alt={product.nombre}
-                        className='w-full h-full object-cover hover:scale-105 transition-transform duration-300'
-                        onError={e => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          target.parentElement!.innerHTML =
-                            '<div class="w-full h-full flex items-center justify-center text-gray-400"><svg class="w-16 h-16" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path></svg></div>';
-                        }}
-                      />
-                    ) : (
-                      <div className='w-full h-full flex items-center justify-center text-gray-400'>
-                        <svg
-                          className='w-16 h-16'
-                          fill='currentColor'
-                          viewBox='0 0 20 20'
-                        >
-                          <path
-                            fillRule='evenodd'
-                            d='M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z'
-                            clipRule='evenodd'
-                          ></path>
-                        </svg>
+          ) : featuredProducts && featuredProducts.length > 0 ? (
+            <div className='mb-16'>
+              <div className='text-center mb-12'>
+                <h2 className='heading-lg mb-4'>Productos Destacados</h2>
+                <p className='text-lg opacity-80 max-w-2xl mx-auto text-balance'>
+                  Descubre nuestras piezas más populares, seleccionadas por su
+                  calidad y autenticidad.
+                </p>
+              </div>
+              
+              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8'>
+                {featuredProducts.map((product: FeaturedProduct) => (
+                  <Card
+                    key={product.id}
+                    className='featured-card overflow-hidden hover:shadow-lg transition-shadow'
+                  >
+                    <div className='aspect-square overflow-hidden bg-gray-100 flex items-center justify-center'>
+                      {product.imagen_url ? (
+                        <img
+                          src={product.imagen_url}
+                          alt={product.nombre}
+                          className='w-full h-full object-cover hover:scale-105 transition-transform duration-300'
+                          onError={e => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            target.parentElement!.innerHTML =
+                              '<div class="w-full h-full flex items-center justify-center text-gray-400"><svg class="w-16 h-16" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path></svg></div>';
+                          }}
+                        />
+                      ) : (
+                        <div className='w-full h-full flex items-center justify-center text-gray-400'>
+                          <svg
+                            className='w-16 h-16'
+                            fill='currentColor'
+                            viewBox='0 0 20 20'
+                          >
+                            <path
+                              fillRule='evenodd'
+                              d='M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z'
+                              clipRule='evenodd'
+                            ></path>
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    <CardContent className='p-4'>
+                      <h3 className='font-semibold text-lg mb-2 line-clamp-2'>
+                        {product.nombre}
+                      </h3>
+                      <p className='text-sm text-gray-600 mb-2'>
+                        Por:{' '}
+                        {product.users?.nombre_completo || 'Artesano Chocoano'}
+                      </p>
+                      <div className='flex items-center justify-between'>
+                        <span className='text-xl font-bold text-primary'>
+                          ${product.precio.toLocaleString()}
+                        </span>
+                        <Link to={`/productos/${product.id}`}>
+                          <Button size='sm'>Ver Detalles</Button>
+                        </Link>
                       </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              
+              <div className='text-center'>
+                <Link to='/productos'>
+                  <Button size='lg' variant='outline'>
+                    Ver Todos los Productos
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          ) : null}
+
+          {/* CTA Section - Integrated */}
+          <div 
+            className='rounded-2xl overflow-hidden relative shadow-lg'
+            style={{
+              backgroundImage:
+                "linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0.4)), url('/assert/2/9a92cd16-82e0-4b9b-bc8f-a7805b2ad499.jpg')",
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+            }}
+          >
+            <div className='p-8 md:p-16 text-center relative z-10'>
+              {(!featuredProducts || featuredProducts.length === 0) && !loading && !error ? (
+                <>
+                  <h2 className='heading-lg mb-4 text-white' style={{ color: '#ffffff', textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
+                    Descubre Artesanías Auténticas del Chocó
+                  </h2>
+                  <p className='text-lg mb-8 text-white opacity-90 max-w-2xl mx-auto text-balance'>
+                    Pronto tendremos productos destacados disponibles. Mientras tanto, 
+                    explora nuestro catálogo completo o únete como artesano para mostrar tu talento.
+                  </p>
+                  <div className='flex flex-col sm:flex-row gap-4 justify-center mb-6'>
+                    <Link to='/productos'>
+                      <Button size='lg' variant='secondary'>
+                        Explorar Productos
+                      </Button>
+                    </Link>
+                    {!user && (
+                      <Link to='/register'>
+                        <Button
+                          size='lg'
+                          variant='outline'
+                          className='bg-white text-primary hover:bg-gray-100'
+                        >
+                          Unirse como Artesano
+                        </Button>
+                      </Link>
                     )}
                   </div>
-                  <CardContent className='p-4'>
-                    <h3 className='font-semibold text-lg mb-2 line-clamp-2'>
-                      {product.nombre}
-                    </h3>
-                    <p className='text-sm text-gray-600 mb-2'>
-                      Por:{' '}
-                      {product.users?.nombre_completo || 'Artesano Chocoano'}
-                    </p>
-                    <div className='flex items-center justify-between'>
-                      <span className='text-xl font-bold text-primary'>
-                        ${product.precio.toLocaleString()}
-                      </span>
-                      <Link to={`/productos/${product.id}`}>
-                        <Button size='sm'>Ver Detalles</Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-              {(!featuredProducts || featuredProducts.length === 0) &&
-                !loading &&
-                !error && (
-                  <div className='col-span-full text-center py-8'>
-                    <p className='text-gray-600'>
-                      No hay productos destacados disponibles en este momento.
-                    </p>
+                </>
+              ) : (
+                <>
+                  <h2 className='heading-lg mb-4 text-white'>
+                    ¿Eres Artesano del Chocó?
+                  </h2>
+                  <p className='text-lg mb-8 text-white opacity-90 max-w-2xl mx-auto text-balance'>
+                    Únete a nuestra plataforma y comparte tu talento con el mundo.
+                    Conectamos artesanos con compradores que valoran lo auténtico.
+                  </p>
+                </>
+              )}
+              
+              {user ? (
+                user.role === 'vendedor' ? (
+                  <Link to='/vendedor'>
+                    <Button size='lg' variant='secondary'>
+                      Ir al Panel de Vendedor
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link to='/register'>
+                    <Button size='lg' variant='secondary'>
+                      Cambiar a Cuenta de Vendedor
+                    </Button>
+                  </Link>
+                )
+              ) : (
+                featuredProducts && featuredProducts.length > 0 && (
+                  <div className='flex flex-col sm:flex-row gap-4 justify-center'>
+                    <Link to='/register'>
+                      <Button size='lg' variant='secondary'>
+                        Registrarse como Vendedor
+                      </Button>
+                    </Link>
+                    <Link to='/login'>
+                      <Button
+                        size='lg'
+                        variant='outline'
+                        className='bg-white text-primary hover:bg-gray-100'
+                      >
+                        Iniciar Sesión
+                      </Button>
+                    </Link>
                   </div>
-                )}
+                )
+              )}
             </div>
-          )}
-
-          <div className='text-center mt-8'>
-            <Link to='/productos'>
-              <Button size='lg' variant='outline'>
-                Ver Todos los Productos
-              </Button>
-            </Link>
           </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section
-        className='py-16 relative overflow-hidden'
-        style={{
-          backgroundImage:
-            "linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0.3)), url('/assert/2/9a92cd16-82e0-4b9b-bc8f-a7805b2ad499.jpg')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }}
-      >
-        <div className='container text-center relative z-10'>
-          <h2 className='heading-lg mb-4 text-white'>
-            ¿Eres Artesano del Chocó?
-          </h2>
-          <p className='text-lg mb-8 text-white opacity-90 max-w-2xl mx-auto text-balance'>
-            Únete a nuestra plataforma y comparte tu talento con el mundo.
-            Conectamos artesanos con compradores que valoran lo auténtico.
-          </p>
-          {!user ? (
-            <div className='flex flex-col sm:flex-row gap-4 justify-center'>
-              <Link to='/register'>
-                <Button size='lg' variant='secondary'>
-                  Registrarse como Vendedor
-                </Button>
-              </Link>
-              <Link to='/login'>
-                <Button
-                  size='lg'
-                  variant='outline'
-                  className='bg-white text-primary hover:bg-gray-100'
-                >
-                  Iniciar Sesión
-                </Button>
-              </Link>
-            </div>
-          ) : user.role === 'vendedor' ? (
-            <Link to='/vendedor'>
-              <Button size='lg' variant='secondary'>
-                Ir al Panel de Vendedor
-              </Button>
-            </Link>
-          ) : (
-            <Link to='/register'>
-              <Button size='lg' variant='secondary'>
-                Cambiar a Cuenta de Vendedor
-              </Button>
-            </Link>
-          )}
         </div>
       </section>
     </div>
