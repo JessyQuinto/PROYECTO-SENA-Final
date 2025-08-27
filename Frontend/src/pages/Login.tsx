@@ -72,11 +72,11 @@ const LoginPage: React.FC = () => {
       description="Accede a tu cuenta para continuar explorando los tesoros artesanales del Chocó."
       features={AuthFeatureSets.login}
     >
-      <p className='opacity-80 text-center mb-6'>
+      <p className='opacity-80 text-center mb-4 text-sm'>
         Accede a tu cuenta para continuar
       </p>
 
-      <form onSubmit={form.handleSubmit} className='space-y-6' noValidate>
+      <form onSubmit={form.handleSubmit} className='space-y-4' noValidate>
         {/* Screen reader announcement area for form errors */}
         <div 
           className='sr-only' 
@@ -180,7 +180,7 @@ const LoginPage: React.FC = () => {
       </form>
 
       {/* Links */}
-      <div className='mt-6 text-center space-y-3'>
+      <div className='mt-4 text-center space-y-2'>
         <div className='text-sm'>
           <Link
             to='/forgot-password'

@@ -248,35 +248,24 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className='min-h-[calc(100vh-120px)] grid place-items-center relative overflow-hidden'>
-      {/* Decorative auth background */}
-      <div
-        aria-hidden
-        className='absolute inset-0 opacity-12'
-        style={{
-          backgroundImage:
-            "linear-gradient(to right, rgba(0,0,0,0.04), rgba(0,0,0,0.00)), url('/assert/motif-de-fond-sans-couture-tribal-dessin-geometrique-noir-et-blanc-vecteur/v1045-03.jpg')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      />
-      <div className='container max-w-5xl relative z-10'>
-        <div className='grid md:grid-cols-3 gap-8 items-start'>
+    <div className='min-h-[calc(100vh-120px)] grid place-items-center'>
+      <div className='container max-w-4xl relative z-10'>
+        <div className='grid md:grid-cols-3 gap-6 items-start'>
           <div className='hidden md:block md:col-span-1'>
             <div className='card card-hover'>
-              <div className='card-body'>
-                <h2 className='card-title text-2xl mb-4'>
+              <div className='card-body p-4'>
+                <h2 className='card-title text-lg mb-3'>
                   Únete a Tesoros Chocó
                 </h2>
-                <p className='opacity-80 mb-6'>
+                <p className='opacity-80 mb-4 text-sm'>
                   Conectamos artesanos del Chocó con personas que valoran lo
                   fabricado a mano, con historia y origen.
                 </p>
-                <div className='space-y-4'>
-                  <div className='flex items-center gap-3'>
-                    <div className='w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center'>
+                <div className='space-y-3'>
+                  <div className='flex items-center gap-2'>
+                    <div className='w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center'>
                       <svg
-                        className='w-4 h-4 text-primary'
+                        className='w-3 h-3 text-primary'
                         fill='none'
                         stroke='currentColor'
                         viewBox='0 0 24 24'
@@ -289,14 +278,14 @@ export const RegisterPage: React.FC = () => {
                         />
                       </svg>
                     </div>
-                    <span className='text-sm'>
+                    <span className='text-xs'>
                       Acceso inmediato a productos únicos
                     </span>
                   </div>
-                  <div className='flex items-center gap-3'>
-                    <div className='w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center'>
+                  <div className='flex items-center gap-2'>
+                    <div className='w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center'>
                       <svg
-                        className='w-4 h-4 text-primary'
+                        className='w-3 h-3 text-primary'
                         fill='none'
                         stroke='currentColor'
                         viewBox='0 0 24 24'
@@ -309,12 +298,12 @@ export const RegisterPage: React.FC = () => {
                         />
                       </svg>
                     </div>
-                    <span className='text-sm'>Apoya a artesanos locales</span>
+                    <span className='text-xs'>Apoya a artesanos locales</span>
                   </div>
-                  <div className='flex items-center gap-3'>
-                    <div className='w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center'>
+                  <div className='flex items-center gap-2'>
+                    <div className='w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center'>
                       <svg
-                        className='w-4 h-4 text-primary'
+                        className='w-3 h-3 text-primary'
                         fill='none'
                         stroke='currentColor'
                         viewBox='0 0 24 24'
@@ -327,7 +316,7 @@ export const RegisterPage: React.FC = () => {
                         />
                       </svg>
                     </div>
-                    <span className='text-sm'>
+                    <span className='text-xs'>
                       Productos con historia y autenticidad
                     </span>
                   </div>
@@ -338,23 +327,23 @@ export const RegisterPage: React.FC = () => {
 
           <div className='md:col-span-2'>
             <div className='card card-hover'>
-              <div className='card-body'>
-                <div className='text-center mb-6'>
-                  <h1 className='text-3xl font-bold mb-2'>Crear Cuenta</h1>
-                  <p className='opacity-80'>
+              <div className='card-body p-4'>
+                <div className='text-center mb-4'>
+                  <h1 className='text-2xl font-bold mb-1'>Crear Cuenta</h1>
+                  <p className='opacity-80 text-sm'>
                     Únete a nuestra comunidad de artesanos y compradores
                   </p>
                 </div>
 
                 {/* Progress indicator */}
-                <div className='mb-8'>
+                <div className='mb-6'>
                   <div className='flex items-center justify-between mb-2'>
-                    <span className='text-sm font-medium text-gray-700'>Paso {currentStep} de {totalSteps}</span>
-                    <span className='text-sm text-gray-500'>{Math.round((currentStep / totalSteps) * 100)}% completado</span>
+                    <span className='text-xs font-medium text-gray-700'>Paso {currentStep} de {totalSteps}</span>
+                    <span className='text-xs text-gray-500'>{Math.round((currentStep / totalSteps) * 100)}% completado</span>
                   </div>
-                  <div className='w-full bg-gray-200 rounded-full h-2'>
+                  <div className='w-full bg-gray-200 rounded-full h-1.5'>
                     <div 
-                      className='bg-primary h-2 rounded-full transition-all duration-300 ease-out'
+                      className='bg-primary h-1.5 rounded-full transition-all duration-300 ease-out'
                       style={{ width: `${(currentStep / totalSteps) * 100}%` }}
                     ></div>
                   </div>
@@ -362,61 +351,61 @@ export const RegisterPage: React.FC = () => {
 
                 {/* Step content with smooth transitions */}
                 <div 
-                  className={`transition-all duration-300 ease-out min-h-[400px] ${
+                  className={`transition-all duration-300 ease-out min-h-[320px] ${
                     isTransitioning ? 'opacity-0 transform scale-95' : 'opacity-100 transform scale-100'
                   }`}
                 >
-                  <div className='text-center mb-6'>
-                    <h2 className='text-xl font-semibold mb-2'>{getStepTitle(currentStep)}</h2>
-                    <p className='text-sm opacity-70'>{getStepSubtitle(currentStep)}</p>
+                  <div className='text-center mb-4'>
+                    <h2 className='text-lg font-semibold mb-1'>{getStepTitle(currentStep)}</h2>
+                    <p className='text-xs opacity-70'>{getStepSubtitle(currentStep)}</p>
                   </div>
 
                   {/* Step 1: Role Selection */}
                   {currentStep === 1 && (
-                    <div className='space-y-4'>
-                      <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                    <div className='space-y-3'>
+                      <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
                         <button
                           type='button'
                           onClick={() => setRole('comprador')}
-                          className={`p-6 rounded-xl border-2 transition-all duration-200 hover:scale-[1.02] ${
+                          className={`p-4 rounded-xl border-2 transition-all duration-200 hover:scale-[1.02] ${
                             role === 'comprador'
                               ? 'border-primary bg-primary/5 text-primary shadow-md'
                               : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
                           }`}
                         >
                           <div className='text-center'>
-                            <svg className='w-12 h-12 mx-auto mb-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                            <svg className='w-8 h-8 mx-auto mb-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                               <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' />
                             </svg>
-                            <div className='font-semibold text-lg mb-1'>Comprador</div>
-                            <div className='text-sm opacity-80'>Explora y compra productos únicos</div>
+                            <div className='font-semibold text-base mb-1'>Comprador</div>
+                            <div className='text-xs opacity-80'>Explora y compra productos únicos</div>
                           </div>
                         </button>
                         <button
                           type='button'
                           onClick={() => setRole('vendedor')}
-                          className={`p-6 rounded-xl border-2 transition-all duration-200 hover:scale-[1.02] ${
+                          className={`p-4 rounded-xl border-2 transition-all duration-200 hover:scale-[1.02] ${
                             role === 'vendedor'
                               ? 'border-primary bg-primary/5 text-primary shadow-md'
                               : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
                           }`}
                         >
                           <div className='text-center'>
-                            <svg className='w-12 h-12 mx-auto mb-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                            <svg className='w-8 h-8 mx-auto mb-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                               <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' />
                             </svg>
-                            <div className='font-semibold text-lg mb-1'>Vendedor</div>
-                            <div className='text-sm opacity-80'>Vende tus creaciones artesanales</div>
+                            <div className='font-semibold text-base mb-1'>Vendedor</div>
+                            <div className='text-xs opacity-80'>Vende tus creaciones artesanales</div>
                           </div>
                         </button>
                       </div>
                       {role === 'vendedor' && (
-                        <div className='mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg'>
-                          <div className='flex items-start gap-3'>
-                            <svg className='w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <div className='mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg'>
+                          <div className='flex items-start gap-2'>
+                            <svg className='w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                               <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' />
                             </svg>
-                            <div className='text-sm text-amber-800'>
+                            <div className='text-xs text-amber-800'>
                               <strong>Nota:</strong> Las cuentas de vendedor requieren aprobación antes de publicar productos.
                             </div>
                           </div>
@@ -427,7 +416,7 @@ export const RegisterPage: React.FC = () => {
 
                   {/* Step 2: Personal Information */}
                   {currentStep === 2 && (
-                    <div className='space-y-5'>
+                    <div className='space-y-4'>
                       <div>
                         <Label htmlFor='nombre'>Nombre completo
                           <span className='text-destructive ml-1'>*</span>
@@ -496,7 +485,7 @@ export const RegisterPage: React.FC = () => {
 
                   {/* Step 3: Location */}
                   {currentStep === 3 && (
-                    <div className='space-y-5'>
+                    <div className='space-y-4'>
                       <div>
                         <Label htmlFor='departamento'>Departamento
                           <span className='text-destructive ml-1'>*</span>
@@ -554,8 +543,8 @@ export const RegisterPage: React.FC = () => {
 
                   {/* Step 4: Security & Terms */}
                   {currentStep === 4 && (
-                    <div className='space-y-6'>
-                      <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                    <div className='space-y-4'>
+                      <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
                         <div>
                           <Label htmlFor='password'>Contraseña
                             <span className='text-destructive ml-1'>*</span>
@@ -602,7 +591,7 @@ export const RegisterPage: React.FC = () => {
                           )}
                         </div>
                       </div>
-                      <div className='space-y-4 bg-gray-50 p-4 rounded-lg'>
+                      <div className='space-y-3 bg-gray-50 p-3 rounded-lg'>
                         <div className='flex items-start gap-3'>
                           <Checkbox
                             id='confirmInfo'
@@ -665,7 +654,7 @@ export const RegisterPage: React.FC = () => {
                 </div>
 
                 {/* Navigation buttons */}
-                <div className='flex items-center justify-between mt-8 pt-6 border-t'>
+                <div className='flex items-center justify-between mt-6 pt-4 border-t'>
                   <Button
                     type='button'
                     variant='outline'
@@ -712,8 +701,8 @@ export const RegisterPage: React.FC = () => {
                   )}
                 </div>
 
-                <div className='text-center mt-6'>
-                  <p className='text-sm opacity-80'>
+                <div className='text-center mt-4'>
+                  <p className='text-xs opacity-80'>
                     ¿Ya tienes una cuenta?{' '}
                     <Link to='/login' className='text-primary hover:underline'>
                       Inicia sesión

@@ -13,19 +13,6 @@ interface AuthLayoutProps {
   children: ReactNode;
 }
 
-const AuthBackground: React.FC = () => (
-  <div
-    aria-hidden
-    className='absolute inset-0 opacity-12'
-    style={{
-      backgroundImage:
-        "linear-gradient(to right, rgba(0,0,0,0.04), rgba(0,0,0,0.00)), url('/assert/motif-de-fond-sans-couture-tribal-dessin-geometrique-noir-et-blanc-vecteur/v1045-03.jpg')",
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-    }}
-  />
-);
-
 const AuthSidebar: React.FC<{
   title: string;
   description: string;
@@ -33,16 +20,16 @@ const AuthSidebar: React.FC<{
 }> = ({ title, description, features }) => (
   <div className='hidden md:block md:col-span-1'>
     <div className='card card-hover'>
-      <div className='card-body'>
-        <h2 className='card-title text-2xl mb-4'>{title}</h2>
-        <p className='opacity-80 mb-6'>{description}</p>
-        <div className='space-y-4'>
+      <div className='card-body p-4'>
+        <h2 className='card-title text-lg mb-3'>{title}</h2>
+        <p className='opacity-80 mb-4 text-sm'>{description}</p>
+        <div className='space-y-3'>
           {features.map((feature, index) => (
-            <div key={index} className='flex items-center gap-3'>
-              <div className='w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center'>
+            <div key={index} className='flex items-center gap-2'>
+              <div className='w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center'>
                 {feature.icon}
               </div>
-              <span className='text-sm'>{feature.text}</span>
+              <span className='text-xs'>{feature.text}</span>
             </div>
           ))}
         </div>
@@ -57,9 +44,9 @@ const AuthFormContainer: React.FC<{
 }> = ({ subtitle, children }) => (
   <div className='md:col-span-2'>
     <div className='card card-hover'>
-      <div className='card-body'>
-        <div className='text-center mb-6'>
-          <h1 className='text-3xl font-bold mb-2'>{subtitle}</h1>
+      <div className='card-body p-4'>
+        <div className='text-center mb-4'>
+          <h1 className='text-2xl font-bold mb-1'>{subtitle}</h1>
         </div>
         {children}
       </div>
@@ -75,10 +62,9 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
   children,
 }) => {
   return (
-    <div className='min-h-[calc(100vh-120px)] grid place-items-center relative overflow-hidden'>
-      <AuthBackground />
-      <div className='container max-w-5xl relative z-10'>
-        <div className='grid md:grid-cols-3 gap-8 items-start'>
+    <div className='min-h-[calc(100vh-120px)] grid place-items-center'>
+      <div className='container max-w-4xl relative z-10'>
+        <div className='grid md:grid-cols-3 gap-6 items-start'>
           <AuthSidebar title={title} description={description} features={features} />
           <AuthFormContainer subtitle={subtitle}>{children}</AuthFormContainer>
         </div>

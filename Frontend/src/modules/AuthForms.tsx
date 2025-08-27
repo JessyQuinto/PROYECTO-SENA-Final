@@ -96,26 +96,26 @@ export const AuthForms: React.FC<AuthFormsProps> = ({
   };
 
   return (
-    <div className='w-full max-w-md mx-auto'>
+    <div className='w-full max-w-sm mx-auto'>
       <div className='card card-hover'>
-        <div className='card-body'>
+        <div className='card-body p-4'>
           <div 
             className={`transition-all duration-300 ease-out ${
               isTransitioning ? 'opacity-0 transform scale-95' : 'opacity-100 transform scale-100'
             }`}
           >
-            <div className='text-center mb-6'>
-              <h2 className='text-2xl font-semibold mb-2 transition-all duration-300'>
+            <div className='text-center mb-4'>
+              <h2 className='text-xl font-semibold mb-1 transition-all duration-300'>
                 {mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
               </h2>
-              <p className='text-sm opacity-70 transition-all duration-300'>
+              <p className='text-xs opacity-70 transition-all duration-300'>
                 {mode === 'login'
                   ? 'Accede a tu cuenta para continuar'
                   : 'Únete a nuestra comunidad de artesanos'}
               </p>
             </div>
 
-            <div className='min-h-[200px] transition-all duration-300'>
+            <div className='min-h-[180px] transition-all duration-300'>
               {mode === 'login' ? (
                 <form
                   onSubmit={e => loginForm.handleSubmit(e)}
@@ -247,12 +247,12 @@ export const AuthForms: React.FC<AuthFormsProps> = ({
             </div>
           </div>
 
-          <div className='text-center mt-6'>
+          <div className='text-center mt-4'>
             <button
               type='button'
               onClick={toggleMode}
               disabled={isTransitioning}
-              className={`text-sm text-(--color-terracotta-suave) hover:underline transition-all duration-200 ${
+              className={`text-xs text-(--color-terracotta-suave) hover:underline transition-all duration-200 ${
                 isTransitioning ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
               }`}
             >
@@ -263,10 +263,10 @@ export const AuthForms: React.FC<AuthFormsProps> = ({
           </div>
 
           {mode === 'login' && (
-            <div className='text-center mt-4 transition-all duration-300'>
+            <div className='text-center mt-3 transition-all duration-300'>
               <a
                 href='/forgot-password'
-                className='text-sm text-(--color-terracotta-suave) hover:underline transition-all duration-200 hover:scale-105'
+                className='text-xs text-(--color-terracotta-suave) hover:underline transition-all duration-200 hover:scale-105'
               >
                 ¿Olvidaste tu contraseña?
               </a>
