@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthContext';
 import { Button } from '@/components/ui/shadcn/button';
 import { cn } from '@/lib/utils';
@@ -18,6 +19,15 @@ interface UserMenuProps {
 // Component for user avatar and name with animation
 export const UserAvatar: React.FC<{ user: User; className?: string }> = ({ user, className }) => {
   const [isNameVisible, setIsNameVisible] = useState(false);
+  const navigate = useNavigate();
+
+  const handleAvatarClick = () => {
+    if (user?.role === 'comprador') {
+      navigate('/perfil');
+      return;
+    }
+    setIsNameVisible(!isNameVisible);
+  };
 
   const userInitial = useMemo(() => {
     if (!user?.email) return 'U';
@@ -35,7 +45,7 @@ export const UserAvatar: React.FC<{ user: User; className?: string }> = ({ user,
             className='relative z-10 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md'
             onMouseEnter={() => setIsNameVisible(true)}
             onMouseLeave={() => setIsNameVisible(false)}
-            onClick={() => setIsNameVisible(!isNameVisible)}
+            onClick={handleAvatarClick}
           >
             {userInitial}
             {/* Vendor approval status dot (green/red) */}
@@ -76,7 +86,7 @@ export const UserAvatar: React.FC<{ user: User; className?: string }> = ({ user,
           {/* Avatar/Logo container */}
           <div 
             className='relative z-10 flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold cursor-pointer transition-all duration-200 active:scale-95'
-            onClick={() => setIsNameVisible(!isNameVisible)}
+            onClick={handleAvatarClick}
           >
             {userInitial}
             {/* Vendor approval status dot (green/red) */}
