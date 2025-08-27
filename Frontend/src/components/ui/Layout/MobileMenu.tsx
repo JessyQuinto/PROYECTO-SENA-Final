@@ -102,13 +102,8 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   }, [isOpen, handleKeyDown]);
 
   const handleSignOut = async () => {
-    try {
-      await signOut();
-      onClose();
-    } catch (error) {
-      console.error('[MobileMenu] Sign out error:', error);
-      onClose(); // Close menu even if sign out fails
-    }
+    await signOut();
+    onClose();
   };
 
   const getUserInitial = () => {
@@ -123,13 +118,39 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
     <div 
       ref={menuRef}
       id={id}
-      className='md:hidden border-t bg-card shadow-lg'
+      className='md:hidden border-t bg-card'
       role='region'
       aria-label='Menú de navegación móvil'
     >
-      <div className='px-3 py-3 space-y-3'>
-        {/* Navegación principal - Solo las opciones principales */}
-        <nav className='space-y-1' role='navigation' aria-label='Navegación principal'>
+      <div className='px-4 py-4 space-y-3'>
+        {/* Theme toggle */}
+        <div className='flex items-center justify-between py-2'>
+          <span className='text-sm font-medium'>Tema</span>
+          <ThemeToggle />
+        </div>
+
+        {/* Cart link for buyers */}
+        {user?.role === 'comprador' && (
+          <Link
+            to='/carrito'
+            onClick={onClose}
+            className='flex items-center justify-between rounded-md px-3 py-2 text-base font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+            aria-label={`Ir al carrito${cartCount > 0 ? ` (${cartCount} artículos)` : ''}`}
+          >
+            <span>Carrito</span>
+            {cartCount > 0 && (
+              <span 
+                className='flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-medium text-destructive-foreground'
+                aria-label={`${cartCount} artículos en el carrito`}
+              >
+                {cartCount}
+              </span>
+            )}
+          </Link>
+        )}
+
+        {/* Navigation items */}
+        <nav className='space-y-1' role='navigation' aria-label='Elementos de navegación'>
           {items.map(item => {
             const isActive = currentPath === item.path;
             return (
@@ -138,7 +159,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                 to={item.path}
                 onClick={onClose}
                 className={cn(
-                  'block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                  'block rounded-md px-3 py-2 text-base font-medium transition-colors',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                   isActive
                     ? 'bg-accent text-accent-foreground'
@@ -152,61 +173,46 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
           })}
         </nav>
 
-        {/* Carrito - Solo para compradores */}
-        {user?.role === 'comprador' && (
-          <Link
-            to='/carrito'
-            onClick={onClose}
-            className='flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border-t pt-3'
-            aria-label={`Ir al carrito${cartCount > 0 ? ` (${cartCount} artículos)` : ''}`}
-          >
-            <div className='flex items-center space-x-2'>
-              <svg className='h-4 w-4' viewBox='0 0 24 24' fill='none' stroke='currentColor'>
-                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 10H19M7 13v10a2 2 0 002 2h10a2 2 0 002-2V13M7 13L5.4 5M7 13h10' />
-              </svg>
-              <span>Carrito</span>
-            </div>
-            {cartCount > 0 && (
-              <span 
-                className='flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-medium text-destructive-foreground'
-                aria-label={`${cartCount} artículos en el carrito`}
-              >
-                {cartCount}
-              </span>
-            )}
-          </Link>
-        )}
-
-        {/* Theme Toggle Section - Accesible en móvil */}
-        <div className='border-t pt-3 mt-4'>
-          <div className='flex items-center justify-between py-2'>
-            <span className='text-sm font-medium text-foreground'>Tema</span>
-            <ThemeToggle className='mobile-theme-toggle' />
-          </div>
-        </div>
-
-        {/* Sección de usuario compacta en la parte inferior */}
+        {/* User section */}
         {user ? (
-          <div className='border-t pt-3 mt-4'>
-            <div className='flex items-center justify-between py-2'>
-              <div className='flex items-center space-x-2'>
-                <div className='flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold'>
+          <div className='border-t pt-4'>
+            <div className='flex items-center justify-between'>
+              <div className='flex items-center space-x-3'>
+                <div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold'>
                   {getUserInitial()}
                 </div>
                 <div className='flex flex-col'>
-                  <span className='text-xs font-medium text-foreground truncate max-w-[120px]'>
+                  <span className='text-sm font-medium text-foreground'>
                     {user.nombre || user.email}
                   </span>
-                  <span className='text-xxs text-muted-foreground capitalize'>
-                    {user.role}
-                  </span>
+                  <div className='flex items-center space-x-2'>
+                    <span className='text-xs text-muted-foreground capitalize'>
+                      {user.role}
+                    </span>
+                    {user.role === 'vendedor' && user.vendedor_estado && (
+                      <span
+                        className={cn(
+                          'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium',
+                          {
+                            'bg-green-100 text-green-800':
+                              user.vendedor_estado === 'aprobado',
+                            'bg-yellow-100 text-yellow-800':
+                              user.vendedor_estado === 'pendiente',
+                            'bg-red-100 text-red-800':
+                              user.vendedor_estado === 'rechazado',
+                          }
+                        )}
+                      >
+                        {user.vendedor_estado}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
               <Button 
-                variant='ghost' 
+                variant='outline' 
                 size='sm' 
                 onClick={handleSignOut}
-                className='text-xs h-7 px-2'
                 aria-label='Cerrar sesión'
               >
                 Salir
@@ -214,14 +220,14 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
             </div>
           </div>
         ) : (
-          <div className='border-t pt-3 mt-4 space-y-2'>
+          <div className='border-t pt-4 space-y-2'>
             <Link to='/login' onClick={onClose} className='block'>
-              <Button variant='outline' size='sm' className='w-full text-xs h-8'>
+              <Button variant='outline' className='w-full'>
                 Iniciar sesión
               </Button>
             </Link>
             <Link to='/register' onClick={onClose} className='block'>
-              <Button size='sm' className='w-full text-xs h-8'>Crear cuenta</Button>
+              <Button className='w-full'>Crear cuenta</Button>
             </Link>
           </div>
         )}

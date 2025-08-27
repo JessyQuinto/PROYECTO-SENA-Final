@@ -46,97 +46,97 @@ const BuyerProfile: React.FC = () => {
   };
 
   return (
-    <div className='container py-6 sm:py-8'>
-      <h1 className='heading-lg mb-4 sm:mb-6 flex items-center gap-3'>
+    <div className='container py-8'>
+      <h1 className='heading-lg mb-6 flex items-center gap-3'>
         <Icon
           category='Usuario'
           name='IconamoonProfileFill'
-          className='w-6 h-6 sm:w-8 sm:h-8'
+          className='w-8 h-8'
         />
-        <span className='text-xl sm:text-2xl'>Mi perfil</span>
+        Mi perfil
       </h1>
 
-      <div className='grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6'>
-        <Card className='xl:col-span-2'>
-          <CardContent className='p-4 sm:p-6 space-y-4 sm:space-y-6'>
+      <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+        <Card className='lg:col-span-2'>
+          <CardContent className='p-6 space-y-4'>
             <div>
-              <h2 className='font-semibold mb-3 sm:mb-4 flex items-center gap-2 text-base sm:text-lg'>
+              <h2 className='font-semibold mb-2 flex items-center gap-2'>
                 <Icon
                   category='Usuario'
                   name='IconamoonProfileFill'
-                  className='w-4 h-4 sm:w-5 sm:h-5'
+                  className='w-5 h-5'
                 />
-                <span>Información de la cuenta</span>
+                Información de la cuenta
               </h2>
-              <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm'>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-3 text-sm'>
                 <div>
-                  <div className='text-gray-500 flex items-center gap-1 mb-1'>
+                  <div className='text-gray-500 flex items-center gap-1'>
                     <Icon
                       category='Usuario'
                       name='IconamoonProfileFill'
                       className='w-3 h-3'
                     />
-                    <span>Nombre</span>
+                    Nombre
                   </div>
-                  <div className='font-medium text-sm sm:text-base truncate'>{user?.nombre || '—'}</div>
+                  <div className='font-medium'>{user?.nombre || '—'}</div>
                 </div>
                 <div>
-                  <div className='text-gray-500 flex items-center gap-1 mb-1'>
+                  <div className='text-gray-500 flex items-center gap-1'>
                     <Icon
                       category='Autenticacion'
                       name='MdiMail'
                       className='w-3 h-3'
                     />
-                    <span>Correo</span>
+                    Correo
                   </div>
-                  <div className='font-medium text-sm sm:text-base truncate'>{user?.email || '—'}</div>
+                  <div className='font-medium'>{user?.email || '—'}</div>
                 </div>
-                <div className='sm:col-span-2'>
-                  <div className='text-gray-500 flex items-center gap-1 mb-1'>
+                <div>
+                  <div className='text-gray-500 flex items-center gap-1'>
                     <Icon
                       category='Usuario'
                       name='MaterialSymbolsShieldLocked'
                       className='w-3 h-3'
                     />
-                    <span>Rol</span>
+                    Rol
                   </div>
-                  <div className='font-medium text-sm sm:text-base capitalize'>{user?.role}</div>
+                  <div className='font-medium capitalize'>{user?.role}</div>
                 </div>
               </div>
             </div>
 
-            <div className='grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4'>
-              <Link to='/mis-pedidos' className='select-card p-4 sm:p-5 block min-h-[80px] sm:min-h-[100px]'>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+              <Link to='/mis-pedidos' className='select-card p-5 block'>
                 <div className='flex items-start gap-3'>
-                  <div className='p-2 bg-gray-100 rounded-md flex-shrink-0'>
+                  <div className='p-2 bg-gray-100 rounded-md'>
                     <Icon
                       category='Pedidos'
                       name='MaterialSymbolsOrdersOutlineRounded'
-                      className='w-5 h-5 sm:w-6 sm:h-6'
+                      className='w-6 h-6'
                       alt=''
                     />
                   </div>
-                  <div className='flex-1 min-w-0'>
-                    <h3 className='font-semibold mb-1 text-sm sm:text-base'>Mis pedidos</h3>
-                    <p className='text-xs sm:text-sm text-gray-600 line-clamp-2'>
+                  <div className='flex-1'>
+                    <h3 className='font-semibold mb-1'>Mis pedidos</h3>
+                    <p className='text-sm text-gray-600'>
                       Revisa el estado de tus compras y descarga recibos.
                     </p>
                   </div>
                 </div>
               </Link>
-              <Link to='/mis-calificaciones' className='select-card p-4 sm:p-5 block min-h-[80px] sm:min-h-[100px]'>
+              <Link to='/mis-calificaciones' className='select-card p-5 block'>
                 <div className='flex items-start gap-3'>
-                  <div className='p-2 bg-gray-100 rounded-md flex-shrink-0'>
+                  <div className='p-2 bg-gray-100 rounded-md'>
                     <Icon
                       category='Catálogo y producto'
                       name='LucideHeart'
-                      className='w-5 h-5 sm:w-6 sm:h-6'
+                      className='w-6 h-6'
                       alt=''
                     />
                   </div>
-                  <div className='flex-1 min-w-0'>
-                    <h3 className='font-semibold mb-1 text-sm sm:text-base'>Mis calificaciones</h3>
-                    <p className='text-xs sm:text-sm text-gray-600 line-clamp-2'>
+                  <div className='flex-1'>
+                    <h3 className='font-semibold mb-1'>Mis calificaciones</h3>
+                    <p className='text-sm text-gray-600'>
                       Califica tus compras y revisa opiniones anteriores.
                     </p>
                   </div>
@@ -144,22 +144,22 @@ const BuyerProfile: React.FC = () => {
               </Link>
               <Link
                 to='/perfil/perfiles'
-                className='select-card p-4 sm:p-5 block lg:col-span-2 min-h-[80px] sm:min-h-[100px]'
+                className='select-card p-5 block md:col-span-2'
               >
                 <div className='flex items-start gap-3'>
-                  <div className='p-2 bg-gray-100 rounded-md flex-shrink-0'>
+                  <div className='p-2 bg-gray-100 rounded-md'>
                     <Icon
                       category='Usuario'
                       name='RivetIconsSettings'
-                      className='w-5 h-5 sm:w-6 sm:h-6'
+                      className='w-6 h-6'
                       alt=''
                     />
                   </div>
-                  <div className='flex-1 min-w-0'>
-                    <h3 className='font-semibold mb-1 text-sm sm:text-base'>
+                  <div className='flex-1'>
+                    <h3 className='font-semibold mb-1'>
                       Perfiles de pago y envío
                     </h3>
-                    <p className='text-xs sm:text-sm text-gray-600 line-clamp-2'>
+                    <p className='text-sm text-gray-600'>
                       Gestiona tus direcciones y métodos de pago guardados.
                     </p>
                   </div>
@@ -168,16 +168,16 @@ const BuyerProfile: React.FC = () => {
             </div>
 
             <div className='pt-4 border-t'>
-              <h2 className='font-semibold mb-3 sm:mb-4 flex items-center gap-2 text-base sm:text-lg'>
+              <h2 className='font-semibold mb-2 flex items-center gap-2'>
                 <Icon
                   category='Usuario'
                   name='MdiShieldOff'
-                  className='w-4 h-4 sm:w-5 sm:h-5'
+                  className='w-5 h-5'
                 />
-                <span>Privacidad</span>
+                Privacidad
               </h2>
               <button
-                className='btn btn-danger flex items-center justify-center gap-2 min-h-[44px] w-full sm:w-auto text-sm sm:text-base'
+                className='btn btn-danger flex items-center gap-2'
                 onClick={deleteAccount}
               >
                 <Icon
@@ -185,67 +185,67 @@ const BuyerProfile: React.FC = () => {
                   name='BxErrorCircle'
                   className='w-4 h-4'
                 />
-                <span>Eliminar mi cuenta</span>
+                Eliminar mi cuenta
               </button>
             </div>
           </CardContent>
         </Card>
 
-        <div className='space-y-4 sm:space-y-6'>
+        <div className='space-y-6'>
           <Card>
-            <CardContent className='p-4 sm:p-6 space-y-3'>
-              <h2 className='font-semibold flex items-center gap-2 text-base sm:text-lg'>
+            <CardContent className='p-6 space-y-3'>
+              <h2 className='font-semibold flex items-center gap-2'>
                 <Icon
                   category='Navegación principal'
                   name='MdiGrid'
-                  className='w-4 h-4 sm:w-5 sm:h-5'
+                  className='w-5 h-5'
                 />
-                <span>Accesos rápidos</span>
+                Accesos rápidos
               </h2>
-              <div className='grid grid-cols-1 gap-2 sm:gap-3'>
+              <div className='grid grid-cols-1 gap-2'>
                 <Link
                   to='/carrito'
-                  className='btn btn-outline text-center flex items-center justify-center gap-2 min-h-[44px] text-sm sm:text-base'
+                  className='btn btn-outline text-center flex items-center justify-center gap-2'
                 >
                   <Icon
                     category='Carrito y checkout'
                     name='WhhShoppingcart'
                     className='w-4 h-4'
                   />
-                  <span>Ver carrito</span>
+                  Ver carrito
                 </Link>
                 <Link
                   to='/checkout'
-                  className='btn btn-outline text-center flex items-center justify-center gap-2 min-h-[44px] text-sm sm:text-base'
+                  className='btn btn-outline text-center flex items-center justify-center gap-2'
                 >
                   <Icon
                     category='Carrito y checkout'
                     name='StreamlinePlumpPaymentRecieve7Solid'
                     className='w-4 h-4'
                   />
-                  <span>Ir a pagar</span>
+                  Ir a pagar
                 </Link>
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardContent className='p-4 sm:p-6 space-y-3'>
-              <h2 className='font-semibold flex items-center gap-2 text-base sm:text-lg'>
+            <CardContent className='p-6 space-y-3'>
+              <h2 className='font-semibold flex items-center gap-2'>
                 <Icon
                   category='Navegación principal'
                   name='MaterialSymbolsContactSupportRounded'
-                  className='w-4 h-4 sm:w-5 sm:h-5'
+                  className='w-5 h-5'
                 />
-                <span>Soporte</span>
+                Soporte
               </h2>
-              <p className='text-xs sm:text-sm text-gray-600'>
+              <p className='text-sm text-gray-600'>
                 ¿Necesitas ayuda con tu compra? Contáctanos.
               </p>
               <Button
                 asChild
                 variant='secondary'
-                className='flex items-center justify-center gap-2 min-h-[44px] w-full text-sm sm:text-base'
+                className='flex items-center gap-2'
               >
                 <a href='mailto:soporte@tesoroschoco.local'>
                   <Icon
@@ -253,7 +253,7 @@ const BuyerProfile: React.FC = () => {
                     name='MdiMail'
                     className='w-4 h-4'
                   />
-                  <span>Contactar soporte</span>
+                  Contactar soporte
                 </a>
               </Button>
             </CardContent>

@@ -33,7 +33,6 @@ export const AuthForms: React.FC<AuthFormsProps> = ({
   defaultMode = 'login',
 }) => {
   const [mode, setMode] = useState<'login' | 'signup'>(defaultMode);
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
@@ -45,15 +44,19 @@ export const AuthForms: React.FC<AuthFormsProps> = ({
       try {
         const result = await signIn(values.email, values.password);
         if (result.error) {
-          toast.error(result.error);
+          toast.error('Error en el inicio de sesión', {
+            action: 'login',
+          });
         } else {
-          toast.success('', {
+          toast.success('Inicio de sesión exitoso', {
             action: 'login',
           });
           navigate('/dashboard');
         }
       } catch (error: any) {
-        toast.error('Error inesperado');
+        toast.error('Error inesperado', {
+          action: 'login',
+        });
       }
     },
   });
@@ -67,194 +70,170 @@ export const AuthForms: React.FC<AuthFormsProps> = ({
         // Los administradores solo pueden ser creados por el super-admin
         const result = await signUp(values.email, values.password, 'comprador');
         if (result.error) {
-          toast.error(result.error);
-        } else {
-          toast.success('Revisa tu correo para confirmar tu cuenta', {
+          toast.error(result.error, {
             action: 'register',
           });
+        } else {
+          toast.success(
+            'Registro exitoso. Revisa tu correo para confirmar tu cuenta.',
+            {
+              action: 'register',
+            }
+          );
           navigate('/verify-email', {
             state: { email: values.email },
           });
         }
       } catch (error: any) {
-        toast.error('Error inesperado');
+        toast.error('Error inesperado', {
+          action: 'register',
+        });
       }
     },
   });
 
   const toggleMode = () => {
-    setIsTransitioning(true);
-    // Reset forms when switching modes to clear any errors
-    loginForm.reset();
-    signupForm.reset();
-    
-    // Delay the mode change to allow for smooth transition
-    setTimeout(() => {
-      setMode(mode === 'login' ? 'signup' : 'login');
-      setIsTransitioning(false);
-    }, 150); // Half of transition duration for smoother effect
+    setMode(mode === 'login' ? 'signup' : 'login');
   };
 
   return (
-    <div className='w-full max-w-sm mx-auto'>
+    <div className='w-full max-w-md mx-auto'>
       <div className='card card-hover'>
-        <div className='card-body p-4'>
-          <div 
-            className={`transition-all duration-300 ease-out ${
-              isTransitioning ? 'opacity-0 transform scale-95' : 'opacity-100 transform scale-100'
-            }`}
-          >
-            <div className='text-center mb-4'>
-              <h2 className='text-xl font-semibold mb-1 transition-all duration-300'>
-                {mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
-              </h2>
-              <p className='text-xs opacity-70 transition-all duration-300'>
-                {mode === 'login'
-                  ? 'Accede a tu cuenta para continuar'
-                  : 'Únete a nuestra comunidad de artesanos'}
-              </p>
-            </div>
-
-            <div className='min-h-[180px] transition-all duration-300'>
-              {mode === 'login' ? (
-                <form
-                  onSubmit={e => loginForm.handleSubmit(e)}
-                  className='space-y-4 transition-all duration-300'
-                >
-                  <div className='space-y-2'>
-                    <Label htmlFor='login-email'>Email</Label>
-                    <Input
-                      id='login-email'
-                      type='email'
-                      value={loginForm.values.email}
-                      onChange={e => loginForm.setValue('email', e.target.value)}
-                      onBlur={() => loginForm.validateField('email')}
-                      placeholder='tu@email.com'
-                      className={`transition-all duration-200 ${
-                        loginForm.errors.email ? 'border-red-500' : ''
-                      }`}
-                    />
-                    {loginForm.errors.email && (
-                      <p className='text-sm text-red-600 animate-in slide-in-from-top-1 duration-200'>
-                        {loginForm.errors.email}
-                      </p>
-                    )}
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='login-password'>Contraseña</Label>
-                    <Input
-                      id='login-password'
-                      type='password'
-                      value={loginForm.values.password}
-                      onChange={e => loginForm.setValue('password', e.target.value)}
-                      onBlur={() => loginForm.validateField('password')}
-                      placeholder='••••••••'
-                      className={`transition-all duration-200 ${
-                        loginForm.errors.password ? 'border-red-500' : ''
-                      }`}
-                    />
-                    {loginForm.errors.password && (
-                      <p className='text-sm text-red-600 animate-in slide-in-from-top-1 duration-200'>
-                        {loginForm.errors.password}
-                      </p>
-                    )}
-                  </div>
-                  <Button
-                    type='submit'
-                    className='w-full transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]'
-                    disabled={loginForm.isSubmitting}
-                  >
-                    {loginForm.isSubmitting
-                      ? 'Iniciando sesión…'
-                      : 'Iniciar sesión'}
-                  </Button>
-                </form>
-              ) : (
-                <form 
-                  onSubmit={signupForm.handleSubmit} 
-                  className='space-y-4 transition-all duration-300'
-                >
-                  <div className='space-y-2'>
-                    <Label htmlFor='signup-email'>Email</Label>
-                    <Input
-                      id='signup-email'
-                      type='email'
-                      value={signupForm.values.email}
-                      onChange={e => signupForm.setValue('email', e.target.value)}
-                      onBlur={() => signupForm.validateField('email')}
-                      placeholder='tu@email.com'
-                      className={`transition-all duration-200 ${
-                        signupForm.errors.email ? 'border-red-500' : ''
-                      }`}
-                    />
-                    {signupForm.errors.email && (
-                      <p className='text-sm text-red-600 animate-in slide-in-from-top-1 duration-200'>
-                        {signupForm.errors.email}
-                      </p>
-                    )}
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='signup-password'>Contraseña</Label>
-                    <Input
-                      id='signup-password'
-                      type='password'
-                      value={signupForm.values.password}
-                      onChange={e =>
-                        signupForm.setValue('password', e.target.value)
-                      }
-                      onBlur={() => signupForm.validateField('password')}
-                      placeholder='••••••••'
-                      className={`transition-all duration-200 ${
-                        signupForm.errors.password ? 'border-red-500' : ''
-                      }`}
-                    />
-                    {signupForm.errors.password && (
-                      <p className='text-sm text-red-600 animate-in slide-in-from-top-1 duration-200'>
-                        {signupForm.errors.password}
-                      </p>
-                    )}
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='signup-confirm'>Confirmar contraseña</Label>
-                    <Input
-                      id='signup-confirm'
-                      type='password'
-                      value={signupForm.values.confirmPassword}
-                      onChange={e =>
-                        signupForm.setValue('confirmPassword', e.target.value)
-                      }
-                      onBlur={() => signupForm.validateField('confirmPassword')}
-                      placeholder='••••••••'
-                      className={`transition-all duration-200 ${
-                        signupForm.errors.confirmPassword ? 'border-red-500' : ''
-                      }`}
-                    />
-                    {signupForm.errors.confirmPassword && (
-                      <p className='text-sm text-red-600 animate-in slide-in-from-top-1 duration-200'>
-                        {signupForm.errors.confirmPassword}
-                      </p>
-                    )}
-                  </div>
-                  <Button
-                    type='submit'
-                    className='w-full transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]'
-                    disabled={signupForm.isSubmitting}
-                  >
-                    {signupForm.isSubmitting ? 'Creando cuenta…' : 'Crear cuenta'}
-                  </Button>
-                </form>
-              )}
-            </div>
+        <div className='card-body'>
+          <div className='text-center mb-6'>
+            <h2 className='text-2xl font-semibold mb-2'>
+              {mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
+            </h2>
+            <p className='text-sm opacity-70'>
+              {mode === 'login'
+                ? 'Accede a tu cuenta para continuar'
+                : 'Únete a nuestra comunidad de artesanos'}
+            </p>
           </div>
 
-          <div className='text-center mt-4'>
+          {mode === 'login' ? (
+            <form
+              onSubmit={e => loginForm.handleSubmit(e)}
+              className='space-y-4'
+            >
+              <div className='space-y-2'>
+                <Label htmlFor='login-email'>Email</Label>
+                <Input
+                  id='login-email'
+                  type='email'
+                  value={loginForm.values.email}
+                  onChange={e => loginForm.setValue('email', e.target.value)}
+                  onBlur={() => loginForm.validateField('email')}
+                  placeholder='tu@email.com'
+                  className={loginForm.errors.email ? 'border-red-500' : ''}
+                />
+                {loginForm.errors.email && (
+                  <p className='text-sm text-red-600'>
+                    {loginForm.errors.email}
+                  </p>
+                )}
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='login-password'>Contraseña</Label>
+                <Input
+                  id='login-password'
+                  type='password'
+                  value={loginForm.values.password}
+                  onChange={e => loginForm.setValue('password', e.target.value)}
+                  onBlur={() => loginForm.validateField('password')}
+                  placeholder='••••••••'
+                  className={loginForm.errors.password ? 'border-red-500' : ''}
+                />
+                {loginForm.errors.password && (
+                  <p className='text-sm text-red-600'>
+                    {loginForm.errors.password}
+                  </p>
+                )}
+              </div>
+              <Button
+                type='submit'
+                className='w-full'
+                disabled={loginForm.isSubmitting}
+              >
+                {loginForm.isSubmitting
+                  ? 'Iniciando sesión…'
+                  : 'Iniciar sesión'}
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={signupForm.handleSubmit} className='space-y-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='signup-email'>Email</Label>
+                <Input
+                  id='signup-email'
+                  type='email'
+                  value={signupForm.values.email}
+                  onChange={e => signupForm.setValue('email', e.target.value)}
+                  onBlur={() => signupForm.validateField('email')}
+                  placeholder='tu@email.com'
+                  className={signupForm.errors.email ? 'border-red-500' : ''}
+                />
+                {signupForm.errors.email && (
+                  <p className='text-sm text-red-600'>
+                    {signupForm.errors.email}
+                  </p>
+                )}
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='signup-password'>Contraseña</Label>
+                <Input
+                  id='signup-password'
+                  type='password'
+                  value={signupForm.values.password}
+                  onChange={e =>
+                    signupForm.setValue('password', e.target.value)
+                  }
+                  onBlur={() => signupForm.validateField('password')}
+                  placeholder='••••••••'
+                  className={signupForm.errors.password ? 'border-red-500' : ''}
+                />
+                {signupForm.errors.password && (
+                  <p className='text-sm text-red-600'>
+                    {signupForm.errors.password}
+                  </p>
+                )}
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='signup-confirm'>Confirmar contraseña</Label>
+                <Input
+                  id='signup-confirm'
+                  type='password'
+                  value={signupForm.values.confirmPassword}
+                  onChange={e =>
+                    signupForm.setValue('confirmPassword', e.target.value)
+                  }
+                  onBlur={() => signupForm.validateField('confirmPassword')}
+                  placeholder='••••••••'
+                  className={
+                    signupForm.errors.confirmPassword ? 'border-red-500' : ''
+                  }
+                />
+                {signupForm.errors.confirmPassword && (
+                  <p className='text-sm text-red-600'>
+                    {signupForm.errors.confirmPassword}
+                  </p>
+                )}
+              </div>
+              <Button
+                type='submit'
+                className='w-full'
+                disabled={signupForm.isSubmitting}
+              >
+                {signupForm.isSubmitting ? 'Creando cuenta…' : 'Crear cuenta'}
+              </Button>
+            </form>
+          )}
+
+          <div className='text-center mt-6'>
             <button
               type='button'
               onClick={toggleMode}
-              disabled={isTransitioning}
-              className={`text-xs text-(--color-terracotta-suave) hover:underline transition-all duration-200 ${
-                isTransitioning ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
-              }`}
+              className='text-sm text-(--color-terracotta-suave) hover:underline'
             >
               {mode === 'login'
                 ? '¿No tienes cuenta? Regístrate aquí'
@@ -263,10 +242,10 @@ export const AuthForms: React.FC<AuthFormsProps> = ({
           </div>
 
           {mode === 'login' && (
-            <div className='text-center mt-3 transition-all duration-300'>
+            <div className='text-center mt-4'>
               <a
                 href='/forgot-password'
-                className='text-xs text-(--color-terracotta-suave) hover:underline transition-all duration-200 hover:scale-105'
+                className='text-sm text-(--color-terracotta-suave) hover:underline'
               >
                 ¿Olvidaste tu contraseña?
               </a>

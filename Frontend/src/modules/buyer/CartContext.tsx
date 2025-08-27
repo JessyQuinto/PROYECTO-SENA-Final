@@ -4,12 +4,8 @@ import React, {
   useEffect,
   useMemo,
   useState,
-  useCallback,
-  useRef,
 } from 'react';
 import { useAuth } from '@/auth/AuthContext';
-import { useCleanupListener } from '@/lib/stateCleanup';
-import { useDebounce } from '@/hooks/useDebounce';
 
 export interface CartItem {
   productoId: string;
@@ -37,31 +33,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [items, setItems] = useState<CartItem[]>([]);
-  const { user, isSigningOut } = useAuth();
+  const { user } = useAuth();
   const storageKey = user?.id ? `${STORAGE_KEY_BASE}_${user.id}` : null;
-  const persistTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // Debounce storage operations to improve performance
-  const debouncedItems = useDebounce(items, 500);
-
-  // Clear cart immediately when logout starts
-  useEffect(() => {
-    if (isSigningOut) {
-      setItems([]);
-      // Clear any pending storage operations
-      if (persistTimeoutRef.current) {
-        clearTimeout(persistTimeoutRef.current);
-        persistTimeoutRef.current = null;
-      }
-    }
-  }, [isSigningOut]);
-
-  // Listen for cleanup events and clear cart
-  useCleanupListener(
-    useCallback(() => {
-      setItems([]);
-    }, [])
-  );
 
   useEffect(() => {
     // cargar carrito por usuario; si no hay usuario, mantener vacío
@@ -78,32 +51,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [storageKey]);
 
-  // Debounced persistence to localStorage
   useEffect(() => {
     if (!storageKey) return; // no persistir sin usuario
-    
-    // Clear any existing timeout
-    if (persistTimeoutRef.current) {
-      clearTimeout(persistTimeoutRef.current);
-    }
-    
-    // Debounce the storage operation
-    persistTimeoutRef.current = setTimeout(() => {
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(debouncedItems));
-      } catch (error) {
-        console.warn('[Cart] Failed to persist cart to localStorage:', error);
-      }
-    }, 100);
-    
-    return () => {
-      if (persistTimeoutRef.current) {
-        clearTimeout(persistTimeoutRef.current);
-      }
-    };
-  }, [debouncedItems, storageKey]);
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(items));
+    } catch {}
+  }, [items, storageKey]);
 
-  const add = useCallback((item: CartItem) => {
+  const add = (item: CartItem) => {
     setItems(prev => {
       const existing = prev.find(i => i.productoId === item.productoId);
       if (existing) {
@@ -121,9 +76,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       }
       return [...prev, item];
     });
-  }, []);
+  };
 
-  const update = useCallback((productoId: string, cantidad: number) => {
+  const update = (productoId: string, cantidad: number) => {
     setItems(prev =>
       prev.map(i =>
         i.productoId === productoId
@@ -134,29 +89,19 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
           : i
       )
     );
-  }, []);
+  };
 
-  const remove = useCallback((productoId: string) => {
+  const remove = (productoId: string) =>
     setItems(prev => prev.filter(i => i.productoId !== productoId));
-  }, []);
-  
-  const clear = useCallback(() => {
-    setItems([]);
-  }, []);
+  const clear = () => setItems([]);
 
   const total = useMemo(
     () => items.reduce((sum, i) => sum + i.precio * i.cantidad, 0),
     [items]
   );
 
-  // Memoize context value to prevent unnecessary re-renders
-  const contextValue = useMemo(
-    () => ({ items, total, add, update, remove, clear }),
-    [items, total, add, update, remove, clear]
-  );
-
   return (
-    <CartContext.Provider value={contextValue}>
+    <CartContext.Provider value={{ items, total, add, update, remove, clear }}>
       {children}
     </CartContext.Provider>
   );

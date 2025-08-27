@@ -73,7 +73,7 @@ export const RoleBadge: React.FC<{
 }> = ({ role, vendorStatus, showVendorStatus = true, size = 'sm', className }) => {
   return (
     <div className={cn('flex items-center gap-1', className)}>
-      <span className='text-gray-400 capitalize font-normal text-xxs'>
+      <span className='text-gray-400 capitalize font-normal text-xs'>
         {role}
       </span>
       {role === 'vendedor' && vendorStatus && showVendorStatus && (
@@ -147,10 +147,9 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
   const nameElement = showName && (
     <div
       className={cn(
-        'absolute right-full top-0 z-30 flex items-center transition-all duration-300 ease-in-out pr-3',
-        isNameVisible ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0 pointer-events-none'
+        'absolute right-full top-0 z-0 flex items-center transition-all duration-300 ease-in-out pr-2',
+        isNameVisible ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'
       )}
-      style={{ pointerEvents: isNameVisible ? 'none' : 'none' }}
     >
       <span
         className={cn(

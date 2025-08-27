@@ -5,6 +5,8 @@ import { supabase } from '@/lib/supabaseClient';
 import { z } from 'zod';
 import VendorLayout from './VendorLayout';
 import Icon from '@/components/ui/Icon';
+import { useVendorStatusListener } from '@/hooks/useVendorStatusListener';
+import VendorStatusNotification from '@/components/vendor/VendorStatusNotification';
 
 interface VendorStats {
   totalProductos: number;
@@ -55,6 +57,8 @@ const productSchema = z.object({
 
 const VendorDashboard: React.FC = () => {
   const { user } = useAuth();
+  // Escuchar cambios de estado de vendedor en tiempo real
+  useVendorStatusListener();
   const [stats, setStats] = useState<VendorStats | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -231,10 +235,11 @@ const VendorDashboard: React.FC = () => {
         .from('order_items')
         .select(
           `
-          id, cantidad, subtotal, enviado, created_at, order_id,
-          orders!inner(id, total, estado, created_at, comprador_id),
-          users!orders_comprador_id_fkey(email),
-          producto_nombre
+          id, cantidad, subtotal, enviado, order_id, producto_nombre,
+          orders!inner(
+            id, total, estado, created_at,
+            comprador:users(email)
+          )
         `
         )
         .eq('vendedor_id', user.id);
@@ -282,7 +287,7 @@ const VendorDashboard: React.FC = () => {
                 total: item.orders.total,
                 estado: item.orders.estado,
                 created_at: item.orders.created_at,
-                comprador_email: item.users?.email,
+                comprador_email: item.orders?.comprador?.email,
               });
             }
             return acc;
@@ -647,24 +652,24 @@ const VendorDashboard: React.FC = () => {
       title='Panel de Vendedor'
       subtitle='Gestiona tus productos y ventas'
     >
-      {/* Estadísticas - Mobile Optimized */}
+      {/* Estadísticas */}
       {stats && (
-        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8'>
+        <div className='grid grid-cols-1 md:grid-cols-4 gap-6 mb-8'>
           <div className='card'>
-            <div className='card-body p-4 sm:p-6'>
+            <div className='card-body'>
               <div className='flex items-center'>
-                <div className='p-2 sm:p-3 rounded-lg bg-blue-100 text-blue-600 flex-shrink-0'>
+                <div className='p-3 rounded-lg bg-blue-100 text-blue-600'>
                   <Icon
                     category='Catálogo y producto'
                     name='BxsPackage'
-                    className='w-5 h-5 sm:w-6 sm:h-6'
+                    className='w-6 h-6'
                   />
                 </div>
-                <div className='ml-3 sm:ml-4 min-w-0'>
-                  <p className='text-xs sm:text-sm font-medium text-gray-500 truncate'>
+                <div className='ml-4'>
+                  <p className='text-sm font-medium text-gray-500'>
                     Total Productos
                   </p>
-                  <p className='text-xl sm:text-2xl font-bold text-gray-900'>
+                  <p className='text-2xl font-bold text-gray-900'>
                     {stats.totalProductos}
                   </p>
                 </div>
@@ -673,18 +678,18 @@ const VendorDashboard: React.FC = () => {
           </div>
 
           <div className='card'>
-            <div className='card-body p-4 sm:p-6'>
+            <div className='card-body'>
               <div className='flex items-center'>
-                <div className='p-2 sm:p-3 rounded-lg bg-green-100 text-green-600 flex-shrink-0'>
+                <div className='p-3 rounded-lg bg-green-100 text-green-600'>
                   <Icon
                     category='Catálogo y producto'
                     name='LucideTags'
-                    className='w-5 h-5 sm:w-6 sm:h-6'
+                    className='w-6 h-6'
                   />
                 </div>
-                <div className='ml-3 sm:ml-4 min-w-0'>
-                  <p className='text-xs sm:text-sm font-medium text-gray-500 truncate'>Activos</p>
-                  <p className='text-xl sm:text-2xl font-bold text-gray-900'>
+                <div className='ml-4'>
+                  <p className='text-sm font-medium text-gray-500'>Activos</p>
+                  <p className='text-2xl font-bold text-gray-900'>
                     {stats.productosActivos}
                   </p>
                 </div>
@@ -693,20 +698,20 @@ const VendorDashboard: React.FC = () => {
           </div>
 
           <div className='card'>
-            <div className='card-body p-4 sm:p-6'>
+            <div className='card-body'>
               <div className='flex items-center'>
-                <div className='p-2 sm:p-3 rounded-lg bg-purple-100 text-purple-600 flex-shrink-0'>
+                <div className='p-3 rounded-lg bg-purple-100 text-purple-600'>
                   <Icon
                     category='Pedidos'
                     name='MaterialSymbolsOrdersOutlineRounded'
-                    className='w-5 h-5 sm:w-6 sm:h-6'
+                    className='w-6 h-6'
                   />
                 </div>
-                <div className='ml-3 sm:ml-4 min-w-0'>
-                  <p className='text-xs sm:text-sm font-medium text-gray-500 truncate'>
+                <div className='ml-4'>
+                  <p className='text-sm font-medium text-gray-500'>
                     Total Pedidos
                   </p>
-                  <p className='text-xl sm:text-2xl font-bold text-gray-900'>
+                  <p className='text-2xl font-bold text-gray-900'>
                     {stats.totalPedidos}
                   </p>
                 </div>
@@ -714,21 +719,21 @@ const VendorDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className='card sm:col-span-2 lg:col-span-1'>
-            <div className='card-body p-4 sm:p-6'>
+          <div className='card'>
+            <div className='card-body'>
               <div className='flex items-center'>
-                <div className='p-2 sm:p-3 rounded-lg bg-indigo-100 text-indigo-600 flex-shrink-0'>
+                <div className='p-3 rounded-lg bg-indigo-100 text-indigo-600'>
                   <Icon
                     category='Carrito y checkout'
                     name='VaadinWallet'
-                    className='w-5 h-5 sm:w-6 sm:h-6'
+                    className='w-6 h-6'
                   />
                 </div>
-                <div className='ml-3 sm:ml-4 min-w-0'>
-                  <p className='text-xs sm:text-sm font-medium text-gray-500 truncate'>
+                <div className='ml-4'>
+                  <p className='text-sm font-medium text-gray-500'>
                     Ventas del Mes
                   </p>
-                  <p className='text-xl sm:text-2xl font-bold text-gray-900'>
+                  <p className='text-2xl font-bold text-gray-900'>
                     ${stats.ventasDelMes}
                   </p>
                 </div>
@@ -738,84 +743,79 @@ const VendorDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Tabs - Mobile Optimized */}
-      <div className='mb-6 sm:mb-8'>
+      {/* Tabs */}
+      <div className='mb-8'>
         <div className='border-b border-gray-200'>
-          <nav className='-mb-px flex overflow-x-auto scrollbar-hide'>
-            <div className='flex space-x-2 sm:space-x-8 min-w-max px-4 sm:px-0'>
-              <button
-                onClick={() => goTab('products')}
-                className={`py-3 px-2 sm:px-1 border-b-2 font-medium text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap min-h-[44px] ${
-                  activeTab === 'products'
-                    ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <Icon
-                  category='Catálogo y producto'
-                  name='BxsPackage'
-                  className='w-4 h-4 flex-shrink-0'
-                />
-                <span className='hidden sm:inline'>Mis Productos</span>
-                <span className='sm:hidden'>Productos</span>
-              </button>
-              <button
-                onClick={() => goTab('orders')}
-                className={`py-3 px-2 sm:px-1 border-b-2 font-medium text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap min-h-[44px] ${
-                  activeTab === 'orders'
-                    ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <Icon
-                  category='Pedidos'
-                  name='MaterialSymbolsOrdersOutlineRounded'
-                  className='w-4 h-4 flex-shrink-0'
-                />
-                <span>Pedidos</span>
-              </button>
-              <button
-                onClick={() => goTab('add-product')}
-                className={`py-3 px-2 sm:px-1 border-b-2 font-medium text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap min-h-[44px] ${
-                  activeTab === 'add-product'
-                    ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <Icon
-                  category='Vendedor'
-                  name='LucideCircleFadingPlus'
-                  className='w-4 h-4 flex-shrink-0'
-                />
-                <span className='hidden sm:inline'>Agregar Producto</span>
-                <span className='sm:hidden'>Agregar</span>
-              </button>
-              <button
-                onClick={() => goTab('config')}
-                className={`py-3 px-2 sm:px-1 border-b-2 font-medium text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap min-h-[44px] ${
-                  activeTab === 'config'
-                    ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <Icon
-                  category='Usuario'
-                  name='RivetIconsSettings'
-                  className='w-4 h-4 flex-shrink-0'
-                />
-                <span className='hidden sm:inline'>Configuración</span>
-                <span className='sm:hidden'>Config</span>
-              </button>
-            </div>
+          <nav className='-mb-px flex space-x-8'>
+            <button
+              onClick={() => goTab('products')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
+                activeTab === 'products'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <Icon
+                category='Catálogo y producto'
+                name='BxsPackage'
+                className='w-4 h-4'
+              />
+              Mis Productos
+            </button>
+            <button
+              onClick={() => goTab('orders')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
+                activeTab === 'orders'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <Icon
+                category='Pedidos'
+                name='MaterialSymbolsOrdersOutlineRounded'
+                className='w-4 h-4'
+              />
+              Pedidos
+            </button>
+            <button
+              onClick={() => goTab('add-product')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
+                activeTab === 'add-product'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <Icon
+                category='Vendedor'
+                name='LucideCircleFadingPlus'
+                className='w-4 h-4'
+              />
+              Agregar Producto
+            </button>
+            <button
+              onClick={() => goTab('config')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
+                activeTab === 'config'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <Icon
+                category='Usuario'
+                name='RivetIconsSettings'
+                className='w-4 h-4'
+              />
+              Configuración
+            </button>
           </nav>
         </div>
       </div>
 
       {/* Tab Content */}
       {activeTab === 'products' && (
-        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6'>
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
           {products.length === 0 ? (
-            <div className='col-span-full text-center py-8 sm:py-12'>
+            <div className='col-span-full text-center py-12'>
               <svg
                 className='w-12 h-12 text-gray-400 mx-auto mb-4'
                 fill='none'
@@ -829,15 +829,15 @@ const VendorDashboard: React.FC = () => {
                   d='M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4'
                 />
               </svg>
-              <h3 className='text-base sm:text-lg font-medium text-gray-900 mb-2'>
+              <h3 className='text-lg font-medium text-gray-900 mb-2'>
                 No tienes productos
               </h3>
-              <p className='text-sm sm:text-base text-gray-500 mb-4'>
+              <p className='text-gray-500 mb-4'>
                 Comienza agregando tu primer producto.
               </p>
               <button
                 onClick={() => setActiveTab('add-product')}
-                className='btn btn-primary min-h-[44px]'
+                className='btn btn-primary'
               >
                 Agregar Producto
               </button>
@@ -846,7 +846,7 @@ const VendorDashboard: React.FC = () => {
             products.map(product => (
               <div key={product.id} className='card card-hover'>
                 {product.imagen_url && (
-                  <div className='h-40 sm:h-48 bg-gray-200'>
+                  <div className='h-48 bg-gray-200'>
                     <img
                       src={product.imagen_url}
                       alt={product.nombre}
@@ -854,13 +854,13 @@ const VendorDashboard: React.FC = () => {
                     />
                   </div>
                 )}
-                <div className='card-body p-4 sm:p-6'>
+                <div className='card-body'>
                   <div className='flex items-start justify-between mb-2'>
-                    <h3 className='text-base sm:text-lg font-semibold text-gray-900 truncate flex-1 mr-2'>
+                    <h3 className='text-lg font-semibold text-gray-900'>
                       {product.nombre}
                     </h3>
                     <span
-                      className={`badge flex-shrink-0 ${
+                      className={`badge ${
                         product.estado === 'activo'
                           ? 'badge-success'
                           : 'badge-secondary'
@@ -869,19 +869,19 @@ const VendorDashboard: React.FC = () => {
                       {product.estado}
                     </span>
                   </div>
-                  <p className='text-lg sm:text-xl font-bold text-primary-600 mb-2'>
+                  <p className='text-xl font-bold text-primary-600 mb-2'>
                     ${product.precio}
                   </p>
-                  <p className='text-xs sm:text-sm text-gray-500 mb-4'>
+                  <p className='text-sm text-gray-500 mb-4'>
                     Stock: {product.stock} unidades
                   </p>
 
-                  <div className='flex flex-col sm:flex-row gap-2'>
+                  <div className='flex space-x-2'>
                     <button
                       onClick={() =>
                         toggleProductStatus(product.id, product.estado)
                       }
-                      className={`btn btn-sm min-h-[44px] flex items-center justify-center gap-2 text-xs sm:text-sm ${
+                      className={`btn-sm flex items-center gap-1 ${
                         product.estado === 'activo'
                           ? 'btn-secondary'
                           : 'btn-accent'
@@ -894,7 +894,7 @@ const VendorDashboard: React.FC = () => {
                             name='IconParkOutlineSuccess'
                             className='w-3 h-3'
                           />
-                          <span>Desactivar</span>
+                          Desactivar
                         </>
                       ) : (
                         <>
@@ -903,12 +903,12 @@ const VendorDashboard: React.FC = () => {
                             name='IconParkSolidSuccess'
                             className='w-3 h-3'
                           />
-                          <span>Activar</span>
+                          Activar
                         </>
                       )}
                     </button>
                     <button
-                      className='btn btn-outline btn-sm min-h-[44px] flex items-center justify-center gap-2 text-xs sm:text-sm'
+                      className='btn btn-outline btn-sm flex items-center gap-1'
                       onClick={() => startEdit(product)}
                     >
                       <Icon
@@ -916,10 +916,10 @@ const VendorDashboard: React.FC = () => {
                         name='FaSolidEdit'
                         className='w-3 h-3'
                       />
-                      <span>Editar</span>
+                      Editar
                     </button>
                     <button
-                      className='btn btn-outline btn-sm min-h-[44px] flex items-center justify-center gap-2 text-xs sm:text-sm'
+                      className='btn btn-outline btn-sm flex items-center gap-1'
                       onClick={() => archiveProduct(product.id, true)}
                     >
                       <Icon
@@ -927,8 +927,7 @@ const VendorDashboard: React.FC = () => {
                         name='LineMdTrash'
                         className='w-3 h-3'
                       />
-                      <span className='hidden sm:inline'>Archivar</span>
-                      <span className='sm:hidden'>Del</span>
+                      Archivar
                     </button>
                   </div>
                 </div>
@@ -942,139 +941,97 @@ const VendorDashboard: React.FC = () => {
         <>
           <div className='card'>
             <div className='card-header'>
-              <h2 className='text-base sm:text-lg font-semibold text-gray-900'>
+              <h2 className='text-lg font-semibold text-gray-900'>
                 Pedidos Recientes
               </h2>
             </div>
-            <div className='card-body p-4 sm:p-6'>
+            <div className='card-body'>
               {orders.length === 0 ? (
-                <p className='text-gray-500 text-center py-6 sm:py-8 text-sm sm:text-base'>
+                <p className='text-gray-500 text-center py-8'>
                   No tienes pedidos aún
                 </p>
               ) : (
-                <>
-                  {/* Mobile: Card Layout */}
-                  <div className='block sm:hidden space-y-3'>
-                    {orders.map(order => (
-                      <div key={order.id} className='border border-gray-200 rounded-lg p-3'>
-                        <div className='flex justify-between items-start mb-2'>
-                          <div className='flex-1 min-w-0'>
-                            <p className='text-xs font-mono text-gray-500 truncate'>
-                              #{order.id.slice(0, 8)}
-                            </p>
-                            <p className='text-sm font-medium text-gray-900 truncate'>
-                              {order.comprador_email}
-                            </p>
-                          </div>
-                          <span
-                            className={`badge text-xs ml-2 flex-shrink-0 ${
-                              order.estado === 'entregado'
-                                ? 'badge-success'
-                                : order.estado === 'enviado'
-                                  ? 'badge-primary'
-                                  : order.estado === 'procesando'
-                                    ? 'badge-warning'
-                                    : 'badge-secondary'
-                            }`}
-                          >
-                            {order.estado}
-                          </span>
-                        </div>
-                        <div className='flex justify-between items-center'>
-                          <p className='text-sm font-bold text-primary-600'>
+                <div className='overflow-x-auto'>
+                  <table className='w-full'>
+                    <thead>
+                      <tr className='border-b border-gray-200'>
+                        <th className='text-left py-3 px-4 font-medium text-gray-500'>
+                          Pedido
+                        </th>
+                        <th className='text-left py-3 px-4 font-medium text-gray-500'>
+                          Cliente
+                        </th>
+                        <th className='text-left py-3 px-4 font-medium text-gray-500'>
+                          Total
+                        </th>
+                        <th className='text-left py-3 px-4 font-medium text-gray-500'>
+                          Estado
+                        </th>
+                        <th className='text-left py-3 px-4 font-medium text-gray-500'>
+                          Fecha
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {orders.map(order => (
+                        <tr key={order.id} className='border-b border-gray-100'>
+                          <td className='py-3 px-4 text-sm font-mono'>
+                            #{order.id.slice(0, 8)}
+                          </td>
+                          <td className='py-3 px-4 text-sm'>
+                            {order.comprador_email}
+                          </td>
+                          <td className='py-3 px-4 text-sm font-medium'>
                             ${order.total}
-                          </p>
-                          <p className='text-xs text-gray-500'>
+                          </td>
+                          <td className='py-3 px-4'>
+                            <span
+                              className={`badge ${
+                                order.estado === 'entregado'
+                                  ? 'badge-success'
+                                  : order.estado === 'enviado'
+                                    ? 'badge-primary'
+                                    : order.estado === 'procesando'
+                                      ? 'badge-warning'
+                                      : 'badge-secondary'
+                              }`}
+                            >
+                              {order.estado}
+                            </span>
+                          </td>
+                          <td className='py-3 px-4 text-sm text-gray-500'>
                             {new Date(order.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Desktop: Table Layout */}
-                  <div className='hidden sm:block overflow-x-auto'>
-                    <table className='w-full'>
-                      <thead>
-                        <tr className='border-b border-gray-200'>
-                          <th className='text-left py-3 px-4 font-medium text-gray-500'>
-                            Pedido
-                          </th>
-                          <th className='text-left py-3 px-4 font-medium text-gray-500'>
-                            Cliente
-                          </th>
-                          <th className='text-left py-3 px-4 font-medium text-gray-500'>
-                            Total
-                          </th>
-                          <th className='text-left py-3 px-4 font-medium text-gray-500'>
-                            Estado
-                          </th>
-                          <th className='text-left py-3 px-4 font-medium text-gray-500'>
-                            Fecha
-                          </th>
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {orders.map(order => (
-                          <tr key={order.id} className='border-b border-gray-100'>
-                            <td className='py-3 px-4 text-sm font-mono'>
-                              #{order.id.slice(0, 8)}
-                            </td>
-                            <td className='py-3 px-4 text-sm'>
-                              {order.comprador_email}
-                            </td>
-                            <td className='py-3 px-4 text-sm font-medium'>
-                              ${order.total}
-                            </td>
-                            <td className='py-3 px-4'>
-                              <span
-                                className={`badge ${
-                                  order.estado === 'entregado'
-                                    ? 'badge-success'
-                                    : order.estado === 'enviado'
-                                      ? 'badge-primary'
-                                      : order.estado === 'procesando'
-                                        ? 'badge-warning'
-                                        : 'badge-secondary'
-                                }`}
-                              >
-                                {order.estado}
-                              </span>
-                            </td>
-                            <td className='py-3 px-4 text-sm text-gray-500'>
-                              {new Date(order.created_at).toLocaleDateString()}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </div>
-          <div className='card mt-4 sm:mt-6'>
+          <div className='card mt-6'>
             <div className='card-header'>
-              <h2 className='text-base sm:text-lg font-semibold text-gray-900'>
+              <h2 className='text-lg font-semibold text-gray-900'>
                 Ítems pendientes de envío
               </h2>
             </div>
-            <div className='card-body p-4 sm:p-6'>
+            <div className='card-body'>
               {orderItems.filter(it => !it.enviado).length === 0 ? (
-                <p className='text-gray-500 text-sm sm:text-base'>No tienes ítems pendientes</p>
+                <p className='text-gray-500'>No tienes ítems pendientes</p>
               ) : (
-                <div className='space-y-3'>
+                <div className='space-y-2'>
                   {orderItems
                     .filter(it => !it.enviado)
                     .map(it => (
                       <div
                         key={it.id}
-                        className='flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg gap-3 sm:gap-4'
+                        className='flex items-center justify-between p-3 border rounded-lg'
                       >
-                        <div className='flex-1 min-w-0'>
-                          <p className='font-medium text-sm sm:text-base truncate'>
+                        <div>
+                          <p className='font-medium'>
                             {it.producto_nombre}{' '}
-                            <span className='text-xs sm:text-sm text-gray-500'>
+                            <span className='text-sm text-gray-500'>
                               x{it.cantidad}
                             </span>
                           </p>
@@ -1083,15 +1040,15 @@ const VendorDashboard: React.FC = () => {
                           </p>
                         </div>
                         <button
-                          className='btn btn-outline btn-sm min-h-[44px] flex items-center justify-center gap-2 text-xs sm:text-sm w-full sm:w-auto'
+                          className='btn btn-outline btn-sm flex items-center gap-1'
                           onClick={() => markItemSent(it.id)}
                         >
                           <Icon
                             category='Pedidos'
                             name='HugeiconsDeliveredSent'
-                            className='w-3 h-3 flex-shrink-0'
+                            className='w-3 h-3'
                           />
-                          <span>Marcar enviado</span>
+                          Marcar enviado
                         </button>
                       </div>
                     ))}
@@ -1511,6 +1468,7 @@ const VendorDashboard: React.FC = () => {
           </div>
         </div>
       )}
+      <VendorStatusNotification />
     </VendorLayout>
   );
 };

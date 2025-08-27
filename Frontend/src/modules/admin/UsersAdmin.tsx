@@ -154,10 +154,12 @@ const UsersAdmin: React.FC = () => {
     id: string,
     estado: Exclude<VendedorEstado, null>
   ) => {
-    const { error } = await supabase
-      .from('users')
-      .update({ vendedor_estado: estado })
-      .eq('id', id);
+    // Usar la función RPC simplificada en lugar de UPDATE directo
+    const { data, error } = await supabase.rpc('simple_admin_update_vendor_status', {
+      target_user_id: id,
+      new_status: estado
+    });
+    
     if (error) {
       (window as any).toast?.error(error.message, {
         role: 'admin',
@@ -165,13 +167,34 @@ const UsersAdmin: React.FC = () => {
       });
       return;
     }
+    
+    // Actualizar el estado local
     setUsers(list =>
       list.map(u => (u.id === id ? { ...u, vendedor_estado: estado } : u))
     );
+    
     (window as any).toast?.success(`Vendedor ${estado}`, {
       role: 'admin',
       action: estado === 'aprobado' ? 'approve' : 'reject',
     });
+
+    // 🔄 ACTUALIZAR ESTADO DEL USUARIO EN TIEMPO REAL
+    // Si el usuario afectado está actualmente logueado, notificar el cambio
+    try {
+      const currentSession = (await supabase.auth.getSession()).data.session;
+      if (currentSession?.user?.id === id) {
+        // El usuario afectado está logueado, notificar el cambio
+        window.dispatchEvent(new CustomEvent('vendorStatusChanged', {
+          detail: { 
+            vendorId: id, 
+            newStatus: estado,
+            timestamp: Date.now()
+          }
+        }));
+      }
+    } catch (e) {
+      console.warn('[refresh] No se pudo notificar cambio de estado:', e);
+    }
 
     // Notificar por correo si está habilitado en app_config
     try {
@@ -428,209 +451,50 @@ const UsersAdmin: React.FC = () => {
 
   return (
     <AdminLayout title='Gestión de Usuarios'>
-      <div className='space-y-4 sm:space-y-6'>
-        <div className='flex flex-col gap-3 sm:gap-4'>
+      <div className='space-y-6'>
+        <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
           <div>
-            <h1 className='text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight'>
+            <h1 className='text-3xl font-bold tracking-tight'>
               Gestión de Usuarios
             </h1>
-            <p className='text-sm sm:text-base text-muted-foreground'>
+            <p className='text-muted-foreground'>
               Administra usuarios, roles y permisos del sistema
             </p>
           </div>
         </div>
 
         <div className='space-y-4'>
-          {/* Filtros y búsqueda - Mobile Optimized */}
-          <div className='flex flex-col gap-3 sm:gap-4'>
-            <div className='w-full'>
+          {/* Filtros y búsqueda */}
+          <div className='flex flex-col sm:flex-row gap-4'>
+            <div className='flex-1'>
               <input
                 type='text'
                 placeholder='Buscar usuarios por email o nombre...'
-                className='input input-bordered w-full text-sm sm:text-base min-h-[44px]'
+                className='input input-bordered w-full'
                 value={query}
                 onChange={e => setQuery(e.target.value)}
               />
             </div>
           </div>
 
-          {/* Lista de usuarios - Mobile Optimized */}
+          {/* Tabla de usuarios */}
           {filtered.length === 0 ? (
-            <div className='text-center py-8 text-muted-foreground text-sm sm:text-base'>
+            <div className='text-center py-8 text-muted-foreground'>
               No se encontraron usuarios
             </div>
           ) : (
-            <>
-              {/* Mobile: Card Layout */}
-              <div className='block lg:hidden space-y-3'>
-                {filtered.map(u => (
-                  <div key={u.id} className='card bg-base-100 shadow-sm border'>
-                    <div className='card-body p-4'>
-                      {/* User Info Header */}
-                      <div className='flex items-start justify-between mb-3'>
-                        <div className='flex-1 min-w-0'>
-                          <h3 className='font-medium text-sm truncate'>
-                            {u.nombre_completo || 'Sin nombre'}
-                          </h3>
-                          <p className='text-xs text-muted-foreground truncate'>
-                            {u.email}
-                          </p>
-                          {u.created_at && (
-                            <p className='text-xs text-muted-foreground'>
-                              {new Date(u.created_at).toLocaleDateString()}
-                            </p>
-                          )}
-                        </div>
-                        <div className='flex flex-col items-end gap-1'>
-                          <span
-                            className={`badge text-xs ${
-                              u.role === 'admin'
-                                ? 'badge-error'
-                                : u.role === 'vendedor'
-                                  ? 'badge-warning'
-                                  : 'badge-info'
-                            }`}
-                          >
-                            {u.role || 'comprador'}
-                          </span>
-                          {u.role === 'vendedor' && (
-                            <span
-                              className={`badge text-xs ${
-                                u.vendedor_estado === 'aprobado'
-                                  ? 'badge-success'
-                                  : u.vendedor_estado === 'pendiente'
-                                    ? 'badge-warning'
-                                    : 'badge-secondary'
-                              }`}
-                            >
-                              {u.vendedor_estado || 'pendiente'}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className='flex flex-wrap gap-2'>
-                        {u.role === 'vendedor' && canShowButton(u, 'vendorActions') && (
-                          <>
-                            <button
-                              className='btn btn-outline btn-xs flex-1 min-h-[36px] flex items-center justify-center gap-1'
-                              onClick={() => setVendorStatus(u.id, 'aprobado')}
-                            >
-                              <Icon
-                                category='Administrador'
-                                name='MdiShieldCheck'
-                                className='w-3 h-3'
-                              />
-                              <span>Aprobar</span>
-                            </button>
-                            <button
-                              className='btn btn-outline btn-xs flex-1 min-h-[36px] flex items-center justify-center gap-1'
-                              onClick={() => setVendorStatus(u.id, 'rechazado')}
-                            >
-                              <Icon
-                                category='Vendedor'
-                                name='LineMdTrash'
-                                className='w-3 h-3'
-                              />
-                              <span>Rechazar</span>
-                            </button>
-                          </>
-                        )}
-                        
-                        {canShowButton(u, 'changeRole') && (
-                          <select
-                            className='select select-xs select-bordered flex-1 min-h-[36px]'
-                            value={u.role || 'comprador'}
-                            onChange={e =>
-                              changeUserRole(
-                                u.id,
-                                e.target.value as 'vendedor' | 'comprador'
-                              )
-                            }
-                          >
-                            <option value='comprador'>Comprador</option>
-                            <option value='vendedor'>Vendedor</option>
-                          </select>
-                        )}
-                        
-                        {canShowButton(u, 'blockActions') && (
-                          <div className='flex gap-1'>
-                            <button
-                              className={`btn btn-outline btn-xs w-8 h-8 p-0 flex items-center justify-center ${
-                                u.bloqueado ? 'opacity-50 pointer-events-none' : ''
-                              }`}
-                              onClick={() => suspend(u.id, true)}
-                              title='Bloquear'
-                            >
-                              <Icon
-                                category='Usuario'
-                                name='MdiShieldOff'
-                                className='w-3 h-3'
-                              />
-                            </button>
-                            <button
-                              className={`btn btn-outline btn-xs w-8 h-8 p-0 flex items-center justify-center ${
-                                !u.bloqueado ? 'opacity-50 pointer-events-none' : ''
-                              }`}
-                              onClick={() => suspend(u.id, false)}
-                              title='Desbloquear'
-                            >
-                              <Icon
-                                category='Administrador'
-                                name='FluentGavel32Filled'
-                                className='w-3 h-3'
-                              />
-                            </button>
-                          </div>
-                        )}
-                        
-                        <button
-                          className='btn btn-outline btn-xs min-h-[36px] flex items-center justify-center gap-1'
-                          onClick={() =>
-                            alert('Historial y métricas del usuario próximamente')
-                          }
-                        >
-                          <Icon
-                            category='Administrador'
-                            name='LucideFileClock'
-                            className='w-3 h-3'
-                          />
-                          <span>Detalles</span>
-                        </button>
-                        
-                        {canShowButton(u, 'deleteUser') && (
-                          <button
-                            className='btn btn-error btn-xs min-h-[36px] flex items-center justify-center gap-1'
-                            onClick={() => removeUser(u.id)}
-                          >
-                            <Icon
-                              category='Vendedor'
-                              name='LineMdTrash'
-                              className='w-3 h-3'
-                            />
-                            <span>Eliminar</span>
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Desktop: Table Layout */}
-              <div className='hidden lg:block overflow-x-auto'>
-                <table className='table table-zebra w-full'>
-                  <thead>
-                    <tr>
-                      <th>Usuario</th>
-                      <th>Rol</th>
-                      <th>Estado</th>
-                      <th>Acciones</th>
-                      <th>Gestión</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+            <div className='overflow-x-auto'>
+              <table className='table table-zebra w-full'>
+                <thead>
+                  <tr>
+                    <th>Usuario</th>
+                    <th>Rol</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                    <th>Gestión</th>
+                  </tr>
+                </thead>
+                <tbody>
                   {filtered.map(u => (
                     <tr key={u.id}>
                       <td className='py-2 pr-4'>
@@ -884,7 +748,6 @@ const UsersAdmin: React.FC = () => {
                 </tbody>
               </table>
             </div>
-          </>
           )}
         </div>
       </div>

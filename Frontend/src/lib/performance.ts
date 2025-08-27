@@ -293,7 +293,7 @@ class PerformanceMonitor {
 
 // Create and export singleton instance
 export const performanceMonitor = new PerformanceMonitor(
-  false // Disabled for production performance
+  true // Enable in all environments
   // You can configure an analytics endpoint here
   // import.meta.env.VITE_ANALYTICS_ENDPOINT
 );

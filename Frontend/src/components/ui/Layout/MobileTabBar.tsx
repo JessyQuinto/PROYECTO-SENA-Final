@@ -121,16 +121,12 @@ const MobileTabBar: React.FC = () => {
             <Link
               to={t.path}
               className={`mobile-tabbar-item ${isActive(t.path) ? 'active' : ''}`}
-              aria-current={isActive(t.path) ? 'page' : undefined}
             >
-              <div className='relative flex flex-col items-center justify-center h-full'>
+              <div className='relative'>
                 <Icon
                   category={t.icon.category}
                   name={t.icon.name}
-                  className={`w-5 h-5 mb-1 transition-all duration-200 ${
-                    isActive(t.path) ? 'scale-110' : 'scale-100'
-                  }`}
-                  aria-hidden='true'
+                  className='w-6 h-6'
                 />
                 {t.showBadge && cartCount > 0 && (
                   <span
@@ -140,12 +136,8 @@ const MobileTabBar: React.FC = () => {
                     {cartCount}
                   </span>
                 )}
-                <span className={`label text-xs font-medium transition-all duration-200 ${
-                  isActive(t.path) ? 'text-primary' : 'text-muted-foreground'
-                }`}>
-                  {t.label}
-                </span>
               </div>
+              <span className='label'>{t.label}</span>
             </Link>
           </li>
         ))}

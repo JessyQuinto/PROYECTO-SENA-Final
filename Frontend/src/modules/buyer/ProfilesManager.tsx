@@ -242,32 +242,32 @@ const ProfilesManager: React.FC = () => {
   };
 
   return (
-    <div className='container py-6 sm:py-8'>
-      <h1 className='heading-lg mb-4 sm:mb-6 flex items-center gap-3'>
+    <div className='container py-8'>
+      <h1 className='heading-lg mb-6 flex items-center gap-3'>
         <Icon
           category='Usuario'
           name='RivetIconsSettings'
-          className='w-6 h-6 sm:w-8 sm:h-8'
+          className='w-8 h-8'
         />
-        <span className='text-xl sm:text-2xl'>Perfiles guardados</span>
+        Perfiles guardados
       </h1>
 
-      <div className='grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6'>
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
         <Card>
-          <CardContent className='p-4 sm:p-6 space-y-4'>
-            <h2 className='font-semibold flex items-center gap-2 text-base sm:text-lg'>
+          <CardContent className='p-6 space-y-4'>
+            <h2 className='font-semibold flex items-center gap-2'>
               <Icon
                 category='Carrito y checkout'
                 name='HugeiconsMapsLocation01'
-                className='w-4 h-4 sm:w-5 sm:h-5'
+                className='w-5 h-5'
               />
-              <span>Direcciones</span>
+              Direcciones
             </h2>
-            <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
               <select
                 id='address-tipo'
                 name='address-tipo'
-                className='input min-h-[44px] text-sm sm:text-base'
+                className='input'
                 value={addr.tipo}
                 onChange={e =>
                   setAddr({ ...addr, tipo: e.target.value as any })
@@ -283,7 +283,6 @@ const ProfilesManager: React.FC = () => {
                 value={addr.nombre}
                 onChange={handleAddressChange('nombre')}
                 autoComplete='name'
-                className='min-h-[44px] text-sm sm:text-base'
               />
               <Input
                 id='address-telefono'
@@ -292,12 +291,11 @@ const ProfilesManager: React.FC = () => {
                 value={addr.telefono}
                 onChange={handleAddressChange('telefono')}
                 autoComplete='tel'
-                className='min-h-[44px] text-sm sm:text-base'
               />
               <Input
                 id='address-direccion'
                 name='address-direccion'
-                className='sm:col-span-2 min-h-[44px] text-sm sm:text-base'
+                className='md:col-span-2'
                 placeholder='Dirección'
                 value={addr.direccion}
                 onChange={handleAddressChange('direccion')}
@@ -306,7 +304,7 @@ const ProfilesManager: React.FC = () => {
               <Input
                 id='address-direccion2'
                 name='address-direccion2'
-                className='sm:col-span-2 min-h-[44px] text-sm sm:text-base'
+                className='md:col-span-2'
                 placeholder='Apto, interior, referencia'
                 value={addr.direccion2}
                 onChange={handleAddressChange('direccion2')}
@@ -319,7 +317,6 @@ const ProfilesManager: React.FC = () => {
                 value={addr.ciudad}
                 onChange={handleAddressChange('ciudad')}
                 autoComplete='address-level2'
-                className='min-h-[44px] text-sm sm:text-base'
               />
               <Input
                 id='address-departamento'
@@ -328,7 +325,6 @@ const ProfilesManager: React.FC = () => {
                 value={addr.departamento}
                 onChange={handleAddressChange('departamento')}
                 autoComplete='address-level1'
-                className='min-h-[44px] text-sm sm:text-base'
               />
               <Input
                 id='address-codigo-postal'
@@ -337,9 +333,8 @@ const ProfilesManager: React.FC = () => {
                 value={addr.codigo_postal}
                 onChange={handleAddressChange('codigo_postal')}
                 autoComplete='postal-code'
-                className='min-h-[44px] text-sm sm:text-base'
               />
-              <label className='inline-flex items-center gap-2 text-xs sm:text-sm col-span-full'>
+              <label className='inline-flex items-center gap-2 text-sm'>
                 <input
                   id='address-predeterminada'
                   name='address-predeterminada'
@@ -359,20 +354,20 @@ const ProfilesManager: React.FC = () => {
                     setAddr({ ...addr, es_predeterminada: next });
                   }}
                 />
-                <span>Predeterminada</span>
+                Predeterminada
               </label>
-              <div className='sm:col-span-2 flex flex-col sm:flex-row gap-2'>
+              <div className='md:col-span-2 flex gap-2'>
                 <Button
                   disabled={loading}
                   onClick={saveAddress}
-                  className='flex items-center justify-center gap-2 min-h-[44px] text-sm sm:text-base flex-1'
+                  className='flex items-center gap-2'
                 >
                   <Icon
                     category='Vendedor'
                     name='FaSolidEdit'
                     className='w-4 h-4'
                   />
-                  <span>{addr.id ? 'Actualizar' : 'Guardar'}</span>
+                  {addr.id ? 'Actualizar' : 'Guardar'}
                 </Button>
                 {addr.id && (
                   <Button
@@ -389,66 +384,61 @@ const ProfilesManager: React.FC = () => {
                         codigo_postal: '',
                       })
                     }
-                    className='flex items-center justify-center gap-2 min-h-[44px] text-sm sm:text-base flex-1'
+                    className='flex items-center gap-2'
                   >
                     <Icon
                       category='Estados y Feedback'
                       name='BxErrorCircle'
                       className='w-4 h-4'
                     />
-                    <span>Cancelar</span>
+                    Cancelar
                   </Button>
                 )}
               </div>
             </div>
-            <ul className='text-xs sm:text-sm divide-y'>
+            <ul className='text-sm divide-y'>
               {addresses.map(a => (
                 <li
                   key={a.id}
-                  className='py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'
+                  className='py-2 flex items-center justify-between'
                 >
-                  <div className='flex-1 min-w-0'>
-                    <div className='flex flex-wrap items-center gap-2 mb-1'>
-                      <span className='font-medium text-sm'>[{a.tipo}]</span>
-                      <span className='font-medium text-sm'>{a.nombre}</span>
-                      {a.es_predeterminada && (
-                        <span className='badge badge-success text-xs'>Default</span>
-                      )}
-                    </div>
-                    <p className='text-xs sm:text-sm text-muted-foreground truncate'>
-                      {a.ciudad}, {a.departamento}
-                    </p>
+                  <div className='truncate pr-3'>
+                    <span className='font-medium'>[{a.tipo}]</span> {a.nombre} —{' '}
+                    {a.ciudad}, {a.departamento}{' '}
+                    {a.es_predeterminada ? (
+                      <span className='badge badge-success ml-2'>Default</span>
+                    ) : null}
                   </div>
-                  <div className='flex flex-col sm:flex-row gap-2 w-full sm:w-auto'>
+                  <div className='flex gap-2'>
                     <Button
                       variant='secondary'
                       onClick={() => editAddress(a as any)}
-                      className='flex items-center justify-center gap-1 min-h-[40px] text-xs sm:text-sm'
+                      className='flex items-center gap-1'
                     >
                       <Icon
                         category='Vendedor'
                         name='FaSolidEdit'
                         className='w-3 h-3'
                       />
-                      <span>Editar</span>
+                      Editar
                     </Button>
                     <Button
                       variant='destructive'
                       onClick={() => deleteAddress(a.id!)}
-                      className='flex items-center justify-center gap-1 min-h-[40px] text-xs sm:text-sm'
+                      className='flex items-center gap-1'
                     >
                       <Icon
                         category='Vendedor'
                         name='LineMdTrash'
                         className='w-3 h-3'
                       />
-                      <span>Eliminar</span>
+                      Eliminar
                     </Button>
                   </div>
                 </li>
               ))}
             </ul>
-            <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs sm:text-sm pt-2'>
+            <div className='flex items-center justify-between text-sm pt-2'>
               <span>
                 Página {addrPage} de{' '}
                 {Math.max(1, Math.ceil(addrTotal / pageSize))}
@@ -461,14 +451,14 @@ const ProfilesManager: React.FC = () => {
                     setAddrPage(p => p - 1);
                     setTimeout(load, 0);
                   }}
-                  className='flex items-center justify-center gap-1 min-h-[40px] flex-1 sm:flex-none text-xs sm:text-sm'
+                  className='flex items-center gap-1'
                 >
                   <Icon
                     category='Catálogo y producto'
                     name='WhhArrowdown'
                     className='w-3 h-3'
                   />
-                  <span>Anterior</span>
+                  Anterior
                 </Button>
                 <Button
                   variant='secondary'
@@ -477,14 +467,14 @@ const ProfilesManager: React.FC = () => {
                     setAddrPage(p => p + 1);
                     setTimeout(load, 0);
                   }}
-                  className='flex items-center justify-center gap-1 min-h-[40px] flex-1 sm:flex-none text-xs sm:text-sm'
+                  className='flex items-center gap-1'
                 >
                   <Icon
                     category='Catálogo y producto'
                     name='WhhArrowup'
                     className='w-3 h-3'
                   />
-                  <span>Siguiente</span>
+                  Siguiente
                 </Button>
               </div>
             </div>

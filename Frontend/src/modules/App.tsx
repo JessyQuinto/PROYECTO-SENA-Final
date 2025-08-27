@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, memo } from 'react';
+import React, { Suspense, lazy } from 'react';
 import { AuthProvider } from '@/auth/AuthContext';
 import { BrowserRouter, Routes, Route, FutureConfig } from 'react-router-dom';
 import MainLayout from '@/components/ui/Layout/MainLayout';
@@ -11,7 +11,6 @@ import { Toaster } from '@/components/ui/shadcn/toaster';
 import { ThemeProvider } from '@/components/ui/ThemeProvider';
 import { PageErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { CacheProvider } from '@/components/cache/CacheProvider';
-import { LoadingPageSkeleton } from '@/components/ui/Skeleton';
 
 // Lazy load pages for better performance
 const AuthPage = lazy(() => import('@/pages/Auth'));
@@ -45,54 +44,32 @@ const OrderDetailPage = lazy(() => import('./buyer/OrderDetailPage'));
 const BuyerProfile = lazy(() => import('./buyer/BuyerProfile'));
 const BuyerProfilesManager = lazy(() => import('./buyer/ProfilesManager'));
 
-// Enhanced loading component with skeleton
-const AppLoadingSkeleton = memo(() => (
-  <LoadingPageSkeleton 
-    showNavigation={true} 
-    layout='dashboard' 
-    itemCount={6}
-  />
-));
-AppLoadingSkeleton.displayName = 'AppLoadingSkeleton';
+// Loading component
+const LoadingSpinner = () => (
+  <div className='container py-10 flex items-center justify-center'>
+    <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
+    <span className='ml-2'>Cargando…</span>
+  </div>
+);
 
-// Memoized core providers to prevent unnecessary re-renders
-const CoreProviders = memo(({ children }: { children: React.ReactNode }) => (
+export const App: React.FC = () => (
   <PageErrorBoundary>
     <ThemeProvider>
       <CacheProvider>
         <AuthProvider>
-          {children}
-        </AuthProvider>
-      </CacheProvider>
-    </ThemeProvider>
-  </PageErrorBoundary>
-));
-CoreProviders.displayName = 'CoreProviders';
-
-// Memoized UI providers
-const UIProviders = memo(({ children }: { children: React.ReactNode }) => (
-  <CartProvider>
-    <ToastProvider>
-      <MainLayout>
-        {children}
-        <Toaster position='top-right' richColors closeButton />
-      </MainLayout>
-    </ToastProvider>
-  </CartProvider>
-));
-UIProviders.displayName = 'UIProviders';
-
-export const App: React.FC = memo(() => (
-  <CoreProviders>
-    <BrowserRouter
-      future={{
-        v7_startTransition: true,
-        v7_relativeSplatPath: true,
-      } as unknown as FutureConfig}
-    >
-      <UIProviders>
-        <Suspense fallback={<AppLoadingSkeleton />}>
-          <Routes>
+          <BrowserRouter
+            future={
+              {
+                v7_startTransition: true,
+                v7_relativeSplatPath: true,
+              } as unknown as FutureConfig
+            }
+          >
+            <CartProvider>
+              <ToastProvider>
+                <MainLayout>
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <Routes>
                       {/* Public routes */}
                       <Route path='/' element={<Home />} />
                       <Route path='/productos' element={<ProductCatalog />} />
@@ -260,8 +237,13 @@ export const App: React.FC = memo(() => (
                       />
                     </Routes>
                   </Suspense>
-                </UIProviders>
-              </BrowserRouter>
-            </CoreProviders>
-          ));
-          App.displayName = 'App';
+                </MainLayout>
+                <Toaster position='top-right' richColors closeButton />
+              </ToastProvider>
+            </CartProvider>
+          </BrowserRouter>
+        </AuthProvider>
+      </CacheProvider>
+    </ThemeProvider>
+  </PageErrorBoundary>
+);

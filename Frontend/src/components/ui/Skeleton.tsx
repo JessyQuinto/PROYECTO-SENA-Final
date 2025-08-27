@@ -32,20 +32,6 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   );
 };
 
-// Configuration interfaces for skeleton layouts
-interface SkeletonLayoutConfig {
-  variant?: 'default' | 'shimmer' | 'pulse';
-  showImage?: boolean;
-  showRating?: boolean;
-  showBadge?: boolean;
-  showChart?: boolean;
-  showAvatar?: boolean;
-  columns?: number;
-  fields?: number;
-  items?: number;
-  className?: string;
-}
-
 // Enhanced Product Card Skeleton with realistic proportions
 interface ProductCardSkeletonProps {
   showRating?: boolean;
@@ -57,45 +43,51 @@ export const ProductCardSkeleton: React.FC<ProductCardSkeletonProps> = ({
   showRating = true,
   showBadge = false,
   className,
-}) => (
-  <div className={cn('space-y-3 p-4 border rounded-lg', className)}>
-    {/* Image skeleton with aspect ratio */}
-    <div className='relative'>
-      <Skeleton className='aspect-[3/2] w-full rounded-lg' variant='shimmer' />
-      {showBadge && (
-        <div className='absolute top-2 left-2'>
-          <Skeleton className='h-5 w-12 rounded-full' delay={200} />
-        </div>
-      )}
-    </div>
-
-    {/* Content skeleton */}
-    <div className='space-y-2'>
-      <Skeleton className='h-5 w-4/5' delay={100} />
-      <Skeleton className='h-4 w-3/5' delay={150} />
-
-      {/* Price and rating row */}
-      <div className='flex items-center justify-between mt-3'>
-        <Skeleton className='h-6 w-1/3' delay={200} />
-        {showRating && (
-          <div className='flex items-center gap-1'>
-            <Skeleton className='h-3 w-3 rounded-full' delay={250} />
-            <Skeleton className='h-3 w-8' delay={280} />
+}) => {
+  return (
+    <div className={cn('space-y-3 p-4 border rounded-lg', className)}>
+      {/* Image skeleton with aspect ratio */}
+      <div className='relative'>
+        <Skeleton
+          className='aspect-[3/2] w-full rounded-lg'
+          variant='shimmer'
+        />
+        {showBadge && (
+          <div className='absolute top-2 left-2'>
+            <Skeleton className='h-5 w-12 rounded-full' delay={200} />
           </div>
         )}
       </div>
 
-      {/* Action buttons */}
-      <div className='flex items-center justify-between mt-4'>
-        <Skeleton className='h-4 w-16' delay={300} />
-        <div className='flex gap-2'>
-          <Skeleton className='h-8 w-12' delay={350} />
-          <Skeleton className='h-8 w-16' delay={380} />
+      {/* Content skeleton */}
+      <div className='space-y-2'>
+        {/* Product title */}
+        <Skeleton className='h-5 w-4/5' delay={100} />
+        <Skeleton className='h-4 w-3/5' delay={150} />
+
+        {/* Price and rating row */}
+        <div className='flex items-center justify-between mt-3'>
+          <Skeleton className='h-6 w-1/3' delay={200} />
+          {showRating && (
+            <div className='flex items-center gap-1'>
+              <Skeleton className='h-3 w-3 rounded-full' delay={250} />
+              <Skeleton className='h-3 w-8' delay={280} />
+            </div>
+          )}
+        </div>
+
+        {/* Action buttons */}
+        <div className='flex items-center justify-between mt-4'>
+          <Skeleton className='h-4 w-16' delay={300} />
+          <div className='flex gap-2'>
+            <Skeleton className='h-8 w-12' delay={350} />
+            <Skeleton className='h-8 w-16' delay={380} />
+          </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Table Row Skeleton
 interface TableRowSkeletonProps {
@@ -106,15 +98,17 @@ interface TableRowSkeletonProps {
 export const TableRowSkeleton: React.FC<TableRowSkeletonProps> = ({
   columns = 4,
   className,
-}) => (
-  <tr className={className}>
-    {Array.from({ length: columns }).map((_, index) => (
-      <td key={index} className='p-4'>
-        <Skeleton className='h-4 w-full' delay={index * 50} />
-      </td>
-    ))}
-  </tr>
-);
+}) => {
+  return (
+    <tr className={className}>
+      {Array.from({ length: columns }).map((_, index) => (
+        <td key={index} className='p-4'>
+          <Skeleton className='h-4 w-full' delay={index * 50} />
+        </td>
+      ))}
+    </tr>
+  );
+};
 
 // Form Skeleton
 interface FormSkeletonProps {
@@ -127,37 +121,46 @@ export const FormSkeleton: React.FC<FormSkeletonProps> = ({
   fields = 3,
   showSubmitButton = true,
   className,
-}) => (
-  <div className={cn('space-y-6', className)}>
-    {Array.from({ length: fields }).map((_, index) => (
-      <div key={index} className='space-y-2'>
-        <Skeleton className='h-4 w-20' delay={index * 100} />
-        <Skeleton className='h-10 w-full' delay={index * 100 + 50} />
-      </div>
-    ))}
-    {showSubmitButton && (
-      <Skeleton className='h-10 w-32' delay={fields * 100 + 100} />
-    )}
-  </div>
-);
+}) => {
+  return (
+    <div className={cn('space-y-6', className)}>
+      {Array.from({ length: fields }).map((_, index) => (
+        <div key={index} className='space-y-2'>
+          <Skeleton className='h-4 w-20' delay={index * 100} />
+          <Skeleton className='h-10 w-full' delay={index * 100 + 50} />
+        </div>
+      ))}
+      {showSubmitButton && (
+        <Skeleton className='h-10 w-32' delay={fields * 100 + 100} />
+      )}
+    </div>
+  );
+};
 
 // Navigation Skeleton
-export const NavigationSkeleton: React.FC = () => (
-  <nav className='border-b bg-background'>
-    <div className='container flex h-16 items-center justify-between'>
-      <Skeleton className='h-8 w-32' />
-      <div className='hidden md:flex items-center space-x-6'>
-        {Array.from({ length: 4 }).map((_, index) => (
-          <Skeleton key={index} className='h-4 w-16' delay={index * 100} />
-        ))}
+export const NavigationSkeleton: React.FC = () => {
+  return (
+    <nav className='border-b bg-background'>
+      <div className='container flex h-16 items-center justify-between'>
+        {/* Logo */}
+        <Skeleton className='h-8 w-32' />
+
+        {/* Navigation items */}
+        <div className='hidden md:flex items-center space-x-6'>
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className='h-4 w-16' delay={index * 100} />
+          ))}
+        </div>
+
+        {/* User menu */}
+        <div className='flex items-center gap-4'>
+          <Skeleton className='h-8 w-8 rounded-full' delay={400} />
+          <Skeleton className='h-8 w-20' delay={450} />
+        </div>
       </div>
-      <div className='flex items-center gap-4'>
-        <Skeleton className='h-8 w-8 rounded-full' delay={400} />
-        <Skeleton className='h-8 w-20' delay={450} />
-      </div>
-    </div>
-  </nav>
-);
+    </nav>
+  );
+};
 
 // Dashboard Card Skeleton
 interface DashboardCardSkeletonProps {
@@ -168,34 +171,39 @@ interface DashboardCardSkeletonProps {
 export const DashboardCardSkeleton: React.FC<DashboardCardSkeletonProps> = ({
   showChart = false,
   className,
-}) => (
-  <div className={cn('rounded-lg border bg-card p-6 shadow-sm', className)}>
-    <div className='space-y-4'>
-      <div className='flex items-center justify-between'>
-        <div className='space-y-2'>
-          <Skeleton className='h-4 w-24' />
-          <Skeleton className='h-8 w-32' delay={100} />
+}) => {
+  return (
+    <div className={cn('rounded-lg border bg-card p-6 shadow-sm', className)}>
+      <div className='space-y-4'>
+        {/* Header */}
+        <div className='flex items-center justify-between'>
+          <div className='space-y-2'>
+            <Skeleton className='h-4 w-24' />
+            <Skeleton className='h-8 w-32' delay={100} />
+          </div>
+          <Skeleton className='h-8 w-8 rounded-lg' delay={150} />
         </div>
-        <Skeleton className='h-8 w-8 rounded-lg' delay={150} />
-      </div>
 
-      {showChart ? (
-        <Skeleton className='h-40 w-full' delay={200} />
-      ) : (
-        <div className='space-y-2'>
-          <Skeleton className='h-4 w-full' delay={200} />
-          <Skeleton className='h-4 w-4/5' delay={250} />
-          <Skeleton className='h-4 w-3/5' delay={300} />
+        {/* Chart or content area */}
+        {showChart ? (
+          <Skeleton className='h-40 w-full' delay={200} />
+        ) : (
+          <div className='space-y-2'>
+            <Skeleton className='h-4 w-full' delay={200} />
+            <Skeleton className='h-4 w-4/5' delay={250} />
+            <Skeleton className='h-4 w-3/5' delay={300} />
+          </div>
+        )}
+
+        {/* Footer action */}
+        <div className='flex justify-between items-center pt-4 border-t'>
+          <Skeleton className='h-4 w-20' delay={350} />
+          <Skeleton className='h-6 w-16' delay={400} />
         </div>
-      )}
-
-      <div className='flex justify-between items-center pt-4 border-t'>
-        <Skeleton className='h-4 w-20' delay={350} />
-        <Skeleton className='h-6 w-16' delay={400} />
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Text Skeleton with realistic text patterns
 interface TextSkeletonProps {
@@ -341,43 +349,5 @@ export const LoadingPageSkeleton: React.FC<LoadingPageSkeletonProps> = ({
     </div>
   );
 };
-
-// Factory function for creating typed skeleton components
-export function createSkeletonComponent<T extends Record<string, any>>(
-  layout: 'product' | 'table' | 'form' | 'dashboard' | 'navigation' | 'card' | 'text',
-  defaultProps?: Partial<T>
-) {
-  const SkeletonComponent: React.FC<T> = (props) => {
-    const mergedProps = { ...defaultProps, ...props };
-    
-    switch (layout) {
-      case 'product':
-        return <ProductCardSkeleton {...(mergedProps as any)} />;
-      case 'table':
-        return <TableRowSkeleton {...(mergedProps as any)} />;
-      case 'form':
-        return <FormSkeleton {...(mergedProps as any)} />;
-      case 'dashboard':
-        return <DashboardCardSkeleton {...(mergedProps as any)} />;
-      case 'navigation':
-        return <NavigationSkeleton />;
-      case 'card':
-        return <CardSkeleton {...(mergedProps as any)} />;
-      case 'text':
-        return <TextSkeleton {...(mergedProps as any)} />;
-      default:
-        return <Skeleton {...(mergedProps as any)} />;
-    }
-  };
-  
-  SkeletonComponent.displayName = `${layout.charAt(0).toUpperCase() + layout.slice(1)}Skeleton`;
-  return SkeletonComponent;
-}
-
-// Pre-configured skeleton components using factory function
-export const ProductSkeleton = createSkeletonComponent('product');
-export const TableSkeleton = createSkeletonComponent('table');
-export const DashboardSkeleton = createSkeletonComponent('dashboard');
-export const FormComponentSkeleton = createSkeletonComponent('form');
 
 export default Skeleton;

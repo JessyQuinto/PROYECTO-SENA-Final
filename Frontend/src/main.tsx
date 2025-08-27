@@ -7,8 +7,8 @@ import { initializeSecurity } from './lib/csp';
 import './lib/serviceWorker'; // Initialize service worker
 import './styles.css';
 
-// Initialize performance monitoring (DISABLED for better performance)
-// initPerformanceMonitoring();
+// Initialize performance monitoring
+initPerformanceMonitoring();
 
 // Initialize security configuration
 initializeSecurity();

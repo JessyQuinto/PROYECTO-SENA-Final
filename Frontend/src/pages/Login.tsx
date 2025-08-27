@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/shadcn/label';
 import { useForm } from '@/hooks/useForm';
 import { useToastWithAuth } from '@/hooks/useToast';
 import { useRateLimit } from '@/hooks/useSecurity';
+import { AuthLayout, AuthFeatureSets } from '@/components/auth/AuthLayout';
 
 // validation handled inline in submit handler
 
@@ -31,28 +32,37 @@ const LoginPage: React.FC = () => {
 
       // Validación manual simple
       if (!values.email) {
-        toast.error('El correo electrónico es obligatorio');
+        toast.error('El correo electrónico es obligatorio', {
+          action: 'login',
+        });
         return;
       }
       if (!values.password) {
-        toast.error('La contraseña es obligatoria');
+        toast.error('La contraseña es obligatoria', { action: 'login' });
         return;
       }
 
       if (!rateLimit.checkLimit()) {
-        toast.error('Demasiados intentos. Intenta más tarde.');
+        toast.error(
+          'Demasiados intentos de inicio de sesión. Intenta más tarde.',
+          {
+            action: 'login',
+          }
+        );
         return;
       }
 
       const result = await signIn(values.email, values.password);
       if (result.error) {
-        toast.error(result.error);
+        toast.error(result.error, {
+          action: 'login',
+        });
         return;
       }
 
       // Limpiar rate limit en login exitoso
       rateLimit.clearLimit();
-      toast.success('', {
+      toast.success('Inicio de sesión exitoso', {
         action: 'login',
       });
     },
@@ -65,38 +75,17 @@ const LoginPage: React.FC = () => {
   }, [user, navigate]);
 
   return (
-    <div className='min-h-[calc(100vh-120px)] grid place-items-center bg-gradient-to-br from-primary-50 to-white'>
-      <div className='container-sm'>
-        <div className='grid md:grid-cols-2 gap-8 items-center'>
-          <div className='hidden md:block'>
-            <div className='card card-hover'>
-              <div className='card-body'>
-                <h1 className='text-2xl font-semibold text-gray-900 mb-2'>
-                  Bienvenido de vuelta
-                </h1>
-                <p className='text-gray-600'>
-                  Accede a tu cuenta para continuar explorando los tesoros artesanales del Chocó.
-                </p>
-                <ul className='mt-4 space-y-2 text-sm text-gray-600'>
-                  <li>• Acceso rápido a tu perfil</li>
-                  <li>• Gestiona tus pedidos</li>
-                  <li>• Favoritos y listas personalizadas</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-          <div className='card card-hover'>
-            <div className='card-body'>
-              <div className='text-center mb-4'>
-                <h2 className='text-xl font-semibold mb-1'>
-                  Iniciar Sesión
-                </h2>
-                <p className='text-xs opacity-70'>
-                  Accede a tu cuenta para continuar
-                </p>
-              </div>
+    <AuthLayout
+      title="Bienvenido de vuelta"
+      subtitle="Iniciar Sesión"
+      description="Accede a tu cuenta para continuar explorando los tesoros artesanales del Chocó."
+      features={AuthFeatureSets.login}
+    >
+      <p className='opacity-80 text-center mb-6'>
+        Accede a tu cuenta para continuar
+      </p>
 
-      <form onSubmit={form.handleSubmit} className='space-y-4' noValidate>
+      <form onSubmit={form.handleSubmit} className='space-y-6' noValidate>
         {/* Screen reader announcement area for form errors */}
         <div 
           className='sr-only' 
@@ -200,7 +189,7 @@ const LoginPage: React.FC = () => {
       </form>
 
       {/* Links */}
-      <div className='mt-4 text-center space-y-2'>
+      <div className='mt-6 text-center space-y-3'>
         <div className='text-sm'>
           <Link
             to='/forgot-password'
@@ -219,11 +208,7 @@ const LoginPage: React.FC = () => {
           </Link>
         </div>
       </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    </AuthLayout>
   );
 };
 
