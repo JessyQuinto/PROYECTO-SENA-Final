@@ -437,14 +437,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             ok = false;
           }
           if (!ok) {
-            // Fallback si backend no disponible
-            const { error: insertError } = await supabase.from('users').insert({
-              id: data.user.id,
-              email: email,
-              role: role,
-              vendedor_estado: role === 'vendedor' ? 'pendiente' : null,
-              nombre_completo: extra?.nombre ?? null,
-            });
+            // Fallback si backend no disponible (idempotente con upsert)
+            const { error: insertError } = await supabase
+              .from('users')
+              .upsert(
+                {
+                  id: data.user.id,
+                  email: email,
+                  role: role,
+                  vendedor_estado: role === 'vendedor' ? 'pendiente' : null,
+                  nombre_completo: extra?.nombre ?? null,
+                },
+                { onConflict: 'id' }
+              );
             if (insertError) {
               if (import.meta.env.DEV) {
                 console.warn(
@@ -455,14 +460,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
           }
         } else {
-          // Fallback: crear perfil mínimo vía RLS desde el cliente (menos seguro; solo dev)
-          const { error: insertError } = await supabase.from('users').insert({
-            id: data.user.id,
-            email: email,
-            role: role,
-            vendedor_estado: role === 'vendedor' ? 'pendiente' : null,
-            nombre_completo: extra?.nombre ?? null,
-          });
+          // Fallback: crear/actualizar perfil mínimo vía RLS desde el cliente (solo dev)
+          const { error: insertError } = await supabase
+            .from('users')
+            .upsert(
+              {
+                id: data.user.id,
+                email: email,
+                role: role,
+                vendedor_estado: role === 'vendedor' ? 'pendiente' : null,
+                nombre_completo: extra?.nombre ?? null,
+              },
+              { onConflict: 'id' }
+            );
           if (insertError) {
             if (import.meta.env.DEV) {
               console.warn(

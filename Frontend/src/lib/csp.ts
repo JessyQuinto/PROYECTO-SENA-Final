@@ -63,6 +63,7 @@ export const developmentCSP: Partial<CSPDirectives> = {
     "'self'",
     'https://*.supabase.co',
     'https://*.supabase.com',
+    'http://localhost:4000',
     'ws:', // WebSocket for development
     'wss:', // Secure WebSocket
   ],
