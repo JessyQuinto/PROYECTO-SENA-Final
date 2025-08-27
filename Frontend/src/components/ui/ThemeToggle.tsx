@@ -56,6 +56,7 @@ const EnhancedThemeToggle: React.FC<ThemeToggleProps> = ({
       className={`theme-toggle ${isTransitioning ? 'transitioning' : ''} ${className ?? ''}`}
       role='group'
       aria-label='Preferencia de tema'
+      data-active={isDarkActive ? 'dark' : 'light'}
     >
       {/* Light */}
       <button
@@ -206,6 +207,7 @@ const LegacyThemeToggle: React.FC<ThemeToggleProps> = ({ className }) => {
       className={`theme-toggle ${className ?? ''}`}
       role='group'
       aria-label='Preferencia de tema'
+      data-active={(pref === 'nord-dark' || (pref === 'auto' && isDark)) ? 'dark' : 'light'}
     >
       {/* Light */}
       <button

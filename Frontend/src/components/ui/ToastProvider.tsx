@@ -42,7 +42,7 @@ function getSimpleTitle(
 
   const simpleActionTexts: Record<NonNullable<ToastOptions['action']>, { success: string; error: string; default: string }> = {
     register: { success: 'Registro exitoso', error: 'Error en el registro', default: 'Registro' },
-    login: { success: 'Bienvenido', error: 'Error de inicio de sesión', default: 'Inicio de sesión' },
+    login: { success: 'Has iniciado sesión', error: 'Error de inicio de sesión', default: 'Inicio de sesión' },
     purchase: { success: 'Compra exitosa', error: 'Error en la compra', default: 'Compra' },
     sale: { success: 'Venta realizada', error: 'Error en la venta', default: 'Venta' },
     update: { success: 'Actualizado', error: 'Error al actualizar', default: 'Actualización' },

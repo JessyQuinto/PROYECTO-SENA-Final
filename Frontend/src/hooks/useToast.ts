@@ -28,7 +28,7 @@ export interface ToastOptions {
 // Simplified action text map for cleaner notifications
 const SIMPLE_ACTION_TEXT_MAP: Record<ToastAction, { success: string; error: string; default: string }> = {
   register: { success: 'Registro exitoso', error: 'Error en el registro', default: 'Registro' },
-  login: { success: 'Bienvenido', error: 'Error de inicio de sesión', default: 'Inicio de sesión' },
+  login: { success: 'Has iniciado sesión', error: 'Error de inicio de sesión', default: 'Inicio de sesión' },
   purchase: { success: 'Compra exitosa', error: 'Error en la compra', default: 'Compra' },
   sale: { success: 'Venta realizada', error: 'Error en la venta', default: 'Venta' },
   update: { success: 'Actualizado', error: 'Error al actualizar', default: 'Actualización' },
@@ -56,12 +56,12 @@ function getDefaultTitle(
   return actionTexts.default;
 }
 
-// Function to create personalized welcome messages
+// Function to create personalized login messages
 export function createWelcomeMessage(userName?: string): string {
   if (userName) {
-    return `Bienvenido, ${userName}`;
+    return `Has iniciado sesión, ${userName}`;
   }
-  return 'Bienvenido';
+  return 'Has iniciado sesión';
 }
 
 export const useToast = () => {
