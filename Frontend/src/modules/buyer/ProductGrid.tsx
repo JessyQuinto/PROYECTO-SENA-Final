@@ -1,6 +1,9 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import Icon from '@/components/ui/Icon';
 import ProductCard from './ProductCard';
+import { Button } from '@/components/ui/shadcn/button';
+import { useAuth } from '@/auth/AuthContext';
 
 interface Product {
   id: string;
@@ -25,25 +28,56 @@ interface ProductGridProps {
   avgMap: { [key: string]: number };
   twoColsMobile: boolean;
   className?: string;
+  hasFiltersApplied?: boolean;
 }
 
 const ProductGrid: React.FC<ProductGridProps> = React.memo(
-  ({ products, avgMap, twoColsMobile, className = '' }) => {
+  ({ products, avgMap, twoColsMobile, className = '', hasFiltersApplied = false }) => {
+    const { user } = useAuth();
+    
     // Empty state
     if (products.length === 0) {
       return (
-        <div className={`text-center py-8 px-4 ${className}`}>
+        <div className={`text-center py-12 px-4 ${className}`}>
           <Icon
             category='Catálogo y producto'
             name='BxsPackage'
-            className='w-12 h-12 text-gray-400 mx-auto mb-4'
+            className='w-16 h-16 text-gray-400 mx-auto mb-6'
           />
-          <h3 className='text-base md:text-lg font-medium text-gray-900 mb-2'>
-            No se encontraron productos
+          <h3 className='text-lg md:text-xl font-medium text-gray-900 mb-3'>
+            {hasFiltersApplied ? 'No se encontraron productos' : 'No hay productos disponibles'}
           </h3>
-          <p className='text-sm md:text-base text-gray-500'>
-            Intenta ajustar tus filtros de búsqueda
-          </p>
+          
+          {hasFiltersApplied ? (
+            <div className='space-y-4'>
+              <p className='text-sm md:text-base text-gray-500 mb-4'>
+                Intenta ajustar tus filtros de búsqueda
+              </p>
+            </div>
+          ) : (
+            <div className='space-y-4 max-w-md mx-auto'>
+              <p className='text-sm md:text-base text-gray-500 mb-6'>
+                {!user 
+                  ? 'Parece que no hay productos disponibles en este momento. Inicia sesión para ver todos los productos disponibles.'
+                  : 'Actualmente no hay productos disponibles. ¡Vuelve pronto para ver las nuevas artesanías!'}
+              </p>
+              
+              {!user && (
+                <div className='flex flex-col sm:flex-row gap-3 justify-center'>
+                  <Link to='/login'>
+                    <Button size='lg' className='w-full sm:w-auto'>
+                      Iniciar Sesión
+                    </Button>
+                  </Link>
+                  <Link to='/register'>
+                    <Button size='lg' variant='outline' className='w-full sm:w-auto'>
+                      Crear Cuenta
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       );
     }

@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import CatalogHeader from './CatalogHeader';
 import ProductFilters from './ProductFilters';
 import ProductGrid from './ProductGrid';
 import { LoadingPageSkeleton } from '@/components/ui/Skeleton';
+import Icon from '@/components/ui/Icon';
 import {
   useCachedCategories,
   useCachedProductRatings,
@@ -73,6 +75,7 @@ const filterProducts = (products: any[], filters: ProductFilters, debouncedSearc
 const ProductCatalog: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [priceMaxAuto, setPriceMaxAuto] = useState<number>(1000000);
   const [showFiltersMobile, setShowFiltersMobile] = useState(false);
   const [twoColsMobile, setTwoColsMobile] = useState(false);
@@ -109,6 +112,7 @@ const ProductCatalog: React.FC = () => {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
 
       const { data: productsData, error: productsError } = await supabase
         .from('productos')
@@ -120,7 +124,12 @@ const ProductCatalog: React.FC = () => {
         .eq('archivado', false)
         .gt('stock', 0);
 
-      if (productsError) throw productsError;
+      if (productsError) {
+        console.error('Error loading products:', productsError);
+        setError(productsError.message);
+        // Don't throw here, handle gracefully
+        return;
+      }
 
       // Only update state if component is still mounted
       if (!isMountedRef.current) return;
@@ -144,7 +153,7 @@ const ProductCatalog: React.FC = () => {
     } catch (error) {
       console.error('Error loading products:', error);
       if (isMountedRef.current) {
-        // You might want to set an error state here
+        setError(error instanceof Error ? error.message : 'Error desconocido al cargar productos');
       }
     } finally {
       if (isMountedRef.current) {
@@ -208,6 +217,42 @@ const ProductCatalog: React.FC = () => {
     );
   }
 
+  // Error state
+  if (error) {
+    return (
+      <div className='container py-8'>
+        <div className='text-center py-12'>
+          <Icon
+            category='Estados y Feedback'
+            name='BxErrorCircle'
+            className='w-16 h-16 mx-auto text-red-500 mb-4'
+          />
+          <h2 className='text-xl font-semibold text-gray-700 mb-2'>
+            Error al cargar productos
+          </h2>
+          <p className='text-gray-500 mb-6'>
+            {error.includes('permission') || error.includes('policy') 
+              ? 'No tienes permisos para ver los productos. Intenta iniciar sesión.'
+              : 'Hubo un problema al cargar los productos. Intenta recargar la página.'}
+          </p>
+          <div className='flex flex-col sm:flex-row gap-3 justify-center'>
+            <button
+              onClick={() => window.location.reload()}
+              className='px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors'
+            >
+              Recargar página
+            </button>
+            <Link to='/login'>
+              <button className='px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors'>
+                Iniciar sesión
+              </button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className='container py-4 md:py-8'>
       <CatalogHeader
@@ -240,6 +285,12 @@ const ProductCatalog: React.FC = () => {
           avgMap={avgMap || {}}
           twoColsMobile={twoColsMobile}
           className='lg:col-span-3'
+          hasFiltersApplied={
+            filters.searchTerm.trim() !== '' ||
+            filters.selectedCategories.length > 0 ||
+            filters.priceMin > 0 ||
+            filters.priceMax < priceMaxAuto
+          }
         />
       </div>
     </div>
