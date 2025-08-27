@@ -108,11 +108,22 @@ const Navbar: React.FC = () => {
 
   return (
     <nav 
-      className='bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40'
+      className='bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 relative overflow-hidden border-b border-border/40'
       role='navigation'
       aria-label='Navegación principal'
     >
-      <div className='container mx-auto px-3 sm:px-4'>
+      {/* Decorative pattern background */}
+      <div
+        aria-hidden
+        className='absolute inset-0 opacity-5 pointer-events-none'
+        style={{
+          backgroundImage:
+            "url('/assert/motif-de-fond-sans-couture-tribal-dessin-geometrique-noir-et-blanc-vecteur/v1045-03.jpg')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      />
+      <div className='container mx-auto px-3 sm:px-4 relative z-10'>
         <div className='flex items-center justify-between h-12 sm:h-14 md:h-16'>
           {/* Logo compacto para móvil */}
           <Link
