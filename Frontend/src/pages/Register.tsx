@@ -248,84 +248,29 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className='min-h-[calc(100vh-120px)] grid place-items-center'>
-      <div className='container max-w-4xl relative z-10'>
-        <div className='grid md:grid-cols-3 gap-6 items-start'>
-          <div className='hidden md:block md:col-span-1'>
+    <div className='min-h-[calc(100vh-120px)] grid place-items-center bg-gradient-to-br from-primary-50 to-white'>
+      <div className='container max-w-6xl'>
+        <div className='grid md:grid-cols-5 gap-8 items-start'>
+          <div className='hidden md:block md:col-span-2'>
             <div className='card card-hover'>
-              <div className='card-body p-4'>
-                <h2 className='card-title text-lg mb-3'>
+              <div className='card-body'>
+                <h2 className='text-2xl font-semibold text-gray-900 mb-2'>
                   Únete a Tesoros Chocó
                 </h2>
-                <p className='opacity-80 mb-4 text-sm'>
+                <p className='text-gray-600'>
                   Conectamos artesanos del Chocó con personas que valoran lo
                   fabricado a mano, con historia y origen.
                 </p>
-                <div className='space-y-3'>
-                  <div className='flex items-center gap-2'>
-                    <div className='w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center'>
-                      <svg
-                        className='w-3 h-3 text-primary'
-                        fill='none'
-                        stroke='currentColor'
-                        viewBox='0 0 24 24'
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={2}
-                          d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
-                        />
-                      </svg>
-                    </div>
-                    <span className='text-xs'>
-                      Acceso inmediato a productos únicos
-                    </span>
-                  </div>
-                  <div className='flex items-center gap-2'>
-                    <div className='w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center'>
-                      <svg
-                        className='w-3 h-3 text-primary'
-                        fill='none'
-                        stroke='currentColor'
-                        viewBox='0 0 24 24'
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={2}
-                          d='M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z'
-                        />
-                      </svg>
-                    </div>
-                    <span className='text-xs'>Apoya a artesanos locales</span>
-                  </div>
-                  <div className='flex items-center gap-2'>
-                    <div className='w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center'>
-                      <svg
-                        className='w-3 h-3 text-primary'
-                        fill='none'
-                        stroke='currentColor'
-                        viewBox='0 0 24 24'
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={2}
-                          d='M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z'
-                        />
-                      </svg>
-                    </div>
-                    <span className='text-xs'>
-                      Productos con historia y autenticidad
-                    </span>
-                  </div>
-                </div>
+                <ul className='mt-4 space-y-2 text-sm text-gray-600'>
+                  <li>• Acceso inmediato a productos únicos</li>
+                  <li>• Apoya a artesanos locales</li>
+                  <li>• Productos con historia y autenticidad</li>
+                </ul>
               </div>
             </div>
           </div>
 
-          <div className='md:col-span-2'>
+          <div className='md:col-span-3'>
             <div className='card card-hover'>
               <div className='card-body p-4'>
                 <div className='text-center mb-4'>

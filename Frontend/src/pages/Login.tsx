@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/shadcn/label';
 import { useForm } from '@/hooks/useForm';
 import { useToastWithAuth } from '@/hooks/useToast';
 import { useRateLimit } from '@/hooks/useSecurity';
-import { AuthLayout, AuthFeatureSets } from '@/components/auth/AuthLayout';
 
 // validation handled inline in submit handler
 
@@ -66,15 +65,36 @@ const LoginPage: React.FC = () => {
   }, [user, navigate]);
 
   return (
-    <AuthLayout
-      title="Bienvenido de vuelta"
-      subtitle="Iniciar Sesión"
-      description="Accede a tu cuenta para continuar explorando los tesoros artesanales del Chocó."
-      features={AuthFeatureSets.login}
-    >
-      <p className='opacity-80 text-center mb-4 text-sm'>
-        Accede a tu cuenta para continuar
-      </p>
+    <div className='min-h-[calc(100vh-120px)] grid place-items-center bg-gradient-to-br from-primary-50 to-white'>
+      <div className='container-sm'>
+        <div className='grid md:grid-cols-2 gap-8 items-center'>
+          <div className='hidden md:block'>
+            <div className='card card-hover'>
+              <div className='card-body'>
+                <h1 className='text-2xl font-semibold text-gray-900 mb-2'>
+                  Bienvenido de vuelta
+                </h1>
+                <p className='text-gray-600'>
+                  Accede a tu cuenta para continuar explorando los tesoros artesanales del Chocó.
+                </p>
+                <ul className='mt-4 space-y-2 text-sm text-gray-600'>
+                  <li>• Acceso rápido a tu perfil</li>
+                  <li>• Gestiona tus pedidos</li>
+                  <li>• Favoritos y listas personalizadas</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div className='card card-hover'>
+            <div className='card-body'>
+              <div className='text-center mb-4'>
+                <h2 className='text-xl font-semibold mb-1'>
+                  Iniciar Sesión
+                </h2>
+                <p className='text-xs opacity-70'>
+                  Accede a tu cuenta para continuar
+                </p>
+              </div>
 
       <form onSubmit={form.handleSubmit} className='space-y-4' noValidate>
         {/* Screen reader announcement area for form errors */}
@@ -199,7 +219,11 @@ const LoginPage: React.FC = () => {
           </Link>
         </div>
       </div>
-    </AuthLayout>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
