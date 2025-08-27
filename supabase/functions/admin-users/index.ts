@@ -36,8 +36,27 @@ Deno.serve(async (req: Request) => {
   // Verify admin
   try {
     const { data } = await supa.auth.getUser();
-    const callerRole = (data?.user as any)?.app_metadata?.role as string | undefined;
-    if (callerRole !== "admin") return json({ error: "Forbidden" }, { status: 403, headers: corsHeaders });
+    const caller = data?.user;
+    if (!caller) return json({ error: "Auth check failed" }, { status: 401, headers: corsHeaders });
+
+    // Verificar rol en la base de datos (más seguro que app_metadata)
+    const { data: userProfile, error: profileError } = await admin
+      .from('users')
+      .select('role, bloqueado')
+      .eq('id', caller.id)
+      .single();
+
+    if (profileError || !userProfile) {
+      return json({ error: "User profile not found" }, { status: 401, headers: corsHeaders });
+    }
+
+    if (userProfile.bloqueado) {
+      return json({ error: "User is blocked" }, { status: 403, headers: corsHeaders });
+    }
+
+    if (userProfile.role !== "admin") {
+      return json({ error: "Forbidden - Admin access required" }, { status: 403, headers: corsHeaders });
+    }
   } catch {
     return json({ error: "Auth check failed" }, { status: 401, headers: corsHeaders });
   }

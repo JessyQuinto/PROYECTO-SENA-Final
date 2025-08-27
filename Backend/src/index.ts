@@ -280,6 +280,25 @@ app.post('/rpc/crear_pedido', async (req: Request, res: Response, next: NextFunc
     const caller = userData?.user;
     if (!caller) return res.status(401).json({ error: 'No autenticado' });
 
+    // Verificar rol del usuario en la base de datos
+    const { data: userProfile, error: profileError } = await supabaseUser
+      .from('users')
+      .select('role, bloqueado')
+      .eq('id', caller.id)
+      .single();
+
+    if (profileError || !userProfile) {
+      return res.status(401).json({ error: 'Perfil de usuario no encontrado' });
+    }
+
+    if (userProfile.bloqueado) {
+      return res.status(403).json({ error: 'Usuario bloqueado' });
+    }
+
+    if (userProfile.role !== 'comprador') {
+      return res.status(403).json({ error: 'Solo compradores pueden crear pedidos' });
+    }
+
     const { items, shipping, simulate_payment } = parsed.data;
 
     // Crear pedido: usar RPC backend con user_id explícito para evitar depender de claims del JWT en PostgREST
