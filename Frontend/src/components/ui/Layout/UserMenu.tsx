@@ -38,6 +38,18 @@ export const UserAvatar: React.FC<{ user: User; className?: string }> = ({ user,
             onClick={() => setIsNameVisible(!isNameVisible)}
           >
             {userInitial}
+            {/* Vendor approval status dot (green/red) */}
+            {user.role === 'vendedor' && (
+              <span
+                className={cn(
+                  'absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2',
+                  'border-background',
+                  user.vendedor_estado === 'aprobado' ? 'bg-green-500' : 'bg-red-500'
+                )}
+                aria-label='Estado de vendedor'
+                title={user.vendedor_estado || 'estado'}
+              />
+            )}
           </div>
           
           {/* Animated name container - positioned to the left of the avatar */}
@@ -54,29 +66,7 @@ export const UserAvatar: React.FC<{ user: User; className?: string }> = ({ user,
             </span>
           </div>
           
-          {/* Role display below avatar - smaller and more discrete */}
-          <div className='absolute -bottom-5 left-0 right-0 flex justify-center'>
-            <span className='text-xs text-gray-400 capitalize font-normal'>
-              {user.role}
-              {user.role === 'vendedor' && user.vendedor_estado && (
-                <span
-                  className={cn(
-                    'ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium',
-                    {
-                      'bg-green-100 text-green-700':
-                        user.vendedor_estado === 'aprobado',
-                      'bg-yellow-100 text-yellow-700':
-                        user.vendedor_estado === 'pendiente',
-                      'bg-red-100 text-red-700':
-                        user.vendedor_estado === 'rechazado',
-                    }
-                  )}
-                >
-                  {user.vendedor_estado}
-                </span>
-              )}
-            </span>
-          </div>
+          {/* No role text below avatar */}
         </div>
       </div>
 
@@ -89,6 +79,18 @@ export const UserAvatar: React.FC<{ user: User; className?: string }> = ({ user,
             onClick={() => setIsNameVisible(!isNameVisible)}
           >
             {userInitial}
+            {/* Vendor approval status dot (green/red) */}
+            {user.role === 'vendedor' && (
+              <span
+                className={cn(
+                  'absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2',
+                  'border-background',
+                  user.vendedor_estado === 'aprobado' ? 'bg-green-500' : 'bg-red-500'
+                )}
+                aria-label='Estado de vendedor'
+                title={user.vendedor_estado || 'estado'}
+              />
+            )}
           </div>
           
           {/* Animated name container for mobile - positioned to the left of the avatar */}
@@ -105,29 +107,7 @@ export const UserAvatar: React.FC<{ user: User; className?: string }> = ({ user,
             </span>
           </div>
           
-          {/* Role display below avatar for mobile - smaller and more discrete */}
-          <div className='absolute -bottom-4 left-0 right-0 flex justify-center'>
-            <span className='text-xs text-gray-400 capitalize font-normal'>
-              {user.role}
-              {user.role === 'vendedor' && user.vendedor_estado && (
-                <span
-                  className={cn(
-                    'ml-1 inline-flex items-center px-1 py-0.5 rounded text-xs font-medium',
-                    {
-                      'bg-green-100 text-green-700':
-                        user.vendedor_estado === 'aprobado',
-                      'bg-yellow-100 text-yellow-700':
-                        user.vendedor_estado === 'pendiente',
-                      'bg-red-100 text-red-700':
-                        user.vendedor_estado === 'rechazado',
-                    }
-                  )}
-                >
-                  {user.vendedor_estado}
-                </span>
-              )}
-            </span>
-          </div>
+          {/* No role text below avatar */}
         </div>
       </div>
     </div>
