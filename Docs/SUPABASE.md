@@ -29,12 +29,12 @@
 │   Frontend      │    │   Supabase      │    │   Edge Functions │
 │   (React/Vite)  │◄──►│   (PostgreSQL)  │◄──►│   (Deno)        │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
-                              │
-                              ▼
-                       ┌─────────────────┐
-                       │   Storage       │
-                       │   (Imágenes)    │
-                       └─────────────────┘
+                             │
+                             ▼
+                      ┌─────────────────┐
+                      │   Storage       │
+                      │   (Imágenes)    │
+                      └─────────────────┘
 ```
 
 ---
@@ -322,6 +322,11 @@ Los tokens JWT incluyen:
 - `role`: Rol del usuario (admin, vendedor, comprador)
 - `vendedor_estado`: Estado del vendedor (si aplica)
 
+### **Configuración de Seguridad Adicional (Auth)**
+- Reducir expiración de OTP a ≤ 60 minutos.
+- Habilitar “Leaked Password Protection”.
+Estas opciones se ajustan desde el Dashboard de Supabase (Auth > Providers > Email y Security).
+
 ---
 
 ## ⚡ **Edge Functions**
@@ -377,6 +382,51 @@ Los tokens JWT incluyen:
 **Endpoint**: `POST /functions/v1/self-account`
 
 **Payload**: `{}` (usa el usuario autenticado)
+
+### **5. notify-order-status**
+**Propósito**: Notificar cambios de estado de pedidos (procesando, enviado, entregado, cancelado)
+
+**Endpoint**: `POST /functions/v1/notify-order-status`
+
+**Payload**:
+```json
+{
+  "order_id": "uuid-del-pedido",
+  "status": "procesando|enviado|entregado|cancelado",
+  "recipient_email": "cliente@ejemplo.com",
+  "recipient_name": "Nombre",
+  "from": "Opcional Nombre <noreply@tesoros-choco.app>"
+}
+```
+
+### **6. notify-low-stock**
+**Propósito**: Notificar a vendedores cuando el stock está por debajo de umbral
+
+**Endpoint**: `POST /functions/v1/notify-low-stock`
+
+**Payload**:
+```json
+{
+  "producto_id": "uuid",
+  "vendedor_email": "vendedor@ejemplo.com",
+  "vendedor_nombre": "Nombre"
+}
+```
+
+### **7. notify-evaluation**
+**Propósito**: Notificaciones de evaluaciones (nueva evaluación; recordatorio a comprador)
+
+**Endpoint**: `POST /functions/v1/notify-evaluation`
+
+**Payload**:
+```json
+{
+  "type": "new_evaluation|evaluation_reminder",
+  "recipient_email": "destinatario@ejemplo.com",
+  "recipient_name": "Nombre",
+  "data": { "producto_id": "uuid", "puntuacion": 5, "comentario": "..." }
+}
+```
 
 ---
 
@@ -609,18 +659,11 @@ RETURNS text
 
 ### **Funciones Optimizadas**
 
-Todas las funciones han sido optimizadas con:
-- `SECURITY DEFINER` para operaciones privilegiadas
-- `SET search_path = public` para seguridad
-- Manejo de errores mejorado
-- Performance optimizada
+Las funciones SECURITY DEFINER han sido fijadas con `SET search_path = public`. Verificar que nuevas funciones sigan este patrón.
 
 ### **Políticas RLS Consolidadas**
 
-Se consolidaron políticas duplicadas para mejorar performance:
-- **evaluaciones**: Políticas de INSERT consolidadas
-- **order_items**: Políticas de SELECT consolidadas
-- **order_shipping**: Políticas consolidadas
+Se han actualizado políticas para reducir llamadas a `auth.*` por fila usando `(select auth.*())` y consolidar múltiples políticas por acción/rol. Revisar migración `20250827_fix_search_path_rls_mv_docs`.
 
 ### **Limpieza de Datos**
 
