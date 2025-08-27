@@ -1,110 +1,34 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useForm } from '@/hooks/useForm';
 import { useToast } from '@/hooks/useToast';
-import { useSupabase } from '@/hooks/useSupabase';
-import { Input } from '@/components/ui/shadcn/input';
-import { Label } from '@/components/ui/shadcn/label';
 import { Button } from '@/components/ui/shadcn/button';
-import { z } from 'zod';
 import { supabase } from '@/lib/supabaseClient';
-
-const TOTAL = 120;
-
-const verifyCodeSchema = z.object({
-  email: z.string().email('Email inválido'),
-  code: z
-    .string()
-    .min(6, 'El código debe tener 6 dígitos')
-    .max(6, 'El código debe tener 6 dígitos'),
-});
-
-type VerifyCodeForm = z.infer<typeof verifyCodeSchema>;
+import { useEmailVerificationWatcher } from '@/hooks/useEmailVerificationWatcher';
 
 const VerifyEmailPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const toast = useToast();
-  const { executeMutation } = useSupabase({
-    showToast: true,
-    toastAction: 'update',
+  const email = (location.state as any)?.email as string | undefined;
+  const status = useEmailVerificationWatcher(5000, () => {
+    // Callback cuando se verifique: avisar y navegar
+    toast.success('¡Cuenta verificada! Puedes iniciar sesión.', { action: 'login' });
+    try {
+      // Si ya hay sesión válida, redirigir al home o dashboard según rol en tu flujo
+      navigate('/login', { replace: true });
+    } catch {}
   });
-
-  const [seconds, setSeconds] = useState(TOTAL);
-  const [verifying, setVerifying] = useState(false);
-
-  const form = useForm<VerifyCodeForm>({
-    initialValues: {
-      email: location.state?.email || '',
-      code: '',
-    },
-    validationSchema: verifyCodeSchema,
-    onSubmit: async values => {
-      setVerifying(true);
-      try {
-        const { error } = await supabase.auth.verifyOtp({
-          email: values.email,
-          token: values.code,
-          type: 'signup',
-        });
-
-        if (error) {
-          toast.error('Código inválido', {
-            action: 'update',
-          });
-        } else {
-          toast.success('Email verificado', {
-            action: 'update',
-          });
-          navigate('/login');
-        }
-      } catch (err: any) {
-        toast.error('Error al verificar', {
-          action: 'update',
-        });
-      } finally {
-        setVerifying(false);
-      }
-    },
-  });
-
-  // Countdown timer
-  useEffect(() => {
-    if (seconds > 0) {
-      const timer = setTimeout(() => setSeconds(seconds - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [seconds]);
-
-  const timeDisplay = useMemo(() => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  }, [seconds]);
-
-  const resendCode = async () => {
-    if (!form.values.email) {
-      toast.error('Email requerido', {
-        action: 'update',
-      });
+  const resendLink = async () => {
+    if (!email) {
+      toast.error('Email requerido', { action: 'update' });
       return;
     }
-
-    const result = await executeMutation(
-      () =>
-        supabase.auth.resend({
-          type: 'signup',
-          email: form.values.email,
-        }),
-      'Código reenviado'
-    );
-
-    if (result !== null) {
-      setSeconds(TOTAL);
-      toast.success('Código reenviado', {
-        action: 'update',
-      });
+    const { error } = await supabase.auth.resend({ type: 'signup', email });
+    if (error) {
+      toast.error('No pudimos reenviar el enlace', { action: 'update' });
+      return;
     }
+    toast.success('Enlace de confirmación reenviado', { action: 'update' });
   };
 
   return (
@@ -118,74 +42,61 @@ const VerifyEmailPage: React.FC = () => {
                   Verificar tu email
                 </h1>
                 <p className='opacity-80'>
-                  Ingresa el código de verificación que te enviamos.
+                  Te enviamos un enlace para confirmar tu cuenta.
                 </p>
+                {status === 'pending' && (
+                  <div className='mt-3 text-sm text-gray-600'>
+                    Esta página detectará automáticamente cuando confirmes tu correo.
+                  </div>
+                )}
+                {status === 'verified' && (
+                  <div className='mt-3 text-sm text-green-700 flex items-center gap-2'>
+                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className='text-green-600'>
+                      <path d='M20 6L9 17l-5-5' />
+                    </svg>
+                    <span>Tu cuenta ya está verificada.</span>
+                  </div>
+                )}
+                {status === 'error' && (
+                  <div className='mt-3 text-sm text-red-600'>
+                    No pudimos comprobar el estado de verificación. Intenta recargar.
+                  </div>
+                )}
               </div>
             </div>
           </div>
           <div className='card card-hover'>
             <div className='card-body'>
-              <h2 className='text-xl font-semibold mb-4'>
-                Código de verificación
+              <h2 className='text-xl font-semibold mb-2'>
+                Revisa tu correo
               </h2>
-              <form className='space-y-4' onSubmit={form.handleSubmit}>
-                <div className='space-y-2'>
-                  <Label htmlFor='email'>Email</Label>
-                  <Input
-                    id='email'
-                    type='email'
-                    value={form.values.email}
-                    onChange={e => form.setValue('email', e.target.value)}
-                    onBlur={() => form.validateField('email')}
-                    placeholder='tu@email.com'
-                    className={form.errors.email ? 'border-red-500' : ''}
-                  />
-                  {form.errors.email && (
-                    <p className='text-sm text-red-600'>{form.errors.email}</p>
-                  )}
-                </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='code'>Código de verificación</Label>
-                  <Input
-                    id='code'
-                    value={form.values.code}
-                    onChange={e => form.setValue('code', e.target.value)}
-                    onBlur={() => form.validateField('code')}
-                    placeholder='123456'
-                    maxLength={6}
-                    className={form.errors.code ? 'border-red-500' : ''}
-                  />
-                  {form.errors.code && (
-                    <p className='text-sm text-red-600'>{form.errors.code}</p>
-                  )}
-                </div>
-                <Button type='submit' className='w-full' disabled={verifying}>
-                  {verifying ? 'Verificando…' : 'Verificar código'}
+              <p className='opacity-80 mb-4'>
+                Te enviamos un enlace para confirmar tu cuenta. Esta página detectará cuando completes la confirmación.
+              </p>
+              <div className='flex flex-col gap-3'>
+                <Button type='button' onClick={resendLink} variant='secondary'>
+                  Reenviar enlace de confirmación
                 </Button>
-                <div className='text-center space-y-2'>
-                  <div className='text-sm'>
-                    ¿No recibiste el código?{' '}
-                    <button
-                      type='button'
-                      onClick={resendCode}
-                      disabled={seconds > 0}
-                      className='text-(--color-terracotta-suave) hover:underline disabled:opacity-50'
-                    >
-                      {seconds > 0
-                        ? `Reenviar en ${timeDisplay}`
-                        : 'Reenviar código'}
-                    </button>
+                {status === 'verified' && (
+                  <div className='flex items-center justify-center gap-2 text-green-700 text-sm'>
+                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className='text-green-600'>
+                      <path d='M20 6L9 17l-5-5' />
+                    </svg>
+                    <span>Correo verificado. Redirigiendo…</span>
                   </div>
-                  <div className='text-sm'>
-                    <Link
-                      to='/login'
-                      className='text-(--color-terracotta-suave) hover:underline'
-                    >
-                      Volver a iniciar sesión
-                    </Link>
-                  </div>
+                )}
+                {status === 'error' && (
+                  <div className='text-sm text-red-600'>No pudimos comprobar el estado de verificación. Intenta recargar.</div>
+                )}
+                <div className='text-sm text-center'>
+                  <Link
+                    to='/login'
+                    className='text-(--color-terracotta-suave) hover:underline'
+                  >
+                    Volver a iniciar sesión
+                  </Link>
                 </div>
-              </form>
+              </div>
             </div>
           </div>
         </div>
