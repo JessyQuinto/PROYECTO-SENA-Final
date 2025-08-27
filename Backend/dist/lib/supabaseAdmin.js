@@ -5,12 +5,12 @@ export function getSupabaseAdmin() {
     if (supabaseAdmin)
         return supabaseAdmin;
     const url = process.env.SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY; // fallback temporal
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!url) {
         throw new Error('[supabase-admin] SUPABASE_URL no definida. Crea Backend/.env con SUPABASE_URL=...');
     }
     if (!serviceKey) {
-        throw new Error('[supabase-admin] Falta SUPABASE_SERVICE_ROLE_KEY (o SUPABASE_ANON_KEY como fallback).');
+        throw new Error('[supabase-admin] Falta SUPABASE_SERVICE_ROLE_KEY. Nunca usar ANON en backend/admin.');
     }
     supabaseAdmin = createClient(url, serviceKey, {
         auth: { autoRefreshToken: false, persistSession: false }

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import AdminLayout from './AdminLayout';
 import Icon from '../../components/ui/Icon';
@@ -25,6 +25,14 @@ const UsersAdmin: React.FC = () => {
     role: string;
     email?: string;
   } | null>(null);
+  
+  // ✅ NUEVO: Estado para tracking de cambios de rol
+  const [changingRoles, setChangingRoles] = useState<Set<string>>(new Set());
+
+  // ✅ NUEVO: Estado para auto-refresh
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
+  const [refreshInterval, setRefreshInterval] = useState(30000); // 30 segundos por defecto
 
   // Super admin único autorizado (el único que puede modificar otros admins)
   const SUPER_ADMIN_EMAIL = 'admin@tesoros-choco.com';
@@ -39,42 +47,144 @@ const UsersAdmin: React.FC = () => {
     );
   }, [users, query]);
 
-  const load = async () => {
-    setLoading(true);
+  // ✅ MEJORADO: Función de carga más robusta
+  const load = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true);
 
-    // Cargar usuarios
-    const { data, error } = await supabase
-      .from('users')
-      .select(
-        'id,email,role,vendedor_estado,bloqueado,nombre_completo,created_at'
-      )
-      .order('created_at', { ascending: false });
-
-    if (error) console.error(error.message);
-    setUsers((data || []) as UsuarioRow[]);
-
-    // Cargar usuario actual
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (session?.user) {
-      const { data: currentUserData } = await supabase
+    try {
+      // Cargar usuarios
+      const { data, error } = await supabase
         .from('users')
-        .select('id, role, email')
-        .eq('id', session.user.id)
-        .single();
+        .select(
+          'id,email,role,vendedor_estado,bloqueado,nombre_completo,created_at'
+        )
+        .order('created_at', { ascending: false });
 
-      if (currentUserData) {
-        setCurrentUser(currentUserData);
+      if (error) {
+        console.error('Error loading users:', error.message);
+        return;
       }
-    }
 
-    setLoading(false);
-  };
+      setUsers((data || []) as UsuarioRow[]);
+
+      // Cargar usuario actual
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: currentUserData } = await supabase
+          .from('users')
+          .select('id, role, email')
+          .eq('id', session.user.id)
+          .single();
+
+        if (currentUserData) {
+          setCurrentUser(currentUserData);
+        }
+      }
+
+      setLastRefresh(new Date());
+    } catch (error) {
+      console.error('Unexpected error loading users:', error);
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  }, []);
+
+  // ✅ NUEVO: Auto-refresh automático
+  useEffect(() => {
+    if (!autoRefreshEnabled) return;
+
+    const interval = setInterval(() => {
+      console.log('[UsersAdmin] Auto-refreshing users...');
+      load(false); // Cargar sin mostrar loading
+    }, refreshInterval);
+
+    return () => clearInterval(interval);
+  }, [autoRefreshEnabled, refreshInterval, load]);
+
+  // ✅ NUEVO: Listener para cambios en tiempo real
+  useEffect(() => {
+    const channel = supabase
+      .channel('users_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'users'
+        },
+        (payload: any) => {
+          console.log('[UsersAdmin] Real-time change detected:', payload);
+          
+          // ✅ MEJORADO: Actualizar lista inmediatamente
+          if (payload.eventType === 'INSERT') {
+            setUsers(prev => [payload.new as UsuarioRow, ...prev]);
+          } else if (payload.eventType === 'UPDATE') {
+            setUsers(prev => prev.map(user => 
+              user.id === payload.new.id ? payload.new as UsuarioRow : user
+            ));
+          } else if (payload.eventType === 'DELETE') {
+            setUsers(prev => prev.filter(user => user.id !== payload.old.id));
+          }
+          
+          setLastRefresh(new Date());
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // ✅ NUEVO: Listener para cambios de estado de vendedor
+  useEffect(() => {
+    const handleVendorStatusChange = (event: CustomEvent) => {
+      console.log('[UsersAdmin] Vendor status change detected:', event.detail);
+      
+      // Actualizar el usuario específico
+      setUsers(prev => prev.map(user => {
+        if (user.id === event.detail.vendorId) {
+          return { ...user, vendedor_estado: event.detail.newStatus };
+        }
+        return user;
+      }));
+      
+      setLastRefresh(new Date());
+    };
+
+    // ✅ NUEVO: Listener para cambios de rol
+    const handleUserRoleChange = (event: CustomEvent) => {
+      console.log('[UsersAdmin] User role change detected:', event.detail);
+      
+      // Actualizar el usuario específico
+      setUsers(prev => prev.map(user => {
+        if (user.id === event.detail.userId) {
+          return { 
+            ...user, 
+            role: event.detail.newRole,
+            vendedor_estado: event.detail.newRole === 'vendedor' ? 'pendiente' : null
+          };
+        }
+        return user;
+      }));
+      
+      setLastRefresh(new Date());
+    };
+
+    window.addEventListener('vendorStatusChanged', handleVendorStatusChange as EventListener);
+    window.addEventListener('userRoleChanged', handleUserRoleChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('vendorStatusChanged', handleVendorStatusChange as EventListener);
+      window.removeEventListener('userRoleChanged', handleUserRoleChange as EventListener);
+    };
+  }, []);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   // Función para determinar si se pueden mostrar ciertos botones
   const canShowButton = (user: UsuarioRow, buttonType: string): boolean => {
@@ -95,7 +205,16 @@ const UsersAdmin: React.FC = () => {
         if (user.role === 'admin') {
           return isSuperAdmin;
         }
-        // Para otros roles, cualquier admin puede cambiar
+        // ✅ MEJORADO: Para otros roles, cualquier admin puede cambiar
+        // Pero con restricciones adicionales
+        if (user.role === 'vendedor') {
+          // Si es vendedor, solo permitir cambiar a comprador (no a admin)
+          return true;
+        }
+        if (user.role === 'comprador') {
+          // Si es comprador, permitir cambiar a vendedor
+          return true;
+        }
         return true;
 
       case 'vendorActions':
@@ -399,22 +518,28 @@ const UsersAdmin: React.FC = () => {
     }
   };
 
-  // Función para cambiar el rol de un usuario (solo vendedor o comprador)
+  // ✅ MEJORADO: Función para cambiar el rol de un usuario usando RPC
   const changeUserRole = async (
     id: string,
-    newRole: 'vendedor' | 'comprador'
+    newRole: 'vendedor' | 'comprador' | 'admin'
   ) => {
+    // ✅ NUEVO: Marcar que se está cambiando el rol
+    setChangingRoles(prev => new Set(prev).add(id));
+    
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({
-          role: newRole,
-          vendedor_estado: newRole === 'vendedor' ? 'pendiente' : null,
-        })
-        .eq('id', id);
+      // ✅ NUEVO: Usar la función RPC en lugar de UPDATE directo
+      const { data, error } = await supabase.rpc('admin_change_user_role', {
+        p_target_user_id: id,
+        p_new_role: newRole
+      });
 
       if (error) throw error;
 
+      if (!data?.success) {
+        throw new Error(data?.error || 'Error desconocido al cambiar rol');
+      }
+
+      // ✅ MEJORADO: Actualizar estado local con datos de la RPC
       setUsers(list =>
         list.map(u =>
           u.id === id
@@ -427,14 +552,50 @@ const UsersAdmin: React.FC = () => {
         )
       );
 
-      (window as any).toast?.success(`Rol cambiado a ${newRole}`, {
-        role: 'admin',
-        action: 'update',
-      });
+      // ✅ NUEVO: Mostrar mensaje de éxito más informativo
+      (window as any).toast?.success(
+        `✅ Rol cambiado exitosamente: ${data.old_role} → ${data.new_role}`, 
+        {
+          role: 'admin',
+          action: 'update',
+        }
+      );
+
+      // ✅ NUEVO: Actualizar timestamp de última actualización
+      setLastRefresh(new Date());
+
+      // ✅ NUEVO: Notificar cambio en tiempo real si el usuario está logueado
+      try {
+        const currentSession = (await supabase.auth.getSession()).data.session;
+        if (currentSession?.user?.id === id) {
+          window.dispatchEvent(new CustomEvent('userRoleChanged', {
+            detail: { 
+              userId: id, 
+              oldRole: data.old_role,
+              newRole: data.new_role,
+              timestamp: Date.now()
+            }
+          }));
+        }
+      } catch (e) {
+        console.warn('[refresh] No se pudo notificar cambio de rol:', e);
+      }
+
     } catch (e: any) {
-      (window as any).toast?.error(e?.message || 'No se pudo cambiar el rol', {
-        role: 'admin',
-        action: 'update',
+      console.error('[changeUserRole] Error:', e);
+      (window as any).toast?.error(
+        `❌ Error al cambiar rol: ${e?.message || 'Error desconocido'}`, 
+        {
+          role: 'admin',
+          action: 'update',
+        }
+      );
+    } finally {
+      // ✅ NUEVO: Remover del estado de cambios
+      setChangingRoles(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
       });
     }
   };
@@ -464,8 +625,8 @@ const UsersAdmin: React.FC = () => {
         </div>
 
         <div className='space-y-4'>
-          {/* Filtros y búsqueda */}
-          <div className='flex flex-col sm:flex-row gap-4'>
+          {/* ✅ NUEVO: Controles de auto-refresh y estado */}
+          <div className='flex flex-col sm:flex-row gap-4 items-center justify-between'>
             <div className='flex-1'>
               <input
                 type='text'
@@ -474,6 +635,54 @@ const UsersAdmin: React.FC = () => {
                 value={query}
                 onChange={e => setQuery(e.target.value)}
               />
+            </div>
+            
+            {/* ✅ NUEVO: Panel de control de auto-refresh */}
+            <div className='flex items-center gap-4 bg-gray-50 p-3 rounded-lg border'>
+              <div className='flex items-center gap-2'>
+                <input
+                  type='checkbox'
+                  id='autoRefresh'
+                  className='checkbox checkbox-sm'
+                  checked={autoRefreshEnabled}
+                  onChange={(e) => setAutoRefreshEnabled(e.target.checked)}
+                />
+                <label htmlFor='autoRefresh' className='text-sm font-medium'>
+                  Auto-refresh
+                </label>
+              </div>
+              
+              {autoRefreshEnabled && (
+                <div className='flex items-center gap-2'>
+                  <select
+                    value={refreshInterval}
+                    onChange={(e) => setRefreshInterval(Number(e.target.value))}
+                    className='select select-sm select-bordered'
+                  >
+                    <option value={15000}>15s</option>
+                    <option value={30000}>30s</option>
+                    <option value={60000}>1m</option>
+                    <option value={120000}>2m</option>
+                  </select>
+                </div>
+              )}
+              
+              <button
+                onClick={() => load(true)}
+                className='btn btn-sm btn-outline'
+                disabled={loading}
+              >
+                {loading ? (
+                  <div className='loading loading-spinner loading-xs'></div>
+                ) : (
+                  <Icon category='Interface' name='MdiRefresh' className='w-4 h-4' />
+                )}
+                Actualizar
+              </button>
+              
+              <div className='text-xs text-gray-500'>
+                Última actualización: {lastRefresh.toLocaleTimeString()}
+              </div>
             </div>
           </div>
 
@@ -515,7 +724,7 @@ const UsersAdmin: React.FC = () => {
                       </td>
                       <td className='py-2 pr-4'>
                         {u.role === 'admin' ? (
-                          <div className='flex flex-col gap-1'>
+                          <div className='flex flex-col gap-2'>
                             <span className='badge badge-error flex items-center gap-1'>
                               <Icon
                                 category='Administrador'
@@ -536,27 +745,67 @@ const UsersAdmin: React.FC = () => {
                             )}
                           </div>
                         ) : (
-                          <div className='flex flex-col gap-1'>
+                          <div className='flex flex-col gap-2'>
+                            {/* ✅ MEJORADO: Badge del rol actual */}
                             <span
-                              className={`badge ${u.role === 'vendedor' ? 'badge-warning' : 'badge-info'}`}
+                              className={`badge ${u.role === 'vendedor' ? 'badge-warning' : 'badge-info'} flex items-center gap-1`}
                             >
-                              {u.role || 'comprador'}
+                              {u.role === 'vendedor' ? (
+                                <Icon category='Interface' name='MdiStore' className='w-3 h-3' />
+                              ) : (
+                                <Icon category='Interface' name='MdiShopping' className='w-3 h-3' />
+                              )}
+                              {u.role === 'vendedor' ? 'Vendedor' : 'Comprador'}
                             </span>
-                            {/* Selector de rol solo para vendedores y compradores */}
+                            
+                            {/* ✅ MEJORADO: Selector de rol más funcional */}
                             {canShowButton(u, 'changeRole') && (
-                              <select
-                                className='select select-sm select-bordered w-full'
-                                value={u.role || 'comprador'}
-                                onChange={e =>
-                                  changeUserRole(
-                                    u.id,
-                                    e.target.value as 'vendedor' | 'comprador'
-                                  )
-                                }
-                              >
-                                <option value='comprador'>Comprador</option>
-                                <option value='vendedor'>Vendedor</option>
-                              </select>
+                              <div className='flex flex-col gap-1'>
+                                <label className='text-xs text-gray-600 font-medium'>
+                                  Cambiar a:
+                                </label>
+                                <select
+                                  className='select select-sm select-bordered w-full text-xs'
+                                  value={u.role || 'comprador'}
+                                  disabled={changingRoles.has(u.id)}
+                                  onChange={e => {
+                                    const newRole = e.target.value as 'vendedor' | 'comprador' | 'admin';
+                                    // ✅ NUEVO: Confirmación antes de cambiar
+                                    if (confirm(`¿Estás seguro de que quieres cambiar el rol de ${u.email} de "${u.role}" a "${newRole}"?`)) {
+                                      changeUserRole(u.id, newRole);
+                                    } else {
+                                      // Resetear el select al valor original
+                                      e.target.value = u.role || 'comprador';
+                                    }
+                                  }}
+                                >
+                                  <option value='comprador'>🛒 Comprador</option>
+                                  <option value='vendedor'>🏪 Vendedor</option>
+                                  {currentUser?.email === SUPER_ADMIN_EMAIL && (
+                                    <option value='admin'>🛡️ Administrador</option>
+                                  )}
+                                </select>
+                                
+                                {/* ✅ NUEVO: Información adicional */}
+                                {u.role === 'vendedor' && (
+                                  <span className='text-xs text-orange-600'>
+                                    ⚠️ Al cambiar a comprador, se perderán productos
+                                  </span>
+                                )}
+                                {u.role === 'comprador' && (
+                                  <span className='text-xs text-blue-600'>
+                                    ℹ️ Al cambiar a vendedor, requerirá aprobación
+                                  </span>
+                                )}
+                                
+                                {/* ✅ NUEVO: Indicador de cambio en progreso */}
+                                {changingRoles.has(u.id) && (
+                                  <div className='flex items-center gap-2 text-xs text-blue-600'>
+                                    <div className='loading loading-spinner loading-xs'></div>
+                                    <span>Cambiando rol...</span>
+                                  </div>
+                                )}
+                              </div>
                             )}
                           </div>
                         )}

@@ -170,6 +170,80 @@ const requireAdminJwt = async (req: Request, res: Response, next: NextFunction) 
   } catch (e) { next(e); }
 };
 
+// ✅ NUEVO: Middleware para validar vendedores aprobados
+const requireApprovedVendor = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = await getUserFromAuthHeader(req);
+    if (!user) return res.status(401).json({ error: 'No autenticado' });
+    
+    // Verificar rol y estado en la base de datos
+    const supabaseUser = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!, {
+      global: { headers: { Authorization: req.headers.authorization! } },
+      auth: { autoRefreshToken: false, persistSession: false }
+    });
+    
+    const { data: userProfile, error: profileError } = await supabaseUser
+      .from('users')
+      .select('role, vendedor_estado, bloqueado')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || !userProfile) {
+      return res.status(401).json({ error: 'Perfil de usuario no encontrado' });
+    }
+
+    if (userProfile.bloqueado) {
+      return res.status(403).json({ error: 'Usuario bloqueado' });
+    }
+
+    if (userProfile.role !== 'vendedor') {
+      return res.status(403).json({ error: 'Solo vendedores pueden acceder a este recurso' });
+    }
+
+    if (userProfile.vendedor_estado !== 'aprobado') {
+      return res.status(403).json({ error: 'Vendedor debe estar aprobado para acceder a este recurso' });
+    }
+
+    (req as any).user = user;
+    next();
+  } catch (e) { next(e); }
+};
+
+// ✅ NUEVO: Middleware para validar compradores
+const requireApprovedBuyer = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = await getUserFromAuthHeader(req);
+    if (!user) return res.status(401).json({ error: 'No autenticado' });
+    
+    // Verificar rol y estado en la base de datos
+    const supabaseUser = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!, {
+      global: { headers: { Authorization: req.headers.authorization! } },
+      auth: { autoRefreshToken: false, persistSession: false }
+    });
+    
+    const { data: userProfile, error: profileError } = await supabaseUser
+      .from('users')
+      .select('role, bloqueado')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || !userProfile) {
+      return res.status(401).json({ error: 'Perfil de usuario no encontrado' });
+    }
+
+    if (userProfile.bloqueado) {
+      return res.status(403).json({ error: 'Usuario bloqueado' });
+    }
+
+    if (userProfile.role !== 'comprador') {
+      return res.status(403).json({ error: 'Solo compradores pueden acceder a este recurso' });
+    }
+
+    (req as any).user = user;
+    next();
+  } catch (e) { next(e); }
+};
+
 const setRoleSchema = z.object({ role: z.enum(['admin', 'vendedor', 'comprador']) });
 app.post('/admin/users/:id/role', rateLimit, requireAdminJwt, async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.params.id;
@@ -414,3 +488,5 @@ const port = process.env.PORT || 4000;
 app.listen(port, () => {
   console.log(`[backend-demo] listening on :${port}`);
 });
+
+
