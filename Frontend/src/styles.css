@@ -199,6 +199,7 @@
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   /* Typography Scale */
+  --text-xxs: 0.625rem; /* 10px */
   --text-xs: 0.75rem; /* 12px */
   --text-sm: 0.875rem; /* 14px */
   --text-base: 1rem; /* 16px */
@@ -386,6 +387,9 @@
   }
 
   /* Text Colors */
+  .text-xxs {
+    font-size: var(--text-xxs);
+  }
   .text-primary {
     color: var(--color-text-primary);
   }

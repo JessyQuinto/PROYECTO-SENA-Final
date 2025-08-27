@@ -57,7 +57,7 @@ export const UserAvatar: React.FC<{ user: User; className?: string }> = ({ user,
           
           {/* Role display below avatar - smaller and more discrete */}
           <div className='absolute -bottom-5 left-0 right-0 flex justify-center'>
-            <span className='text-xs text-gray-400 capitalize font-normal'>
+            <span className='text-xxs text-gray-400 capitalize font-normal'>
               {user.role}
               {user.role === 'vendedor' && user.vendedor_estado && (
                 <span
@@ -109,7 +109,7 @@ export const UserAvatar: React.FC<{ user: User; className?: string }> = ({ user,
           
           {/* Role display below avatar for mobile - smaller and more discrete */}
           <div className='absolute -bottom-4 left-0 right-0 flex justify-center'>
-            <span className='text-xs text-gray-400 capitalize font-normal'>
+            <span className='text-xxs text-gray-400 capitalize font-normal'>
               {user.role}
               {user.role === 'vendedor' && user.vendedor_estado && (
                 <span

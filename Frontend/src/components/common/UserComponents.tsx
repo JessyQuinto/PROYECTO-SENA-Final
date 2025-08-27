@@ -73,7 +73,7 @@ export const RoleBadge: React.FC<{
 }> = ({ role, vendorStatus, showVendorStatus = true, size = 'sm', className }) => {
   return (
     <div className={cn('flex items-center gap-1', className)}>
-      <span className='text-gray-400 capitalize font-normal text-xs'>
+      <span className='text-gray-400 capitalize font-normal text-xxs'>
         {role}
       </span>
       {role === 'vendedor' && vendorStatus && showVendorStatus && (

@@ -197,7 +197,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                   <span className='text-xs font-medium text-foreground truncate max-w-[120px]'>
                     {user.nombre || user.email}
                   </span>
-                  <span className='text-xs text-muted-foreground capitalize'>
+                  <span className='text-xxs text-muted-foreground capitalize'>
                     {user.role}
                   </span>
                 </div>
