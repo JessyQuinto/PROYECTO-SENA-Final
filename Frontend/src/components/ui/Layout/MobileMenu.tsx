@@ -118,39 +118,75 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
     <div 
       ref={menuRef}
       id={id}
-      className='md:hidden border-t bg-card'
+      className='
+        md:hidden 
+        border-t border-border/50 
+        bg-card/95 backdrop-blur-sm
+        shadow-lg
+        animate-in slide-in-up
+        mobile-scroll
+      '
       role='region'
       aria-label='Menú de navegación móvil'
     >
-      <div className='px-4 py-4 space-y-3'>
-        {/* Theme toggle */}
-        <div className='flex items-center justify-between py-2'>
-          <span className='text-sm font-medium'>Tema</span>
-          <ThemeToggle />
+      <div className='px-4 py-6 space-y-4'>
+        {/* Theme toggle - optimizado para móviles */}
+        <div className='flex items-center justify-between py-3 px-2 rounded-lg bg-muted/30'>
+          <span className='text-sm font-medium text-foreground'>Tema</span>
+          <div className='touch-target'>
+            <ThemeToggle />
+          </div>
         </div>
 
-        {/* Cart link for buyers */}
+        {/* Cart link for buyers - optimizado para móviles */}
         {user?.role === 'comprador' && (
           <Link
             to='/carrito'
             onClick={onClose}
-            className='flex items-center justify-between rounded-md px-3 py-2 text-base font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+            className='
+              flex items-center justify-between 
+              rounded-lg px-4 py-4 
+              text-base font-medium 
+              transition-all duration-200
+              bg-primary/5 hover:bg-primary/10
+              touch-target
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
+            '
             aria-label={`Ir al carrito${cartCount > 0 ? ` (${cartCount} artículos)` : ''}`}
           >
-            <span>Carrito</span>
+            <div className='flex items-center gap-3'>
+              <svg
+                className='w-6 h-6 text-primary'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01'
+                />
+              </svg>
+              <span>Carrito</span>
+            </div>
             {cartCount > 0 && (
               <span 
-                className='flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-medium text-destructive-foreground'
+                className='
+                  flex h-6 w-6 items-center justify-center 
+                  rounded-full bg-destructive text-xs font-bold text-destructive-foreground
+                  animate-pulse
+                '
                 aria-label={`${cartCount} artículos en el carrito`}
               >
-                {cartCount}
+                {cartCount > 99 ? '99+' : cartCount}
               </span>
             )}
           </Link>
         )}
 
-        {/* Navigation items */}
-        <nav className='space-y-1' role='navigation' aria-label='Elementos de navegación'>
+        {/* Navigation items - optimizados para móviles */}
+        <nav className='space-y-2' role='navigation' aria-label='Elementos de navegación'>
           {items.map(item => {
             const isActive = currentPath === item.path;
             return (
@@ -159,11 +195,11 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                 to={item.path}
                 onClick={onClose}
                 className={cn(
-                  'block rounded-md px-3 py-2 text-base font-medium transition-colors',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                  'block rounded-lg px-4 py-4 text-base font-medium transition-all duration-200 touch-target',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
                   isActive
-                    ? 'bg-accent text-accent-foreground'
-                    : 'text-foreground hover:bg-accent hover:text-accent-foreground'
+                    ? 'bg-primary/10 text-primary font-semibold shadow-sm'
+                    : 'text-foreground hover:bg-accent/50 hover:text-accent-foreground'
                 )}
                 aria-current={isActive ? 'page' : undefined}
               >
@@ -173,26 +209,26 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
           })}
         </nav>
 
-        {/* User section */}
+        {/* User section - optimizado para móviles */}
         {user ? (
-          <div className='border-t pt-4'>
-            <div className='flex items-center justify-between'>
-              <div className='flex items-center space-x-3'>
-                <div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold'>
+          <div className='border-t border-border/50 pt-6 mt-6'>
+            <div className='flex items-center justify-between p-4 rounded-lg bg-muted/30'>
+              <div className='flex items-center space-x-4'>
+                <div className='flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-lg font-bold shadow-sm'>
                   {getUserInitial()}
                 </div>
                 <div className='flex flex-col'>
-                  <span className='text-sm font-medium text-foreground'>
+                  <span className='text-base font-medium text-foreground'>
                     {user.nombre || user.email}
                   </span>
-                  <div className='flex items-center space-x-2'>
-                    <span className='text-xs text-muted-foreground capitalize'>
+                  <div className='flex items-center space-x-2 mt-1'>
+                    <span className='text-sm text-muted-foreground capitalize'>
                       {user.role}
                     </span>
                     {user.role === 'vendedor' && user.vendedor_estado && (
                       <span
                         className={cn(
-                          'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium',
+                          'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium',
                           {
                             'bg-green-100 text-green-800':
                               user.vendedor_estado === 'aprobado',
@@ -213,6 +249,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                 variant='outline' 
                 size='sm' 
                 onClick={handleSignOut}
+                className='touch-target'
                 aria-label='Cerrar sesión'
               >
                 Salir
@@ -220,14 +257,16 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
             </div>
           </div>
         ) : (
-          <div className='border-t pt-4 space-y-2'>
+          <div className='border-t border-border/50 pt-6 mt-6 space-y-3'>
             <Link to='/login' onClick={onClose} className='block'>
-              <Button variant='outline' className='w-full'>
+              <Button variant='outline' className='w-full touch-target-lg text-base py-3'>
                 Iniciar sesión
               </Button>
             </Link>
             <Link to='/register' onClick={onClose} className='block'>
-              <Button className='w-full'>Crear cuenta</Button>
+              <Button className='w-full touch-target-lg text-base py-3'>
+                Crear cuenta
+              </Button>
             </Link>
           </div>
         )}

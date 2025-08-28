@@ -108,20 +108,20 @@ const Navbar: React.FC = () => {
 
   return (
     <nav 
-      className='bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40'
+      className='bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40 sticky top-0 z-50 safe-area-padding'
       role='navigation'
       aria-label='Navegación principal'
     >
-      <div className='container mx-auto px-4'>
-        <div className='flex items-center justify-between h-16'>
-          {/* Logo */}
+      <div className='mobile-container mx-auto'>
+        <div className='flex items-center justify-between h-14 md:h-14'>
+          {/* Logo optimizado para móviles */}
           <Link
             to='/'
-            className='flex items-center space-x-2 text-xl font-bold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md'
+            className='flex items-center gap-2 md:gap-3 text-lg md:text-xl font-bold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md touch-target'
             aria-label='Ir a página de inicio - Tesoros Chocó'
           >
             <svg
-              className='h-8 w-8'
+              className='h-6 w-6 md:h-8 md:w-8 flex-shrink-0'
               viewBox='0 0 24 24'
               fill='none'
               stroke='currentColor'
@@ -134,27 +134,38 @@ const Navbar: React.FC = () => {
                 d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'
               />
             </svg>
-            <span className='hidden sm:inline'>Tesoros Chocó</span>
+            <span className='hidden sm:inline text-base md:text-xl'>Tesoros Chocó</span>
+            <span className='sm:hidden text-xs font-semibold leading-tight'>TC</span>
           </Link>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation - oculto en móviles */}
           <div className='hidden md:flex items-center space-x-6'>
             <NavigationMenu items={navItems} currentPath={location.pathname} />
           </div>
 
-          {/* Right side items - Reorganized order */}
-          <div className='flex items-center space-x-4'>
-            {/* 1. User Avatar (Logo with animation + Name) */}
-            {user && !isSigningOut && <UserAvatar user={user} />}
+          {/* Right side items - Reorganizados y optimizados para móviles */}
+          <div className='flex items-center gap-1.5 md:gap-4'>
+            {/* 1. User Avatar (solo en desktop) */}
+            <div className='hidden md:block'>
+              {user && !isSigningOut && <UserAvatar user={user} />}
+            </div>
 
-            {/* 2. Cart dropdown */}
-            {user?.role === 'comprador' && !isSigningOut && <CartDropdown />}
+            {/* 2. Cart dropdown (optimizado para móviles) */}
+            {user?.role === 'comprador' && !isSigningOut && (
+              <div className='touch-target'>
+                <CartDropdown />
+              </div>
+            )}
 
-            {/* 3. Theme toggle */}
-            <ThemeToggle />
+            {/* 3. Theme toggle (optimizado para móviles) */}
+            <div className='touch-target'>
+              <ThemeToggle className='mobile-theme-toggle' />
+            </div>
 
-            {/* 4. Sign out button */}
-            {user && !isSigningOut && <SignOutButton />}
+            {/* 4. Sign out button (solo en desktop) */}
+            <div className='hidden md:block'>
+              {user && !isSigningOut && <SignOutButton />}
+            </div>
 
             {/* Auth buttons for non-authenticated users */}
             {!user && (
@@ -162,21 +173,21 @@ const Navbar: React.FC = () => {
                 {/* Desktop auth buttons */}
                 <div className='hidden sm:flex items-center space-x-2'>
                   <Link to='/login'>
-                    <Button variant='ghost' size='sm'>
+                    <Button variant='ghost' size='sm' className='touch-target'>
                       Iniciar Sesión
                     </Button>
                   </Link>
                   <Link to='/register'>
-                    <Button size='sm'>
+                    <Button size='sm' className='touch-target'>
                       Registrarse
                     </Button>
                   </Link>
                 </div>
 
-                {/* Mobile auth icons */}
+                {/* Mobile auth icons - optimizados para táctil */}
                 <Link
                   to='/login'
-                  className='flex sm:hidden h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+                  className='flex sm:hidden touch-target items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
                   aria-label='Iniciar sesión'
                   title='Iniciar sesión'
                 >
@@ -197,7 +208,7 @@ const Navbar: React.FC = () => {
                 </Link>
                 <Link
                   to='/register'
-                  className='flex sm:hidden h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+                  className='flex sm:hidden touch-target items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
                   aria-label='Crear cuenta'
                   title='Crear cuenta'
                 >
@@ -219,11 +230,11 @@ const Navbar: React.FC = () => {
               </div>
             )}
 
-            {/* Mobile menu button */}
+            {/* Mobile menu button - optimizado para táctil */}
             <Button
               variant='ghost'
               size='icon'
-              className='md:hidden'
+              className='md:hidden touch-target p-1.5'
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-label={isMobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
               aria-expanded={isMobileMenuOpen}
@@ -262,7 +273,7 @@ const Navbar: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile menu */}
+        {/* Mobile menu optimizado */}
         <MobileMenu
           items={navItems}
           isOpen={isMobileMenuOpen}

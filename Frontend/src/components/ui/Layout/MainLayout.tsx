@@ -18,25 +18,45 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   const { isSigningOut } = useAuth();
 
   return (
-    <div className='min-h-screen bg-background text-foreground relative'>
+    <div className='min-h-screen-mobile bg-background text-foreground relative mobile-tap-highlight mobile-text-size-adjust'>
+      {/* Loading overlay durante cierre de sesión */}
       {isSigningOut && (
         <div
-          className='fixed inset-0 z-50 flex items-center justify-center bg-background/80'
+          className='fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm'
           aria-live='polite'
           aria-busy='true'
         >
-          <div className='flex items-center gap-3 text-muted-foreground'>
+          <div className='flex items-center gap-3 text-muted-foreground bg-card p-4 rounded-lg shadow-lg'>
             <div className='h-5 w-5 rounded-full border-2 border-muted-foreground border-t-transparent animate-spin' />
-            <span>Cerrando sesión…</span>
+            <span className='text-sm font-medium'>Cerrando sesión…</span>
           </div>
         </div>
       )}
+      
+      {/* Header optimizado para móviles */}
       <Header />
-      <main className={`${className} pb-24 md:pb-0`}>
+      
+      {/* Contenido principal con espaciado optimizado */}
+      <main 
+        className={`
+          ${className} 
+          pb-24 md:pb-0 
+          pt-safe-top 
+          mobile-container
+          mobile-scroll
+          min-h-screen-safe
+        `}
+      >
         {children}
       </main>
+      
+      {/* Footer solo visible en desktop */}
       <Footer />
+      
+      {/* Tab bar móvil optimizado */}
       <MobileTabBar />
+      
+      {/* Modales y componentes globales */}
       <GlobalModals />
       <CookieConsent />
     </div>

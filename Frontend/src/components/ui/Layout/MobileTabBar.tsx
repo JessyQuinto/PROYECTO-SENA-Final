@@ -117,27 +117,66 @@ const MobileTabBar: React.FC = () => {
     >
       <ul className='mobile-tabbar-list'>
         {normalized.map(t => (
-          <li key={`${t.path}|${t.label}`}>
+          <li key={`${t.path}|${t.label}`} className='flex-1'>
             <Link
               to={t.path}
-              className={`mobile-tabbar-item ${isActive(t.path) ? 'active' : ''}`}
+              className={`
+                mobile-tabbar-item 
+                touch-target-lg
+                flex flex-col items-center justify-center
+                gap-1.5
+                px-2 py-3
+                w-full h-full
+                transition-all duration-200 ease-in-out
+                ${isActive(t.path) 
+                  ? 'text-primary bg-primary/5 scale-105' 
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                }
+                active:scale-95
+                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
+              `}
             >
-              <div className='relative'>
+              <div className='relative flex items-center justify-center'>
                 <Icon
                   category={t.icon.category}
                   name={t.icon.name}
-                  className='w-6 h-6'
+                  className={`
+                    w-7 h-7 md:w-6 md:h-6
+                    transition-all duration-200
+                    ${isActive(t.path) ? 'text-primary' : 'text-current'}
+                  `}
                 />
                 {t.showBadge && cartCount > 0 && (
                   <span
-                    className='badge-count'
+                    className='
+                      absolute -top-2 -right-2
+                      bg-destructive text-destructive-foreground
+                      text-xs font-bold
+                      min-w-[20px] h-5
+                      flex items-center justify-center
+                      rounded-full
+                      px-1
+                      shadow-sm
+                      animate-pulse
+                    '
                     aria-label={`${cartCount} artículos en el carrito`}
                   >
-                    {cartCount}
+                    {cartCount > 99 ? '99+' : cartCount}
                   </span>
                 )}
               </div>
-              <span className='label'>{t.label}</span>
+              <span 
+                className={`
+                  text-xs font-medium
+                  transition-all duration-200
+                  ${isActive(t.path) 
+                    ? 'text-primary font-semibold' 
+                    : 'text-current'
+                  }
+                `}
+              >
+                {t.label}
+              </span>
             </Link>
           </li>
         ))}

@@ -59,6 +59,18 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [items, storageKey]);
 
   const add = (item: CartItem) => {
+    // Verificar que el usuario esté autenticado
+    if (!user) {
+      console.warn('Intento de añadir al carrito sin usuario autenticado');
+      return;
+    }
+
+    // Verificar que el usuario tenga rol de comprador
+    if (user.role !== 'comprador') {
+      console.warn('Intento de añadir al carrito con rol incorrecto:', user.role);
+      return;
+    }
+
     setItems(prev => {
       const existing = prev.find(i => i.productoId === item.productoId);
       if (existing) {
@@ -79,6 +91,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const update = (productoId: string, cantidad: number) => {
+    // Verificar que el usuario esté autenticado
+    if (!user) {
+      console.warn('Intento de actualizar carrito sin usuario autenticado');
+      return;
+    }
+
     setItems(prev =>
       prev.map(i =>
         i.productoId === productoId
@@ -91,9 +109,25 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     );
   };
 
-  const remove = (productoId: string) =>
+  const remove = (productoId: string) => {
+    // Verificar que el usuario esté autenticado
+    if (!user) {
+      console.warn('Intento de remover del carrito sin usuario autenticado');
+      return;
+    }
+
     setItems(prev => prev.filter(i => i.productoId !== productoId));
-  const clear = () => setItems([]);
+  };
+
+  const clear = () => {
+    // Verificar que el usuario esté autenticado
+    if (!user) {
+      console.warn('Intento de limpiar carrito sin usuario autenticado');
+      return;
+    }
+
+    setItems([]);
+  };
 
   const total = useMemo(
     () => items.reduce((sum, i) => sum + i.precio * i.cantidad, 0),

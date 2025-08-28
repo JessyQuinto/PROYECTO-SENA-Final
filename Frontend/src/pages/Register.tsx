@@ -146,19 +146,8 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className='min-h-[calc(100vh-120px)] grid place-items-center relative overflow-hidden'>
-      {/* Decorative auth background */}
-      <div
-        aria-hidden
-        className='absolute inset-0 opacity-12'
-        style={{
-          backgroundImage:
-            "linear-gradient(to right, rgba(0,0,0,0.04), rgba(0,0,0,0.00)), url('/assert/motif-de-fond-sans-couture-tribal-dessin-geometrique-noir-et-blanc-vecteur/v1045-03.jpg')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      />
-      <div className='container max-w-5xl relative z-10'>
+          <div className='min-h-[calc(100vh-120px)] grid place-items-center'>
+      <div className='container max-w-5xl'>
         <div className='grid md:grid-cols-3 gap-8 items-start'>
           <div className='hidden md:block md:col-span-1'>
             <div className='card card-hover'>

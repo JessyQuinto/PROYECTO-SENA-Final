@@ -29,51 +29,55 @@ export const Home: React.FC = () => {
   } = useCachedFeaturedProducts();
 
   return (
-    <div>
-      {/* Hero Section (Crafted style) */}
-      <section className='relative overflow-hidden rounded-2xl mx-4 md:mx-10 mt-6 shadow-lg'>
+    <div className='mobile-scroll'>
+      {/* Hero Section (Crafted style) - optimizado para móviles */}
+      <section className='relative overflow-hidden rounded-xl mx-4 md:mx-10 mt-4 md:mt-6 shadow-lg'>
         <div
-          className='bg-cover bg-center flex flex-col justify-end min-h-[56vh]'
+          className='bg-cover bg-center flex flex-col justify-end min-h-[50vh] md:min-h-[56vh]'
           style={{
             backgroundImage:
               "linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.1) 50%), url('/assert/2/9a92cd16-82e0-4b9b-bc8f-a7805b2ad499.jpg')",
           }}
         >
-          <div className='p-8 md:p-16 text-white text-center'>
-            <h1 className='heading-hero mb-4'>Descubre el Alma del Pacífico</h1>
-            <p className='text-lg md:text-xl max-w-2xl mx-auto text-balance'>
+          <div className='p-6 md:p-16 text-white text-center'>
+            <h1 className='text-2xl md:text-4xl lg:text-5xl font-bold mb-3 md:mb-4 leading-tight'>
+              Descubre el Alma del Pacífico
+            </h1>
+            <p className='text-base md:text-lg lg:text-xl max-w-2xl mx-auto text-balance leading-relaxed'>
               Producidas y fabricadas a mano por campesinos de la región.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Features Section - optimizado para móviles */}
       <section
-        className='py-16'
+        className='py-12 md:py-16 px-4 md:px-0'
         style={{ backgroundColor: 'var(--color-marfil)' }}
       >
-        <div className='container'>
-          <div className='text-center mb-12'>
-            <h2 className='heading-lg mb-4'>¿Por qué Tesoros Chocó?</h2>
-            <p className='text-lg opacity-80 max-w-2xl mx-auto text-balance'>
+        <div className='container mx-auto'>
+          <div className='text-center mb-8 md:mb-12'>
+            <h2 className='text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4'>
+              ¿Por qué Tesoros Chocó?
+            </h2>
+            <p className='text-base md:text-lg opacity-80 max-w-2xl mx-auto text-balance leading-relaxed'>
               Conectamos los oficios del Chocó con personas que valoran lo
               fabricado a mano, con historia y origen.
             </p>
           </div>
 
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
-            <Card className='featured-card text-center'>
-              <CardContent className='p-6'>
+          <div className='grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8'>
+            <Card className='featured-card text-center hover:shadow-lg transition-all duration-300'>
+              <CardContent className='p-6 md:p-8'>
                 <div
-                  className='w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4'
+                  className='w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6'
                   style={{
                     backgroundColor:
                       'color-mix(in oklab, var(--color-terracotta-suave) 15%, white)',
                   }}
                 >
                   <svg
-                    className='w-8 h-8'
+                    className='w-8 h-8 md:w-10 md:h-10'
                     style={{ color: 'var(--color-terracotta-suave)' }}
                     fill='none'
                     stroke='currentColor'
@@ -87,27 +91,27 @@ export const Home: React.FC = () => {
                     />
                   </svg>
                 </div>
-                <CardTitle className='text-xl mb-2'>
+                <CardTitle className='text-lg md:text-xl mb-2 md:mb-3 font-semibold'>
                   Piezas con historia
                 </CardTitle>
-                <CardDescription className='opacity-80'>
+                <CardDescription className='opacity-80 text-sm md:text-base leading-relaxed'>
                   Cada pieza nace en un taller real: materiales nobles, técnicas
                   ancestrales y el sello de quien la crea.
                 </CardDescription>
               </CardContent>
             </Card>
 
-            <Card className='featured-card text-center'>
-              <CardContent className='p-6'>
+            <Card className='featured-card text-center hover:shadow-lg transition-all duration-300'>
+              <CardContent className='p-6 md:p-8'>
                 <div
-                  className='w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4'
+                  className='w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6'
                   style={{
                     backgroundColor:
                       'color-mix(in oklab, var(--color-ocre-africano) 15%, white)',
                   }}
                 >
                   <svg
-                    className='w-8 h-8'
+                    className='w-8 h-8 md:w-10 md:h-10'
                     style={{ color: 'var(--color-ocre-africano)' }}
                     fill='none'
                     stroke='currentColor'
@@ -121,27 +125,27 @@ export const Home: React.FC = () => {
                     />
                   </svg>
                 </div>
-                <CardTitle className='text-xl mb-2'>
+                <CardTitle className='text-lg md:text-xl mb-2 md:mb-3 font-semibold'>
                   Tiempo de calidad
                 </CardTitle>
-                <CardDescription className='opacity-80'>
+                <CardDescription className='opacity-80 text-sm md:text-base leading-relaxed'>
                   No hay prisa en la artesanía. Cada pieza requiere su tiempo
                   para alcanzar la perfección.
                 </CardDescription>
               </CardContent>
             </Card>
 
-            <Card className='featured-card text-center'>
-              <CardContent className='p-6'>
+            <Card className='featured-card text-center hover:shadow-lg transition-all duration-300'>
+              <CardContent className='p-6 md:p-8'>
                 <div
-                  className='w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4'
+                  className='w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6'
                   style={{
                     backgroundColor:
                       'color-mix(in oklab, var(--color-verde-oliva) 15%, white)',
                   }}
                 >
                   <svg
-                    className='w-8 h-8'
+                    className='w-8 h-8 md:w-10 md:h-10'
                     style={{ color: 'var(--color-verde-oliva)' }}
                     fill='none'
                     stroke='currentColor'
@@ -161,8 +165,10 @@ export const Home: React.FC = () => {
                     />
                   </svg>
                 </div>
-                <CardTitle className='text-xl mb-2'>Origen auténtico</CardTitle>
-                <CardDescription className='opacity-80'>
+                <CardTitle className='text-lg md:text-xl mb-2 md:mb-3 font-semibold'>
+                  Origen auténtico
+                </CardTitle>
+                <CardDescription className='opacity-80 text-sm md:text-base leading-relaxed'>
                   Productos que nacen en el corazón del Chocó, con materiales y
                   técnicas locales.
                 </CardDescription>
@@ -172,38 +178,40 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Featured Products Section */}
-      <section className='py-16'>
-        <div className='container'>
-          <div className='text-center mb-12'>
-            <h2 className='heading-lg mb-4'>Productos Destacados</h2>
-            <p className='text-lg opacity-80 max-w-2xl mx-auto text-balance'>
+      {/* Featured Products Section - optimizado para móviles */}
+      <section className='py-12 md:py-16 px-4 md:px-0'>
+        <div className='container mx-auto'>
+          <div className='text-center mb-8 md:mb-12'>
+            <h2 className='text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4'>
+              Productos Destacados
+            </h2>
+            <p className='text-base md:text-lg opacity-80 max-w-2xl mx-auto text-balance leading-relaxed'>
               Descubre nuestras piezas más populares, seleccionadas por su
               calidad y autenticidad.
             </p>
           </div>
 
           {loading ? (
-            <div className='flex justify-center'>
+            <div className='flex justify-center py-8'>
               <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
             </div>
           ) : error ? (
-            <div className='text-center text-red-600'>
+            <div className='text-center text-red-600 py-8'>
               Error al cargar productos: {error.message}
             </div>
           ) : (
-            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6'>
               {(featuredProducts || []).map((product: FeaturedProduct) => (
                 <Card
                   key={product.id}
-                  className='featured-card overflow-hidden hover:shadow-lg transition-shadow'
+                  className='featured-card overflow-hidden hover:shadow-lg transition-all duration-300 group'
                 >
                   <div className='aspect-square overflow-hidden bg-gray-100 flex items-center justify-center'>
                     {product.imagen_url ? (
                       <img
                         src={product.imagen_url}
                         alt={product.nombre}
-                        className='w-full h-full object-cover hover:scale-105 transition-transform duration-300'
+                        className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-300'
                         onError={e => {
                           const target = e.target as HTMLImageElement;
                           target.style.display = 'none';
@@ -227,20 +235,22 @@ export const Home: React.FC = () => {
                       </div>
                     )}
                   </div>
-                  <CardContent className='p-4'>
-                    <h3 className='font-semibold text-lg mb-2 line-clamp-2'>
+                  <CardContent className='p-4 md:p-6'>
+                    <h3 className='font-semibold text-lg md:text-xl mb-2 line-clamp-2 leading-tight'>
                       {product.nombre}
                     </h3>
-                    <p className='text-sm text-gray-600 mb-2'>
+                    <p className='text-sm md:text-base text-gray-600 mb-3 md:mb-4'>
                       Por:{' '}
                       {product.users?.nombre_completo || 'Artesano Chocoano'}
                     </p>
-                    <div className='flex items-center justify-between'>
-                      <span className='text-xl font-bold text-primary'>
+                    <div className='flex items-center justify-between gap-3'>
+                      <span className='text-xl md:text-2xl font-bold text-primary'>
                         ${product.precio.toLocaleString()}
                       </span>
                       <Link to={`/productos/${product.id}`}>
-                        <Button size='sm'>Ver Detalles</Button>
+                        <Button size='sm' className='touch-target'>
+                          Ver Detalles
+                        </Button>
                       </Link>
                     </div>
                   </CardContent>
@@ -250,7 +260,7 @@ export const Home: React.FC = () => {
                 !loading &&
                 !error && (
                   <div className='col-span-full text-center py-8'>
-                    <p className='text-gray-600'>
+                    <p className='text-gray-600 text-base md:text-lg'>
                       No hay productos destacados disponibles en este momento.
                     </p>
                   </div>
@@ -258,9 +268,9 @@ export const Home: React.FC = () => {
             </div>
           )}
 
-          <div className='text-center mt-8'>
+          <div className='text-center mt-8 md:mt-12'>
             <Link to='/productos'>
-              <Button size='lg' variant='outline'>
+              <Button size='lg' variant='outline' className='touch-target-lg'>
                 Ver Todos los Productos
               </Button>
             </Link>
@@ -268,9 +278,9 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* CTA Section - optimizado para móviles */}
       <section
-        className='py-16 relative overflow-hidden'
+        className='py-12 md:py-16 relative overflow-hidden px-4 md:px-0'
         style={{
           backgroundImage:
             "linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0.3)), url('/assert/2/9a92cd16-82e0-4b9b-bc8f-a7805b2ad499.jpg')",
@@ -279,18 +289,18 @@ export const Home: React.FC = () => {
           backgroundRepeat: 'no-repeat',
         }}
       >
-        <div className='container text-center relative z-10'>
-          <h2 className='heading-lg mb-4 text-white'>
+        <div className='container mx-auto text-center relative z-10'>
+          <h2 className='text-2xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6 text-white'>
             ¿Eres Artesano del Chocó?
           </h2>
-          <p className='text-lg mb-8 text-white opacity-90 max-w-2xl mx-auto text-balance'>
+          <p className='text-base md:text-lg mb-6 md:mb-8 text-white opacity-90 max-w-2xl mx-auto text-balance leading-relaxed'>
             Únete a nuestra plataforma y comparte tu talento con el mundo.
             Conectamos artesanos con compradores que valoran lo auténtico.
           </p>
           {!user ? (
             <div className='flex flex-col sm:flex-row gap-4 justify-center'>
               <Link to='/register'>
-                <Button size='lg' variant='secondary'>
+                <Button size='lg' variant='secondary' className='touch-target-lg w-full sm:w-auto'>
                   Registrarse como Vendedor
                 </Button>
               </Link>
@@ -298,7 +308,7 @@ export const Home: React.FC = () => {
                 <Button
                   size='lg'
                   variant='outline'
-                  className='bg-white text-primary hover:bg-gray-100'
+                  className='bg-white text-primary hover:bg-gray-100 touch-target-lg w-full sm:w-auto'
                 >
                   Iniciar Sesión
                 </Button>
@@ -306,13 +316,13 @@ export const Home: React.FC = () => {
             </div>
           ) : user.role === 'vendedor' ? (
             <Link to='/vendedor'>
-              <Button size='lg' variant='secondary'>
+              <Button size='lg' variant='secondary' className='touch-target-lg'>
                 Ir al Panel de Vendedor
               </Button>
             </Link>
           ) : (
             <Link to='/register'>
-              <Button size='lg' variant='secondary'>
+              <Button size='lg' variant='secondary' className='touch-target-lg'>
                 Cambiar a Cuenta de Vendedor
               </Button>
             </Link>

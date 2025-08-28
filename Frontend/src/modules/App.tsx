@@ -13,7 +13,6 @@ import { PageErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { CacheProvider } from '@/components/cache/CacheProvider';
 
 // Lazy load pages for better performance
-const AuthPage = lazy(() => import('@/pages/Auth'));
 const LoginPage = lazy(() => import('@/pages/Login'));
 const RegisterPage = lazy(() => import('@/pages/Register'));
 const VerifyEmailPage = lazy(() => import('@/pages/VerifyEmail'));
@@ -78,7 +77,6 @@ export const App: React.FC = () => (
                         element={<ProductDetail />}
                       />
                       <Route path='/demo' element={<Landing />} />
-                      <Route path='/auth' element={<AuthPage />} />
                       <Route path='/login' element={<LoginPage />} />
                       <Route path='/register' element={<RegisterPage />} />
                       <Route

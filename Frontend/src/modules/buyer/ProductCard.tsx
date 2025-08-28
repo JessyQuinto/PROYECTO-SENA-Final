@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/shadcn/card';
 import { useCart } from './CartContext';
+import { useAuthRedirect } from '@/hooks/useAuthRedirect';
 import Icon from '@/components/ui/Icon';
 import { ProductImage } from '@/components/ui/OptimizedImage';
 
@@ -36,6 +37,7 @@ const ProductCardBase: React.FC<ProductCardProps> = ({
 }) => {
   const navigate = useNavigate();
   const { add } = useCart();
+  const { requireCartAccess } = useAuthRedirect();
   const isLowStock = Number(product.stock) <= 5 && Number(product.stock) > 0;
   const createdAt = product.created_at ? new Date(product.created_at) : null;
   const isNew = createdAt
@@ -43,6 +45,15 @@ const ProductCardBase: React.FC<ProductCardProps> = ({
     : false;
 
   const handleAddToCart = () => {
+    // Verificar si el usuario puede añadir al carrito
+    if (!requireCartAccess({
+      message: 'Debes iniciar sesión para añadir productos al carrito',
+      returnTo: '/productos'
+    })) {
+      return; // El usuario fue redirigido al login
+    }
+
+    // Usuario autenticado y con rol correcto, añadir al carrito
     add({
       productoId: product.id,
       nombre: product.nombre,
@@ -57,7 +68,13 @@ const ProductCardBase: React.FC<ProductCardProps> = ({
 
   return (
     <Card
-      className={`product-card transition-all overflow-hidden group hover:shadow-xl border-gray-200 ${className}`}
+      className={`
+        product-card mobile-card
+        transition-all duration-300 overflow-hidden group 
+        hover:shadow-xl border-gray-200 
+        mobile-accelerated
+        ${className}
+      `}
       onClick={goToDetail}
       role='button'
       tabIndex={0}
@@ -70,6 +87,20 @@ const ProductCardBase: React.FC<ProductCardProps> = ({
     >
       <Link to={`/productos/${product.id}`} className='block'>
         <div className='relative bg-gray-100 overflow-hidden aspect-[3/2]'>
+          {/* Badges para stock bajo y productos nuevos */}
+          <div className='absolute top-2 left-2 z-10 flex flex-col gap-1'>
+            {isNew && (
+              <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 shadow-sm'>
+                Nuevo
+              </span>
+            )}
+            {isLowStock && (
+              <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 shadow-sm'>
+                Stock bajo
+              </span>
+            )}
+          </div>
+
           {product.imagen_url ? (
             <ProductImage
               src={product.imagen_url}
@@ -93,34 +124,67 @@ const ProductCardBase: React.FC<ProductCardProps> = ({
               <Icon
                 category='Catálogo y producto'
                 name='MynauiImage'
-                className='w-8 h-8'
+                className='w-8 h-8 md:w-6 md:h-6'
               />
             </div>
           )}
         </div>
       </Link>
 
-      <CardContent className='p-3'>
+      <CardContent className='p-3 md:p-4'>
         <button
           type='button'
-          className='block mb-2 text-left w-full'
+          className='block mb-2 md:mb-3 text-left w-full touch-target'
           onClick={e => {
             e.stopPropagation();
             goToDetail();
           }}
         >
-          <h3 className='text-sm font-medium line-clamp-1 group-hover:text-(--color-terracotta-suave)'>
+          <h3 className='text-sm md:text-base font-medium line-clamp-2 group-hover:text-primary leading-tight'>
             {product.nombre}
           </h3>
         </button>
 
-        <div className='flex items-center justify-between'>
-          <span className='text-lg font-bold text-(--color-terracotta-suave)'>
-            ${Number(product.precio).toLocaleString()}
-          </span>
+        {/* Información del vendedor */}
+        {product.users?.nombre_completo && (
+          <p className='text-xs md:text-sm text-gray-600 mb-2 md:mb-3 line-clamp-1'>
+            Por: {product.users.nombre_completo}
+          </p>
+        )}
+
+        {/* Categoría */}
+        {product.categorias?.nombre && (
+          <p className='text-xs text-gray-500 mb-2 md:mb-3 line-clamp-1'>
+            {product.categorias.nombre}
+          </p>
+        )}
+
+        <div className='flex items-center justify-between gap-2'>
+          <div className='flex flex-col'>
+            <span className='text-lg md:text-xl font-bold text-primary'>
+              ${Number(product.precio).toLocaleString()}
+            </span>
+            {Number(product.stock) <= 0 && (
+              <span className='text-xs text-red-600 font-medium'>
+                Agotado
+              </span>
+            )}
+          </div>
 
           <button
-            className='btn btn-primary btn-sm'
+            className={`
+              touch-target-lg
+              flex items-center justify-center
+              w-10 h-10 md:w-12 md:h-12
+              rounded-full
+              text-white font-bold text-lg
+              transition-all duration-200
+              shadow-sm
+              ${Number(product.stock) <= 0
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-primary hover:bg-primary/90 active:scale-95'
+              }
+            `}
             onClick={e => {
               e.stopPropagation();
               handleAddToCart();
@@ -128,7 +192,11 @@ const ProductCardBase: React.FC<ProductCardProps> = ({
             disabled={Number(product.stock) <= 0}
             aria-label={`Añadir ${product.nombre} al carrito`}
           >
-            +
+            <Icon
+              category='Carrito y checkout'
+              name='WhhShoppingcart'
+              className='w-5 h-5 md:w-6 md:h-6'
+            />
           </button>
         </div>
       </CardContent>
