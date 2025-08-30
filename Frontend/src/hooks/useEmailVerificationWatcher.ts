@@ -40,25 +40,26 @@ export function useEmailVerificationWatcher(pollIntervalMs = 3000, onVerified?: 
         }
 
         // ✅ MEJORADO: Verificación más robusta del estado del email
-        const isVerified = Boolean(
+        let isVerified = Boolean(
           user?.email_confirmed_at ||
           user?.confirmed_at ||
           user?.email_confirmed ||
-          user?.identities?.some((i: any) => i?.identity_data?.email_verified === true) ||
-          // ✅ NUEVO: Verificar también en la tabla users
-          (async () => {
-            try {
-              const { data: userProfile } = await supabase
-                .from('users')
-                .select('email_confirmed_at')
-                .eq('id', user.id)
-                .single();
-              return userProfile?.email_confirmed_at;
-            } catch {
-              return false;
-            }
-          })()
+          user?.identities?.some((i: any) => i?.identity_data?.email_verified === true)
         );
+        
+        // ✅ NUEVO: Verificar también en la tabla users si no está verificado
+        if (!isVerified) {
+          try {
+            const { data: userProfile } = await supabase
+              .from('users')
+              .select('email_confirmed_at')
+              .eq('id', user.id)
+              .single();
+            isVerified = Boolean(userProfile?.email_confirmed_at);
+          } catch {
+            // Ignore error, keep original verification status
+          }
+        }
 
         if (mountedRef.current) {
           setStatus(isVerified ? 'verified' : 'pending');
