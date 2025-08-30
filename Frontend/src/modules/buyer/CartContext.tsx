@@ -6,6 +6,7 @@ import React, {
   useState,
 } from 'react';
 import { useAuth } from '@/auth/AuthContext';
+import { useCleanupListener } from '@/lib/stateCleanup';
 
 export interface CartItem {
   productoId: string;
@@ -33,8 +34,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [items, setItems] = useState<CartItem[]>([]);
-  const { user } = useAuth();
+  const { user, isSigningOut } = useAuth();
   const storageKey = user?.id ? `${STORAGE_KEY_BASE}_${user.id}` : null;
+
+  // Clear cart immediately when logout starts
+  useEffect(() => {
+    if (isSigningOut) {
+      setItems([]);
+    }
+  }, [isSigningOut]);
+
+  // Listen for cleanup events
+  useCleanupListener(() => {
+    setItems([]);
+  });
 
   useEffect(() => {
     // cargar carrito por usuario; si no hay usuario, mantener vacío
@@ -53,6 +66,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     if (!storageKey) return; // no persistir sin usuario
+    if (isSigningOut) return; // no persistir durante logout
     try {
       localStorage.setItem(storageKey, JSON.stringify(items));
     } catch {}
@@ -60,7 +74,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const add = (item: CartItem) => {
     // Verificar que el usuario esté autenticado
-    if (!user) {
+    if (!user || isSigningOut) {
       console.warn('Intento de añadir al carrito sin usuario autenticado');
       return;
     }
@@ -92,7 +106,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const update = (productoId: string, cantidad: number) => {
     // Verificar que el usuario esté autenticado
-    if (!user) {
+    if (!user || isSigningOut) {
       console.warn('Intento de actualizar carrito sin usuario autenticado');
       return;
     }
@@ -111,7 +125,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const remove = (productoId: string) => {
     // Verificar que el usuario esté autenticado
-    if (!user) {
+    if (!user || isSigningOut) {
       console.warn('Intento de remover del carrito sin usuario autenticado');
       return;
     }
@@ -120,12 +134,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const clear = () => {
-    // Verificar que el usuario esté autenticado
-    if (!user) {
-      console.warn('Intento de limpiar carrito sin usuario autenticado');
-      return;
-    }
-
     setItems([]);
   };
 
