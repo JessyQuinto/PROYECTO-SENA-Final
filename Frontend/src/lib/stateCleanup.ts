@@ -32,7 +32,7 @@ export interface CleanupResult {
  */
 export const KEY_PATTERNS = {
   USER_DATA: ['user_', 'profile_', 'preferences_'],
-  CART_DATA: ['cart_', 'tc_cart_'],
+  CART_DATA: ['cart_'],
   AUTH_DATA: ['sb-', 'supabase', 'auth_'],
   SESSION_DATA: ['session_', 'temp_'],
   SYSTEM_DATA: ['theme', 'language', 'locale'],
@@ -53,20 +53,10 @@ export const DEFAULT_PRESERVE_KEYS = [
  */
 export const ALWAYS_REMOVE_KEYS = [
   'user_preferences',
-  'tc_cart_v1_',
+  'cart_data',
   'user_session',
   'last_visited',
   'user_profile',
-] as const;
-
-/**
- * Patterns that should always be removed (partial matching)
- */
-export const ALWAYS_REMOVE_PATTERNS = [
-  'tc_cart_v1_',
-  'cart_',
-  'user_',
-  'sb-',
 ] as const;
 
 /**
@@ -112,8 +102,7 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
     // Determine which keys to remove
     const keysToRemove = allKeys.filter(key => {
       // Always remove certain keys
-      if (ALWAYS_REMOVE_KEYS.some(pattern => key.includes(pattern)) ||
-          ALWAYS_REMOVE_PATTERNS.some(pattern => key.includes(pattern))) {
+      if (ALWAYS_REMOVE_KEYS.some(pattern => key.includes(pattern))) {
         return true;
       }
 
@@ -122,7 +111,7 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
         // Remove anything that looks user-related
         if (
           KEY_PATTERNS.USER_DATA.some(pattern => key.startsWith(pattern)) ||
-          KEY_PATTERNS.CART_DATA.some(pattern => key.includes(pattern)) ||
+          KEY_PATTERNS.CART_DATA.some(pattern => key.startsWith(pattern)) ||
           KEY_PATTERNS.AUTH_DATA.some(pattern => key.includes(pattern))
         ) {
           return !preserveKeys.includes(key);
@@ -131,7 +120,7 @@ export function cleanupUserState(options: CleanupOptions = {}): CleanupResult {
         // Normal mode - be more selective
         if (
           KEY_PATTERNS.USER_DATA.some(pattern => key.startsWith(pattern)) ||
-          KEY_PATTERNS.CART_DATA.some(pattern => key.includes(pattern))
+          KEY_PATTERNS.CART_DATA.some(pattern => key.startsWith(pattern))
         ) {
           return !preserveKeys.includes(key);
         }

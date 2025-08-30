@@ -601,9 +601,8 @@ const UsersAdmin: React.FC = () => {
         throw error;
       }
 
-      // Check if the RPC returned an error in the data
-      if (data && typeof data === 'object' && 'error' in data) {
-        throw new Error(data.error || 'Error desconocido al cambiar rol');
+      if (!data?.success) {
+        throw new Error(data?.error || 'Error desconocido al cambiar rol');
       }
 
       // ✅ MEJORADO: Actualizar estado local con datos de la RPC
@@ -621,7 +620,7 @@ const UsersAdmin: React.FC = () => {
 
       // ✅ NUEVO: Mostrar mensaje de éxito más informativo
       (window as any).toast?.success(
-        `✅ Rol cambiado exitosamente a ${newRole}`, 
+        `✅ Rol cambiado exitosamente: ${data.old_role} → ${data.new_role}`, 
         {
           role: 'admin',
           action: 'update',
@@ -638,8 +637,8 @@ const UsersAdmin: React.FC = () => {
           window.dispatchEvent(new CustomEvent('userRoleChanged', {
             detail: { 
               userId: id, 
-              oldRole: targetUser.role,
-              newRole: newRole,
+              oldRole: data.old_role,
+              newRole: data.new_role,
               timestamp: Date.now()
             }
           }));

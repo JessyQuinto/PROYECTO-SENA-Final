@@ -102,13 +102,8 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   }, [isOpen, handleKeyDown]);
 
   const handleSignOut = async () => {
-    try {
-      await signOut();
-    } catch (error) {
-      console.error('[MobileMenu] Error during signOut:', error);
-    } finally {
-      onClose();
-    }
+    await signOut();
+    onClose();
   };
 
   const getUserInitial = () => {

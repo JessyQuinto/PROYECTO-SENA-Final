@@ -75,15 +75,6 @@ export const CookieConsent: React.FC = () => {
     try {
       setLoading(true);
       
-      // Test localStorage functionality first
-      try {
-        localStorage.setItem('cookie_consent_test', 'test');
-        localStorage.removeItem('cookie_consent_test');
-      } catch (error) {
-        logger.error('[CookieConsent] localStorage test failed:', error);
-        throw new Error('localStorage no disponible');
-      }
-      
       const consentData = {
         value,
         at: new Date().toISOString(),
@@ -92,13 +83,6 @@ export const CookieConsent: React.FC = () => {
       };
 
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(consentData));
-      
-      // Verify the data was saved correctly
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (!saved) {
-        throw new Error('No se pudo verificar que el consentimiento se guardó correctamente');
-      }
-      
       setVisible(false);
       
       logger.debug('[CookieConsent] Consent saved successfully:', value);
