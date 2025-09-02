@@ -4,6 +4,12 @@
 
 **Tesoros Chocó** es una plataforma de comercio electrónico diseñada para conectar artesanos del departamento del Chocó, Colombia, con compradores que valoran productos únicos y auténticos hechos a mano. La plataforma facilita la comercialización de artesanías tradicionales, promoviendo la economía local y preservando las técnicas ancestrales de la región.
 
+## 🌐 Acceso a la Aplicación
+
+**🚀 Aplicación Desplegada**: [https://ambitious-ground-03b86cf10.2.azurestaticapps.net](https://ambitious-ground-03b86cf10.2.azurestaticapps.net)
+
+La aplicación está disponible en línea y lista para usar. No necesitas instalar nada para probarla.
+
 ## 🎯 Objetivos del Proyecto
 
 - **Digitalización del Comercio Artesanal**: Llevar las artesanías del Chocó al comercio digital
@@ -93,6 +99,10 @@ bun run dev
 
 ### 5. Acceder a la Aplicación
 
+#### Aplicación en Línea (Recomendado)
+- **Aplicación Desplegada**: https://ambitious-ground-03b86cf10.2.azurestaticapps.net
+
+#### Desarrollo Local
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:3001
 - **Supabase Dashboard**: https://app.supabase.com
