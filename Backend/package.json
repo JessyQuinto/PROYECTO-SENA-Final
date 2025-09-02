@@ -8,7 +8,8 @@
     "start": "node dist/index.optimized.js",
     "build": "tsc -p tsconfig.json",
     "build:optimized": "tsc --project tsconfig.optimized.json",
-    "build:clean": "rm -rf dist && npm run build:optimized"
+  "build:clean": "rm -rf dist && npm run build:optimized",
+  "test": "vitest run"
   },
   "dependencies": {
     "express": "^4.19.0",
@@ -27,6 +28,9 @@
     "@types/morgan": "^1.9.7",
     "@types/compression": "^1.7.5",
     "tsx": "^4.7.0",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0",
+    "supertest": "^6.3.4",
+    "@types/supertest": "^2.0.16"
   }
 }

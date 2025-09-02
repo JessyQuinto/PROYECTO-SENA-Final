@@ -7,6 +7,8 @@ import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
 const app = express();
+// Export para pruebas (supertest) sin necesidad de abrir puerto real
+export { app };
 
 // CORS: permitir orígenes del frontend configurados por env FRONTEND_ORIGINS (separados por coma)
 // Ej: FRONTEND_ORIGINS="https://<swa>.azurestaticapps.net,https://www.tudominio.com"
@@ -484,9 +486,18 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
 
 // Ejemplo futuro: app.post('/rpc/crear_pedido', ...)
 
-const port = process.env.PORT || 4000;
-app.listen(port, () => {
-  console.log(`[backend-demo] listening on :${port}`);
-});
+const port = Number(process.env.PORT) || 4000;
+const host = process.env.HOST || '127.0.0.1';
+try {
+  const server = app.listen(port, host, () => {
+    const addr = server.address();
+    console.log(`[backend-demo] listening on ${typeof addr === 'string' ? addr : `${addr?.address}:${addr?.port}`}`);
+  });
+  server.on('error', (err) => {
+    console.error('[backend-demo] server error binding port', err);
+  });
+} catch (e) {
+  console.error('[backend-demo] immediate listen error', e);
+}
 
 
