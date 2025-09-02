@@ -144,7 +144,9 @@ Este es un proyecto educativo del SENA. Para contribuir:
 
 ## 📄 Licencia
 
-Proyecto educativo del SENA - Todos los derechos reservados.
+Proyecto educativo del SENA bajo [Licencia Educativa](./LICENSE). 
+
+Este software está destinado principalmente para fines educativos y de preservación cultural. Para usos comerciales, contactar al SENA.
 
 ## 🆘 Soporte
 
