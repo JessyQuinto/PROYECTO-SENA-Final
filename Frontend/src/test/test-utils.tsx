@@ -22,14 +22,15 @@ export const mockUser = {
 
 export const mockProduct = {
   id: 'test-product-id',
-  name: 'Test Product',
-  description: 'A test product description',
-  price: 99.99,
-  seller_id: 'test-seller-id',
-  category_id: 'test-category-id',
-  stock_quantity: 10,
+  nombre: 'Test Product',
+  descripcion: 'A test product description',
+  precio: 99.99,
+  vendedor_id: 'test-seller-id',
+  categoria_id: 'test-category-id',
+  stock: 10,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
+  imagen_url: '/assert/2/9a92cd16-82e0-4b9b-bc8f-a7805b2ad499.jpg',
 };
 
 export const mockCategory = {
