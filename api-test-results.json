@@ -1,0 +1,40 @@
+{
+  "timestamp": "2025-09-02T16:49:43.598Z",
+  "summary": {
+    "passed": 4,
+    "failed": 2,
+    "warnings": 1,
+    "errors": 0,
+    "total": 7
+  },
+  "results": [
+    {
+      "test": "Health Check",
+      "status": "PASSED"
+    },
+    {
+      "test": "Root Redirect",
+      "status": "PASSED"
+    },
+    {
+      "test": "Auth - Create User (Valid)",
+      "status": "FAILED"
+    },
+    {
+      "test": "Auth - Create User (Invalid)",
+      "status": "PASSED"
+    },
+    {
+      "test": "Demo Order Creation",
+      "status": "WARNING"
+    },
+    {
+      "test": "Payment Simulation (Invalid)",
+      "status": "FAILED"
+    },
+    {
+      "test": "404 Handling",
+      "status": "PASSED"
+    }
+  ]
+}
