@@ -1,14 +1,36 @@
 # Proyecto - SENA - Tesoros Chocó - Marketplace de Artesanías
 
-## 📋 Descripción General
+[![Postman Collection](https://img.shields.io/badge/Postman-Collection-orange?logo=postman)](https://www.postman.com/bold-zodiac-382577/proyecto-sena/collection/oq8k6ot/proyecto-sena-api?action=share&creator=13226867)
+[![Deploy Frontend](https://img.shields.io/badge/Frontend-Live-blue?logo=azure-static-web-apps)](https://ambitious-ground-03b86cf10.2.azurestaticapps.net)
 
+## 📋 Descripción General
 **Tesoros Chocó** es una plataforma de comercio electrónico diseñada para conectar artesanos del departamento del Chocó, Colombia, con compradores que valoran productos únicos y auténticos hechos a mano. La plataforma facilita la comercialización de artesanías tradicionales, promoviendo la economía local y preservando las técnicas ancestrales de la región.
 
 ## 🌐 Acceso a la Aplicación
 
+> ⭐ **Probar primero?** Abre directamente la colección de Postman para explorar los endpoints sin instalar nada.
+
 **🚀 Aplicación Desplegada**: [Abrir aplicación](https://ambitious-ground-03b86cf10.2.azurestaticapps.net)
 
-**📡 Colección de Postman**: [Ver colección API](https://www.postman.com/bold-zodiac-382577/proyecto-sena/collection/oq8k6ot/proyecto-sena-api?action=share&creator=13226867)
+**📡 Colección de Postman (Interactiva)**: 👉 [Abrir colección ahora](https://www.postman.com/bold-zodiac-382577/proyecto-sena/collection/oq8k6ot/proyecto-sena-api?action=share&creator=13226867)
+
+### 🔌 Prueba Rápida de la API
+
+Importa la colección en Postman o usa este curl básico (sustituye el ID según corresponda):
+
+```bash
+curl -X GET "https://ambitious-ground-03b86cf10.2.azurestaticapps.net/api/health" -H "accept: application/json"
+```
+
+Si ves `{ "status": "ok" }` la API está respondiendo.
+
+### 🧪 Endpoints Recomendados para Empezar
+- Autenticación: `/auth/login` (POST)
+- Productos públicos: `/products` (GET)
+- Detalle de producto: `/products/:id` (GET)
+- Registro vendedor: `/vendors/register` (POST)
+
+> 💡 En la colección ya vienen ejemplos con body y headers configurados.
 
 La aplicación está disponible en línea y lista para usar. No necesitas instalar nada para probarla. La colección de Postman te permite probar todos los endpoints de la API de forma interactiva.
 
