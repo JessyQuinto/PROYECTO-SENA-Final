@@ -1,36 +1,68 @@
 # Proyecto - SENA - Tesoros Chocó - Marketplace de Artesanías
 
-[![Postman Collection](https://img.shields.io/badge/Postman-Collection-orange?logo=postman)](https://www.postman.com/bold-zodiac-382577/proyecto-sena/collection/oq8k6ot/proyecto-sena-api?action=share&creator=13226867)
+[![Postman Collection](https://img.shields.io/badge/Postman-Collection-orange?logo=postman&label=API%20Docs)](https://www.postman.com/bold-zodiac-382577/proyecto-sena/collection/oq8k6ot/proyecto-sena-api?action=share&creator=13226867)
 [![Deploy Frontend](https://img.shields.io/badge/Frontend-Live-blue?logo=azure-static-web-apps)](https://ambitious-ground-03b86cf10.2.azurestaticapps.net)
+[![Status API](https://img.shields.io/badge/API-Health%20Check-success?logo=fastapi&logoColor=white)](#-postman--api-rapida)
+[![License](https://img.shields.io/badge/Licencia-Educativa-lightgray)](./LICENSE)
+
+---
+
+## 🧭 Tabla de Contenidos
+1. [Descripción General](#-descripción-general)
+2. [Postman & API Rápida](#-postman--api-rápida)
+3. [Acceso a la Aplicación](#-acceso-a-la-aplicación)
+4. [Objetivos](#-objetivos-del-proyecto)
+5. [Arquitectura](#-arquitectura-del-sistema)
+6. [Instalación Rápida](#-instalación-rápida)
+7. [Testing](#-testing)
+8. [Documentación Adicional](#-documentación-adicional)
+9. [Contribución](#-contribución)
+10. [Licencia](#-licencia)
+11. [Soporte](#-soporte)
+
+---
 
 ## 📋 Descripción General
 **Tesoros Chocó** es una plataforma de comercio electrónico diseñada para conectar artesanos del departamento del Chocó, Colombia, con compradores que valoran productos únicos y auténticos hechos a mano. La plataforma facilita la comercialización de artesanías tradicionales, promoviendo la economía local y preservando las técnicas ancestrales de la región.
 
-## 🌐 Acceso a la Aplicación
+## 🔌 Postman & API Rápida
 
-> ⭐ **Probar primero?** Abre directamente la colección de Postman para explorar los endpoints sin instalar nada.
+<div align="center">
 
-**🚀 Aplicación Desplegada**: [Abrir aplicación](https://ambitious-ground-03b86cf10.2.azurestaticapps.net)
+### 🚀 Empieza probando la API sin instalar nada
 
-**📡 Colección de Postman (Interactiva)**: 👉 [Abrir colección ahora](https://www.postman.com/bold-zodiac-382577/proyecto-sena/collection/oq8k6ot/proyecto-sena-api?action=share&creator=13226867)
+<a href="https://www.postman.com/bold-zodiac-382577/proyecto-sena/collection/oq8k6ot/proyecto-sena-api?action=share&creator=13226867"><img src="https://img.shields.io/badge/Abrir%20Colección%20Postman-FF6C37?logo=postman&logoColor=white" alt="Postman" /></a>
 
-### 🔌 Prueba Rápida de la API
+</div>
 
-Importa la colección en Postman o usa este curl básico (sustituye el ID según corresponda):
+> La colección incluye ejemplos listos (Auth, Productos, Vendedores) y variables reutilizables.
 
+**Curl de Salud (Health Check):**
 ```bash
-curl -X GET "https://ambitious-ground-03b86cf10.2.azurestaticapps.net/api/health" -H "accept: application/json"
+curl -s https://ambitious-ground-03b86cf10.2.azurestaticapps.net/api/health | jq
+```
+Respuesta esperada:
+```json
+{ "status": "ok" }
 ```
 
-Si ves `{ "status": "ok" }` la API está respondiendo.
+**Endpoints clave para iniciar:**
+| Propósito | Endpoint | Método |
+|-----------|----------|--------|
+| Login | /auth/login | POST |
+| Listar productos | /products | GET |
+| Detalle producto | /products/:id | GET |
+| Registro vendedor | /vendors/register | POST |
 
-### 🧪 Endpoints Recomendados para Empezar
-- Autenticación: `/auth/login` (POST)
-- Productos públicos: `/products` (GET)
-- Detalle de producto: `/products/:id` (GET)
-- Registro vendedor: `/vendors/register` (POST)
+> Consejo: Prueba primero endpoints públicos y luego flujos autenticados.
 
-> 💡 En la colección ya vienen ejemplos con body y headers configurados.
+---
+
+## 🌐 Acceso a la Aplicación
+
+**Frontend en Producción**: [Abrir aplicación](https://ambitious-ground-03b86cf10.2.azurestaticapps.net)
+
+**Colección Postman**: [Abrir colección](https://www.postman.com/bold-zodiac-382577/proyecto-sena/collection/oq8k6ot/proyecto-sena-api?action=share&creator=13226867)
 
 La aplicación está disponible en línea y lista para usar. No necesitas instalar nada para probarla. La colección de Postman te permite probar todos los endpoints de la API de forma interactiva.
 
