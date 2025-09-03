@@ -477,6 +477,90 @@ app.post('/order-items/:id/shipped', rateLimit, requireUser, async (req: Request
   } catch (e) { next(e); }
 });
 
+// =========================================================
+// DEV ONLY helper: seed or ensure an admin user (password reset)
+// Guarded by header X-Dev-Secret == process.env.DEV_SEED_SECRET and NODE_ENV!=='production'
+// =========================================================
+if (process.env.NODE_ENV !== 'production') {
+  app.post('/dev/ensure-admin', async (req: Request, res: Response) => {
+    const provided = req.headers['x-dev-secret'];
+    if (!process.env.DEV_SEED_SECRET || provided !== process.env.DEV_SEED_SECRET) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    const schema = z.object({ email: z.string().email(), password: z.string().min(8) });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'Payload inválido', detail: parsed.error.flatten() });
+    const { email, password } = parsed.data;
+    try {
+      const supabase = getSupabaseAdmin();
+
+      // Intentar encontrar en tabla pública users primero
+      let userId: string | null = null;
+      const { data: existingProfile } = await supabase.from('users').select('id').eq('email', email).maybeSingle();
+      if (existingProfile?.id) userId = existingProfile.id;
+
+      // Si no tenemos id, intentar enumerar usuarios auth (limit 100) para localizar email
+      if (!userId) {
+        try {
+          // @ts-ignore supabase-js admin listUsers
+            const { data: list } = await (supabase as any).auth.admin.listUsers({ page: 1, perPage: 100 });
+            const found = list?.users?.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
+            if (found) userId = found.id;
+        } catch (e) {
+          // ignorar
+        }
+      }
+
+      if (!userId) {
+        // Crear usuario nuevo
+        const { data: created, error: createErr } = await supabase.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+          user_metadata: { role: 'admin' },
+          app_metadata: { role: 'admin' }
+        } as any);
+        if (createErr) return res.status(500).json({ error: createErr.message });
+        userId = created?.user?.id || null;
+        if (!userId) return res.status(500).json({ error: 'No se obtuvo user.id tras creación' });
+        // Perfil público
+        await supabase.from('users').upsert({ id: userId, email, role: 'admin' }, { onConflict: 'id' });
+      } else {
+        // Actualizar password y role
+        await supabase.auth.admin.updateUserById(userId, { password, app_metadata: { role: 'admin' } });
+        await supabase.from('users').upsert({ id: userId, email, role: 'admin' }, { onConflict: 'id' });
+      }
+      return res.json({ ok: true, user_id: userId, email });
+    } catch (e: any) {
+      return res.status(500).json({ error: e?.message || 'Error inesperado' });
+    }
+  });
+
+  // List limited products (debug)
+  app.get('/dev/debug/products', async (_req: Request, res: Response) => {
+    try {
+      const supabase = getSupabaseAdmin();
+      const { data, error } = await supabase.from('products').select('id,nombre,estado,stock').limit(20);
+      if (error) return res.status(500).json({ error: error.message });
+      res.json({ ok: true, products: data });
+    } catch (e: any) {
+      res.status(500).json({ error: e?.message || 'error' });
+    }
+  });
+
+  // List recent orders (debug)
+  app.get('/dev/debug/orders', async (_req: Request, res: Response) => {
+    try {
+      const supabase = getSupabaseAdmin();
+      const { data, error } = await supabase.from('orders').select('id,estado,created_at,total').order('created_at', { ascending: false }).limit(10);
+      if (error) return res.status(500).json({ error: error.message });
+      res.json({ ok: true, orders: data });
+    } catch (e: any) {
+      res.status(500).json({ error: e?.message || 'error' });
+    }
+  });
+}
+
 // Middleware de error
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
