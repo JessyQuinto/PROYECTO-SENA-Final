@@ -107,6 +107,20 @@ bun run dev
 - **Backend API**: http://localhost:3001
 - **Supabase Dashboard**: https://app.supabase.com
 
+## 🔧 API Documentation
+
+### Postman Collection
+
+Puedes probar la API usando nuestra colección de Postman que incluye todos los endpoints disponibles:
+
+**📋 Postman Collection**: [Proyecto SENA API Collection](https://www.postman.com/bold-zodiac-382577/proyecto-sena/collection/oq8k6ot/proyecto-sena-api?action=share&creator=13226867)
+
+La colección incluye:
+- Endpoints de autenticación
+- Gestión de productos y artesanías
+- Operaciones de usuarios y perfiles
+- Ejemplos de requests y responses
+
 ## 🧪 Testing
 
 ```bash
