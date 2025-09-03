@@ -8,7 +8,9 @@
 
 **🚀 Aplicación Desplegada**: [https://ambitious-ground-03b86cf10.2.azurestaticapps.net](https://ambitious-ground-03b86cf10.2.azurestaticapps.net)
 
-La aplicación está disponible en línea y lista para usar. No necesitas instalar nada para probarla.
+**📡 Colección de Postman**: [https://www.postman.com/bold-zodiac-382577/proyecto-sena/collection/oq8k6ot/proyecto-sena-api?action=share&creator=13226867](https://www.postman.com/bold-zodiac-382577/proyecto-sena/collection/oq8k6ot/proyecto-sena-api?action=share&creator=13226867)
+
+La aplicación está disponible en línea y lista para usar. No necesitas instalar nada para probarla. La colección de Postman te permite probar todos los endpoints de la API de forma interactiva.
 
 ## 🎯 Objetivos del Proyecto
 
