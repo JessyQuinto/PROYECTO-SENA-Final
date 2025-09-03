@@ -60,9 +60,25 @@ Respuesta esperada:
 
 ## 🌐 Acceso a la Aplicación
 
-**Frontend en Producción**: [Abrir aplicación](https://ambitious-ground-03b86cf10.2.azurestaticapps.net)
+<div align="center">
 
-**Colección Postman**: [Abrir colección](https://www.postman.com/bold-zodiac-382577/proyecto-sena/collection/oq8k6ot/proyecto-sena-api?action=share&creator=13226867)
+<h3>🌍 Frontend en Producción</h3>
+
+<a href="https://ambitious-ground-03b86cf10.2.azurestaticapps.net" target="_blank">
+<img alt="Ir al Frontend" src="https://img.shields.io/badge/Visitar%20Marketplace-Azure%20Static%20Web%20Apps-1e90ff?logo=azure-static-web-apps&logoColor=white" />
+</a>
+
+<br/><br/>
+
+<a href="https://www.postman.com/bold-zodiac-382577/proyecto-sena/collection/oq8k6ot/proyecto-sena-api?action=share&creator=13226867" target="_blank">
+<img alt="Colección Postman" src="https://img.shields.io/badge/Probar%20API%20en%20Postman-FF6C37?logo=postman&logoColor=white" />
+</a>
+
+<br/><sub>⚡ Disponibilidad sujeta a reinicios automáticos del servicio.</sub>
+
+</div>
+
+---
 
 La aplicación está disponible en línea y lista para usar. No necesitas instalar nada para probarla. La colección de Postman te permite probar todos los endpoints de la API de forma interactiva.
 
