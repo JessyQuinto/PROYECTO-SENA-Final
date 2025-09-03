@@ -12,7 +12,6 @@
     <a href="https://www.postman.com/bold-zodiac-382577/proyecto-sena/collection/oq8k6ot/proyecto-sena-api?action=share&creator=13226867">
       <img alt="Postman" src="https://img.shields.io/badge/API%20Interactiva-Postman-FF6C37?logo=postman&logoColor=white&style=for-the-badge" />
     </a>
-    <img alt="Estado" src="https://img.shields.io/badge/API-Health_OK-success?style=for-the-badge" />
     <a href="./LICENSE">
       <img alt="Licencia" src="https://img.shields.io/badge/Licencia-Educativa-lightgray?style=for-the-badge" />
     </a>
