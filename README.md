@@ -5,6 +5,8 @@
   <h2>Conectando artesanos del Chocó con el mundo 🌍</h2>
   <p><em>Comercio justo · Identidad cultural · Tecnología abierta</em></p>
 
+  <p><strong>Proyecto académico del Grupo 4 – Programa Análisis y Desarrollo de Software (Ficha 2879645)</strong></p>
+
   <p>
     <a href="https://ambitious-ground-03b86cf10.2.azurestaticapps.net">
       <img alt="Visitar Marketplace" src="https://img.shields.io/badge/Visitar-Marketplace-1e90ff?logo=azure-static-web-apps&logoColor=white&style=for-the-badge" />
