@@ -8,8 +8,8 @@
  * y que los datos coincidan entre la colección y la base de datos.
  */
 
-const https = require('https');
-const http = require('http');
+import https from 'https';
+import http from 'http';
 
 // Configuración
 const CONFIG = {
@@ -352,11 +352,11 @@ async function main() {
 }
 
 // Ejecutar si es llamado directamente
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch(error => {
     log(`\n💥 Error inesperado: ${error.message}`, 'red');
     process.exit(1);
   });
 }
 
-module.exports = PostmanCollectionVerifier;
+export default PostmanCollectionVerifier;

@@ -225,9 +225,10 @@ export class ErrorHandler {
     details?: Record<string, any>,
     context?: Record<string, any>
   ): void {
-    if (import.meta.env.DEV) {
-      console.log(`ℹ️ Info: ${message}`, { details, context });
-    }
+    // MIGRATED: Use unified logger
+    import('../lib/logger.unified').then(({ logger }) => {
+      logger.info(message, { details, context }, 'ErrorHandler');
+    });
   }
 
   public logWarning(
@@ -235,9 +236,10 @@ export class ErrorHandler {
     details?: Record<string, any>,
     context?: Record<string, any>
   ): void {
-    if (import.meta.env.DEV) {
-      console.warn(`⚠️ Warning: ${message}`, { details, context });
-    }
+    // MIGRATED: Use unified logger
+    import('../lib/logger.unified').then(({ logger }) => {
+      logger.warn(message, { details, context }, 'ErrorHandler');
+    });
   }
 
   public clearErrorLog(): void {

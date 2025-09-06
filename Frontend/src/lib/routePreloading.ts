@@ -1,4 +1,5 @@
-import { lazy, ComponentType, LazyExoticComponent } from 'react';
+import { lazy, ComponentType } from 'react';
+import { logger } from './logger.unified';
 
 // Route preloading utilities for performance optimization
 export interface RouteConfig {
@@ -53,10 +54,10 @@ export function preloadRoute(routeName: string, importFn: () => Promise<any>): P
     return Promise.resolve();
   }
 
-  console.log(`[RoutePreload] Preloading route: ${routeName}`);
+  logger.debug(`Preloading route: ${routeName}`, {}, 'RoutePreload');
   
   const modulePromise = importFn().catch(error => {
-    console.warn(`[RoutePreload] Failed to preload ${routeName}:`, error);
+    logger.warn(`Failed to preload ${routeName}`, { error }, 'RoutePreload');
     moduleCache.delete(routeName); // Remove failed cache entry
     throw error;
   });
@@ -64,7 +65,7 @@ export function preloadRoute(routeName: string, importFn: () => Promise<any>): P
   moduleCache.set(routeName, modulePromise);
   
   return modulePromise.then(() => {
-    console.log(`[RoutePreload] Successfully preloaded: ${routeName}`);
+    logger.debug(`Successfully preloaded: ${routeName}`, {}, 'RoutePreload');
   });
 }
 

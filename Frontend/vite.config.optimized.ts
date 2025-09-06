@@ -148,7 +148,7 @@ export default defineConfig({
   
   // Enhanced esbuild configuration
   esbuild: {
-    drop: ['console', 'debugger'],
+    drop: import.meta.env.PROD ? ['console', 'debugger'] : [],
     legalComments: 'none',
   },
 });

@@ -1,3 +1,5 @@
+import { logger } from './logger.unified';
+
 /**
  * Service Worker registration and management utility
  */
@@ -19,7 +21,7 @@ class ServiceWorkerManager {
   constructor() {
     // DESHABILITAR COMPLETAMENTE EL SERVICE WORKER EN DESARROLLO
     if (this.isSupported && import.meta.env.DEV) {
-      console.log('🔧 Service worker disabled in development mode');
+      logger.debug('Service worker disabled in development mode', {}, 'ServiceWorker');
       this.unregisterExisting();
     } else if (this.isSupported && import.meta.env.PROD) {
       this.register();
@@ -35,11 +37,11 @@ class ServiceWorkerManager {
         const registrations = await navigator.serviceWorker.getRegistrations();
         for (const registration of registrations) {
           await registration.unregister();
-          console.log('🗑️ Unregistered existing service worker');
+          logger.info('Unregistered existing service worker', {}, 'ServiceWorker');
         }
       }
     } catch (error) {
-      console.warn('Failed to unregister service workers:', error);
+      logger.warn('Failed to unregister service workers', { error }, 'ServiceWorker');
     }
   }
 
@@ -48,7 +50,7 @@ class ServiceWorkerManager {
    */
   private async register(): Promise<void> {
     try {
-      console.log('🔧 Registering service worker...');
+      logger.debug('Registering service worker...', {}, 'ServiceWorker');
 
       this.registration = await navigator.serviceWorker.register('/sw.js', {
         scope: '/',
@@ -56,7 +58,7 @@ class ServiceWorkerManager {
 
       // Listen for updates
       this.registration.addEventListener('updatefound', () => {
-        console.log('🔄 Service worker update found');
+        logger.info('Service worker update found', {}, 'ServiceWorker');
         const newWorker = this.registration?.installing;
 
         if (newWorker) {
@@ -65,16 +67,16 @@ class ServiceWorkerManager {
               newWorker.state === 'installed' &&
               navigator.serviceWorker.controller
             ) {
-              console.log('🆕 New service worker installed, refresh to update');
+              logger.info('New service worker installed, refresh to update', {}, 'ServiceWorker');
               this.notifyUpdate();
             }
           });
         }
       });
 
-      console.log('✅ Service worker registered successfully');
+      logger.info('Service worker registered successfully', {}, 'ServiceWorker');
     } catch (error) {
-      console.warn('❌ Service worker registration failed:', error);
+      logger.error('Service worker registration failed', error as Error, {}, 'ServiceWorker');
     }
   }
 
@@ -127,7 +129,7 @@ class ServiceWorkerManager {
       });
       return response.success || false;
     } catch (error) {
-      console.warn('Failed to clear caches:', error);
+      logger.warn('Failed to clear caches', { error }, 'ServiceWorker');
       return false;
     }
   }
@@ -150,7 +152,7 @@ class ServiceWorkerManager {
       });
       return response.success || false;
     } catch (error) {
-      console.warn(`Failed to clear ${cacheType} cache:`, error);
+      logger.warn(`Failed to clear ${cacheType} cache`, { error, cacheType }, 'ServiceWorker');
       return false;
     }
   }
@@ -179,7 +181,7 @@ class ServiceWorkerManager {
       const response = await this.sendMessage({ type: 'GET_CACHE_STATS' });
       return response.stats || {};
     } catch (error) {
-      console.warn('Failed to get cache stats:', error);
+      logger.warn('Failed to get cache stats', { error }, 'ServiceWorker');
       return {};
     }
   }
