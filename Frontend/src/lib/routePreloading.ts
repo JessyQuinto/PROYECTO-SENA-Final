@@ -1,4 +1,4 @@
-import { lazy, ComponentType } from 'react';
+import { lazy, ComponentType, LazyExoticComponent } from 'react';
 import { logger } from './logger.unified';
 
 // Route preloading utilities for performance optimization

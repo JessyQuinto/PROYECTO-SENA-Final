@@ -6,8 +6,6 @@ import path from 'path';
 export default defineConfig({
   plugins: [
     react({
-      // Enable React Fast Refresh optimizations
-      fastRefresh: true,
       // Exclude node_modules from JSX runtime transformations
       exclude: /node_modules/,
     }),
@@ -28,8 +26,6 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true,
-    // Enable HTTP/2 for better performance in development
-    https: false,
   },
   build: {
     outDir: 'dist',
@@ -148,7 +144,7 @@ export default defineConfig({
   
   // Enhanced esbuild configuration
   esbuild: {
-    drop: import.meta.env.PROD ? ['console', 'debugger'] : [],
+    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
     legalComments: 'none',
   },
 });
