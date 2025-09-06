@@ -95,22 +95,52 @@
 
 ## 🔥 Demo & API
 
-* 🌐 **Producción:** [Marketplace](https://ambitious-ground-03b86cf10.2.azurestaticapps.net)
-* 🧪 **Colección Postman:** [API interactiva](https://www.postman.com/bold-zodiac-382577/proyecto-sena/collection/oq8k6ot/proyecto-sena-api?action=share&creator=13226867)
+<div align="center">
 
-Test rápido:
+### 🌐 **Demo en Vivo**
+[**Visitar Marketplace Tesoros Chocó →**](https://ambitious-ground-03b86cf10.2.azurestaticapps.net)
+
+### 📡 **API Interactiva - Postman**
+[**🚀 Acceder a la Colección Postman →**](https://www.postman.com/bold-zodiac-382577/proyecto-sena/collection/oq8k6ot/proyecto-sena-api?action=share&creator=13226867)
+
+**📋 Colección Completa con:**
+- ✅ Tests automatizados para todos los endpoints
+- ✅ Variables pre-configuradas
+- ✅ Documentación detallada de cada request
+- ✅ Flujo completo de autenticación y operaciones
+- ✅ Ejemplos de uso y casos de error
+
+</div>
+
+---
+
+### 🧪 **Test Rápido de Conectividad**
 
 ```bash
+# Verificar que el backend esté funcionando
 curl -s https://ambitious-ground-03b86cf10.2.azurestaticapps.net/api/health
 ```
 
-Endpoints básicos:
+### 📋 **Endpoints Principales**
 
 ```http
+# Salud del sistema
+GET  /health
+
+# Productos
 GET  /products
 GET  /products/:id
-POST /auth/login
-POST /vendors/register
+POST /products
+
+# Autenticación (Supabase directo desde frontend)
+POST /auth/v1/token?grant_type=password
+
+# Backend - Post registro
+POST /auth/post-signup
+
+# Pedidos
+POST /rpc/crear_pedido
+POST /payments/simulate
 ```
 
 ---
