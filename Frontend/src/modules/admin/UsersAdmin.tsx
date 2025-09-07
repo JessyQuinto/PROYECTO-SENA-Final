@@ -3,6 +3,8 @@ import { supabase } from '../../lib/supabaseClient';
 import { useCart } from '../../modules/buyer/CartContext';
 import AdminLayout from './AdminLayout';
 import Icon from '../../components/ui/Icon';
+import { Button } from '@/components/ui/shadcn/button';
+import { Card, CardContent } from '@/components/ui/shadcn/card';
 
 type UserRole = 'admin' | 'vendedor' | 'comprador';
 type VendedorEstado = 'pendiente' | 'aprobado' | 'rechazado' | null;
@@ -41,6 +43,22 @@ const UsersAdmin: React.FC = () => {
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false); // Deshabilitado por defecto
   const [refreshInterval, setRefreshInterval] = useState(60000); // 60 segundos por defecto
 
+  // 🆕 NUEVO: Estados para el modal de detalles de usuario
+  const [selectedUser, setSelectedUser] = useState<UsuarioRow | null>(null);
+  const [showUserModal, setShowUserModal] = useState(false);
+  
+  // Función para abrir el modal de detalles
+  const openUserDetails = (user: UsuarioRow) => {
+    setSelectedUser(user);
+    setShowUserModal(true);
+  };
+  
+  // Función para cerrar el modal
+  const closeUserModal = () => {
+    setSelectedUser(null);
+    setShowUserModal(false);
+  };
+  
   // Super admin único autorizado (el único que puede modificar otros admins)
   const SUPER_ADMIN_EMAIL = 'admin@tesoros-choco.com';
 
@@ -773,374 +791,402 @@ const UsersAdmin: React.FC = () => {
             </div>
           </div>
 
-          {/* ✅ MEJORADO: Tabla de usuarios con mejor espaciado */}
+          {/* 🆕 NUEVO: Tabla limpia de usuarios */}
           {filtered.length === 0 ? (
             <div className='text-center py-12 text-muted-foreground'>
-              <Icon
-                category='Interface'
-                name='MdiAccountGroup'
-                className='w-16 h-16 mx-auto mb-4 text-gray-300'
-              />
+              <Icon category='Interface' name='MdiAccountGroup' className='w-16 h-16 mx-auto mb-4 text-gray-300' />
               <h3 className='text-lg font-medium mb-2'>No se encontraron usuarios</h3>
               <p className='text-sm'>Intenta ajustar los filtros de búsqueda</p>
             </div>
           ) : (
-            <div className='overflow-x-auto bg-white rounded-lg border border-gray-200 shadow-sm'>
-              <table className='w-full'>
-                <thead className='bg-gray-50 border-b border-gray-200'>
-                  <tr>
-                    <th className='px-6 py-4 text-left text-sm font-semibold text-gray-700'>
-                      Usuario
-                    </th>
-                    <th className='px-6 py-4 text-left text-sm font-semibold text-gray-700'>
-                      Rol
-                    </th>
-                    <th className='px-6 py-4 text-left text-sm font-semibold text-gray-700'>
-                      Estado
-                    </th>
-                    <th className='px-6 py-4 text-left text-sm font-semibold text-gray-700'>
-                      Acciones
-                    </th>
-                    <th className='px-6 py-4 text-left text-sm font-semibold text-gray-700'>
-                      Gestión
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className='divide-y divide-gray-200'>
-                  {filtered.map(u => (
-                    <tr key={u.id} className='hover:bg-gray-50 transition-colors duration-150'>
-                      <td className='px-6 py-6'>
-                        <div className='flex flex-col space-y-2'>
-                          <span className='font-semibold text-gray-900 text-base'>
-                            {u.nombre_completo || 'Sin nombre'}
-                          </span>
-                          <span className='text-sm text-gray-600'>
-                            {u.email}
-                          </span>
-                          {u.created_at && (
-                            <span className='text-xs text-gray-500'>
-                              Registrado: {new Date(u.created_at).toLocaleDateString()}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className='px-6 py-6'>
-                        {u.role === 'admin' ? (
-                          <div className='flex flex-col space-y-3'>
-                            <span className='inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800'>
-                              <Icon
-                                category='Administrador'
-                                name='MdiShieldCheck'
-                                className='w-4 h-4'
-                                alt=''
-                              />
-                              Admin
-                            </span>
-                            {u.email === SUPER_ADMIN_EMAIL ? (
-                              <span className='text-xs text-green-600 font-medium'>
-                                👑 Super Administrador
-                              </span>
-                            ) : (
-                              <span className='text-xs text-gray-500'>
-                                🔒 Solo super-admin puede modificar
-                              </span>
-                            )}
-                          </div>
-                        ) : (
-                          <div className='flex flex-col space-y-4'>
-                            {/* ✅ MEJORADO: Badge del rol actual */}
-                            <span
-                              className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
-                                u.role === 'vendedor' 
-                                  ? 'bg-yellow-100 text-yellow-800' 
-                                  : 'bg-blue-100 text-blue-800'
-                              }`}
-                            >
-                              {u.role === 'vendedor' ? (
-                                <Icon category='Interface' name='MdiStore' className='w-4 h-4' />
-                              ) : (
-                                <Icon category='Interface' name='MdiShopping' className='w-4 h-4' />
-                              )}
-                              {u.role === 'vendedor' ? 'Vendedor' : 'Comprador'}
-                            </span>
-                            
-                            {/* ✅ MEJORADO: Selector de rol más funcional */}
-                            {canShowButton(u, 'changeRole') && (
-                              <div className='space-y-3'>
-                                <div>
-                                  <label className='block text-xs font-medium text-gray-700 mb-2'>
-                                    Cambiar rol:
-                                  </label>
-                                  <select
-                                    className='w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed'
-                                    value={u.role || 'comprador'}
-                                    disabled={changingRoles.has(u.id)}
-                                    onChange={e => {
-                                      const newRole = e.target.value as 'vendedor' | 'comprador' | 'admin';
-                                      // ✅ NUEVO: Confirmación antes de cambiar
-                                      if (confirm(`¿Estás seguro de que quieres cambiar el rol de ${u.email} de "${u.role}" a "${newRole}"?`)) {
-                                        changeUserRole(u.id, newRole);
-                                      } else {
-                                        // Resetear el select al valor original
-                                        e.target.value = u.role || 'comprador';
-                                      }
-                                    }}
-                                  >
-                                    <option value='comprador'>🛒 Comprador</option>
-                                    <option value='vendedor'>🏪 Vendedor</option>
-                                    {currentUser?.email === SUPER_ADMIN_EMAIL && (
-                                      <option value='admin'>🛡️ Administrador</option>
-                                    )}
-                                  </select>
-                                </div>
-                                
-                                {/* ✅ MEJORADO: Información adicional con reglas de negocio */}
-                                <div className='space-y-2'>
-                                  {u.role === 'vendedor' && (
-                                    <div className='text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded'>
-                                      ⚠️ Al cambiar a comprador, se perderán productos
-                                    </div>
-                                  )}
-                                  {u.role === 'comprador' && (
-                                    <div className='text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded'>
-                                      ℹ️ Al cambiar a vendedor, requerirá aprobación
-                                    </div>
-                                  )}
-                                  
-                                  {/* ✅ NUEVO: Indicadores de restricciones */}
-                                  {u.role === 'vendedor' && (
-                                    <div className='text-xs text-red-600 bg-red-50 px-2 py-1 rounded font-medium'>
-                                      🔒 No se puede cambiar si tiene productos
-                                      {(() => {
-                                        const productCount = vendorProducts.get(u.id) || 0;
-                                        return productCount > 0 ? ` (${productCount} productos)` : '';
-                                      })()}
-                                    </div>
-                                  )}
-                                  {u.role === 'comprador' && u.id === currentUser?.id && (
-                                    <div className='text-xs text-red-600 bg-red-50 px-2 py-1 rounded font-medium'>
-                                      🔒 No se puede cambiar si tiene carrito
-                                    </div>
-                                  )}
-                                  
-                                  {/* ✅ NUEVO: Indicador de cambio en progreso */}
-                                  {changingRoles.has(u.id) && (
-                                    <div className='flex items-center gap-2 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded'>
-                                      <div className='loading loading-spinner loading-xs'></div>
-                                      <span>Cambiando rol...</span>
-                                    </div>
-                                  )}
-                                </div>
+            <Card className='shadow-sm'>
+              <CardContent className='p-0'>
+                <div className='overflow-x-auto'>
+                  <table className='w-full'>
+                    <thead className='bg-gray-50 border-b border-gray-200'>
+                      <tr>
+                        <th className='px-6 py-4 text-left text-sm font-semibold text-gray-700'>Usuario</th>
+                        <th className='px-6 py-4 text-left text-sm font-semibold text-gray-700'>Rol</th>
+                        <th className='px-6 py-4 text-left text-sm font-semibold text-gray-700'>Estado</th>
+                        <th className='px-6 py-4 text-left text-sm font-semibold text-gray-700'>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody className='divide-y divide-gray-200'>
+                      {filtered.map(u => (
+                        <tr key={u.id} className='hover:bg-gray-50 transition-colors duration-150'>
+                          {/* Información básica del usuario */}
+                          <td className='px-6 py-4'>
+                            <div className='flex items-center space-x-3'>
+                              <div className='h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold'>
+                                {(u.nombre_completo || u.email || 'U').charAt(0).toUpperCase()}
                               </div>
-                            )}
-                          </div>
-                        )}
-                      </td>
-                      <td className='px-6 py-6'>
-                        {u.role === 'vendedor' ? (
-                          // Para vendedores: mostrar estado de aprobación y botones
-                          <div className='space-y-3'>
-                            <span
-                              className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
-                                u.vendedor_estado === 'aprobado'
-                                  ? 'bg-green-100 text-green-800'
-                                  : u.vendedor_estado === 'rechazado'
-                                  ? 'bg-red-100 text-red-800'
-                                  : 'bg-yellow-100 text-yellow-800'
-                              }`}
-                              title={u.vendedor_estado || ''}
-                            >
-                              {u.vendedor_estado === 'aprobado' && (
-                                <Icon
-                                  category='Interface'
-                                  name='MdiCheckCircle'
-                                  className='w-4 h-4'
-                                />
-                              )}
-                              {u.vendedor_estado === 'pendiente' && (
-                                <Icon
-                                  category='Interface'
-                                  name='MdiClock'
-                                  className='w-4 h-4'
-                                />
-                              )}
-                              {u.vendedor_estado === 'rechazado' && (
-                                <Icon
-                                  category='Interface'
-                                  name='MdiCloseCircle'
-                                  className='w-4 h-4'
-                                />
-                              )}
-                              {u.vendedor_estado || 'pendiente'}
+                              <div>
+                                <p className='text-sm font-semibold text-gray-900'>
+                                  {u.nombre_completo || 'Sin nombre'}
+                                </p>
+                                <p className='text-sm text-gray-600'>{u.email}</p>
+                              </div>
+                            </div>
+                          </td>
+                          
+                          {/* Rol del usuario */}
+                          <td className='px-6 py-4'>
+                            <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
+                              u.role === 'admin' ? 'bg-red-100 text-red-800'
+                              : u.role === 'vendedor' ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-blue-100 text-blue-800'
+                            }`}>
+                              {u.role === 'admin' ? '🛡️ Admin' : u.role === 'vendedor' ? '🏪 Vendedor' : '🛒 Comprador'}
                             </span>
-                            <div className='flex flex-col space-y-2'>
-                              {canShowButton(u, 'vendorActions') && (
-                                <>
-                                  <button
-                                    className='inline-flex items-center gap-2 px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-md hover:bg-green-700 transition-colors'
-                                    onClick={() =>
-                                      setVendorStatus(u.id, 'aprobado')
-                                    }
-                                    title='Aprobar vendedor'
-                                    aria-label='Aprobar vendedor'
-                                  >
-                                    <Icon
-                                      category='Interface'
-                                      name='MdiCheck'
-                                      className='w-3 h-3'
-                                    />
-                                    Aprobar
-                                  </button>
-                                  <button
-                                    className='inline-flex items-center gap-2 px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded-md hover:bg-red-700 transition-colors'
-                                    onClick={() =>
-                                      setVendorStatus(u.id, 'rechazado')
-                                    }
-                                    title='Rechazar vendedor'
-                                    aria-label='Rechazar vendedor'
-                                  >
-                                    <Icon
-                                      category='Interface'
-                                      name='MdiClose'
-                                      className='w-3 h-3'
-                                    />
-                                    Rechazar
-                                  </button>
-                                </>
+                          </td>
+                          
+                          {/* Estado del usuario */}
+                          <td className='px-6 py-4'>
+                            <div className='flex flex-col space-y-1'>
+                              <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                                u.bloqueado ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                              }`}>
+                                {u.bloqueado ? '🚫 Bloqueado' : '✓ Activo'}
+                              </span>
+                              {u.role === 'vendedor' && (
+                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                                  u.vendedor_estado === 'aprobado' ? 'bg-emerald-100 text-emerald-800'
+                                  : u.vendedor_estado === 'rechazado' ? 'bg-orange-100 text-orange-800'
+                                  : 'bg-amber-100 text-amber-800'
+                                }`}>
+                                  {u.vendedor_estado === 'aprobado' ? '✓ Aprobado'
+                                   : u.vendedor_estado === 'rechazado' ? '❌ Rechazado'
+                                   : '🕰️ Pendiente'}
+                                </span>
                               )}
                             </div>
-                          </div>
-                        ) : u.role === 'comprador' ? (
-                          // Para compradores: mostrar estado de cuenta
-                          <div className='flex items-center gap-2'>
-                            <span className='inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800'>
-                              <Icon
-                                category='Interface'
-                                name='MdiAccount'
-                                className='w-4 h-4'
-                              />
-                              Activo
-                            </span>
-                          </div>
-                        ) : u.role === 'admin' ? (
-                          // Para admins: mostrar privilegios
-                          <div className='flex items-center gap-2'>
-                            <span className='inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800'>
-                              <Icon
-                                category='Administrador'
-                                name='MdiShieldCheck'
-                                className='w-4 h-4'
-                              />
-                              Admin
-                            </span>
-                          </div>
-                        ) : (
-                          // Fallback
-                          <span className='inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800'>
-                            -
-                          </span>
-                        )}
-                      </td>
-                      <td className='px-6 py-6'>
-                        {canShowButton(u, 'blockActions') ? (
-                          <div className='space-y-2'>
-                            <button
-                              className={`inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                                u.bloqueado 
-                                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                                  : 'bg-red-600 text-white hover:bg-red-700'
-                              }`}
-                              onClick={() => !u.bloqueado && suspend(u.id, true)}
-                              title='Bloquear usuario'
-                              aria-label='Bloquear usuario'
-                              disabled={u.bloqueado || false}
+                          </td>
+                          
+                          {/* Acciones */}
+                          <td className='px-6 py-4'>
+                            <Button
+                              onClick={() => openUserDetails(u)}
+                              className='inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white'
+                              size='sm'
                             >
-                              <Icon
-                                category='Interface'
-                                name='MdiBlockHelper'
-                                className='w-3 h-3'
-                              />
-                              Bloquear
-                            </button>
-                            <button
-                              className={`inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                                !u.bloqueado 
-                                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                                  : 'bg-green-600 text-white hover:bg-green-700'
-                              }`}
-                              onClick={() => u.bloqueado && suspend(u.id, false)}
-                              title='Desbloquear usuario'
-                              aria-label='Desbloquear usuario'
-                              disabled={!u.bloqueado || false}
-                            >
-                              <Icon
-                                category='Interface'
-                                name='MdiCheckCircle'
-                                className='w-3 h-3'
-                              />
-                              Desbloquear
-                            </button>
-                          </div>
-                        ) : (
-                          <span
-                            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
-                              u.bloqueado ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                            }`}
-                          >
-                            {u.bloqueado ? (
-                              <Icon category='Interface' name='MdiBlockHelper' className='w-4 h-4' />
-                            ) : (
-                              <Icon category='Interface' name='MdiCheckCircle' className='w-4 h-4' />
-                            )}
-                            {u.bloqueado ? 'Bloqueado' : 'Activo'}
-                          </span>
-                        )}
-                      </td>
-                      <td className='px-6 py-6'>
-                        <div className='space-y-2'>
-                          <button
-                            className='inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700 transition-colors'
-                            onClick={() =>
-                              alert(
-                                'Historial y métricas del usuario próximamente'
-                              )
-                            }
-                            title='Ver detalles del usuario'
-                            aria-label='Ver detalles del usuario'
-                          >
-                            <Icon
-                              category='Interface'
-                              name='MdiInformation'
-                              className='w-3 h-3'
-                            />
-                            Detalles
-                          </button>
-                          {canShowButton(u, 'deleteUser') && (
-                            <button
-                              className='inline-flex items-center gap-2 px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded-md hover:bg-red-700 transition-colors'
-                              onClick={() => removeUser(u.id)}
-                              title='Eliminar usuario'
-                              aria-label='Eliminar usuario'
-                            >
-                              <Icon
-                                category='Interface'
-                                name='MdiDelete'
-                                className='w-3 h-3'
-                              />
-                              Eliminar
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                              <Icon category='Interface' name='MdiEye' className='w-4 h-4' />
+                              Ver Detalles
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 🆕 NUEVO: Modal de detalles del usuario */}
+          {showUserModal && selectedUser && (
+            <UserDetailsModal
+              user={selectedUser}
+              currentUser={currentUser}
+              vendorProducts={vendorProducts}
+              cartItems={cartItems}
+              changingRoles={changingRoles}
+              canShowButton={canShowButton}
+              onClose={closeUserModal}
+              onVendorStatusChange={setVendorStatus}
+              onUserBlock={suspend}
+              onUserDelete={removeUser}
+              onRoleChange={changeUserRole}
+              SUPER_ADMIN_EMAIL={SUPER_ADMIN_EMAIL}
+            />
           )}
         </div>
       </div>
     </AdminLayout>
+  );
+};
+
+// 🆕 NUEVO: Componente modal para detalles del usuario
+interface UserDetailsModalProps {
+  user: UsuarioRow;
+  currentUser: { id: string; role: string; email?: string } | null;
+  vendorProducts: Map<string, number>;
+  cartItems: any[];
+  changingRoles: Set<string>;
+  canShowButton: (user: UsuarioRow, buttonType: string) => boolean;
+  onClose: () => void;
+  onVendorStatusChange: (id: string, estado: 'aprobado' | 'rechazado') => void;
+  onUserBlock: (id: string, blocked: boolean) => void;
+  onUserDelete: (id: string) => void;
+  onRoleChange: (id: string, newRole: 'vendedor' | 'comprador' | 'admin') => void;
+  SUPER_ADMIN_EMAIL: string;
+}
+
+const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
+  user,
+  currentUser,
+  vendorProducts,
+  cartItems,
+  changingRoles,
+  canShowButton,
+  onClose,
+  onVendorStatusChange,
+  onUserBlock,
+  onUserDelete,
+  onRoleChange,
+  SUPER_ADMIN_EMAIL,
+}) => {
+  return (
+    <div className='fixed inset-0 z-50 overflow-y-auto'>
+      <div className='flex min-h-screen items-center justify-center p-4'>
+        <div className='fixed inset-0 bg-black bg-opacity-50 transition-opacity' onClick={onClose} />
+        
+        <div className='relative bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto'>
+          {/* Header del modal */}
+          <div className='sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between'>
+            <div className='flex items-center space-x-3'>
+              <div className='h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg'>
+                {(user.nombre_completo || user.email || 'U').charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <h2 className='text-xl font-semibold text-gray-900'>
+                  {user.nombre_completo || 'Sin nombre'}
+                </h2>
+                <p className='text-sm text-gray-600'>{user.email}</p>
+              </div>
+            </div>
+            <Button onClick={onClose} variant='outline' size='sm'>
+              <Icon category='Interface' name='MdiClose' className='w-4 h-4' />
+              Cerrar
+            </Button>
+          </div>
+
+          {/* Contenido del modal */}
+          <div className='p-6 space-y-6'>
+            {/* Información general */}
+            <Card>
+              <CardContent className='p-4'>
+                <h3 className='text-lg font-semibold mb-4 flex items-center gap-2'>
+                  <Icon category='Interface' name='MdiInformation' className='w-5 h-5' />
+                  Información General
+                </h3>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                  <div>
+                    <label className='text-sm font-medium text-gray-700'>ID de Usuario</label>
+                    <p className='text-sm text-gray-900 font-mono'>{user.id}</p>
+                  </div>
+                  <div>
+                    <label className='text-sm font-medium text-gray-700'>Fecha de Registro</label>
+                    <p className='text-sm text-gray-900'>
+                      {user.created_at ? new Date(user.created_at).toLocaleString() : 'No disponible'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className='text-sm font-medium text-gray-700'>Rol Actual</label>
+                    <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
+                      user.role === 'admin' ? 'bg-red-100 text-red-800'
+                      : user.role === 'vendedor' ? 'bg-yellow-100 text-yellow-800'
+                      : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {user.role === 'admin' ? '🛡️ Administrador' 
+                       : user.role === 'vendedor' ? '🏪 Vendedor' 
+                       : '🛒 Comprador'}
+                    </span>
+                  </div>
+                  <div>
+                    <label className='text-sm font-medium text-gray-700'>Estado de Cuenta</label>
+                    <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
+                      user.bloqueado ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                    }`}>
+                      {user.bloqueado ? '🚫 Bloqueado' : '✅ Activo'}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Gestión de rol */}
+            {user.role !== 'admin' && canShowButton(user, 'changeRole') && (
+              <Card>
+                <CardContent className='p-4'>
+                  <h3 className='text-lg font-semibold mb-4 flex items-center gap-2'>
+                    <Icon category='Interface' name='MdiAccountSwitch' className='w-5 h-5' />
+                    Gestión de Rol
+                  </h3>
+                  <div className='space-y-4'>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-2'>
+                        Cambiar rol de usuario:
+                      </label>
+                      <select
+                        className='w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed'
+                        value={user.role || 'comprador'}
+                        disabled={changingRoles.has(user.id)}
+                        onChange={e => {
+                          const newRole = e.target.value as 'vendedor' | 'comprador' | 'admin';
+                          if (confirm(`¿Estás seguro de que quieres cambiar el rol de ${user.email} de "${user.role}" a "${newRole}"?`)) {
+                            onRoleChange(user.id, newRole);
+                          } else {
+                            e.target.value = user.role || 'comprador';
+                          }
+                        }}
+                      >
+                        <option value='comprador'>🛒 Comprador</option>
+                        <option value='vendedor'>🏪 Vendedor</option>
+                        {currentUser?.email === SUPER_ADMIN_EMAIL && (
+                          <option value='admin'>🛡️ Administrador</option>
+                        )}
+                      </select>
+                    </div>
+                    
+                    {/* Información sobre restricciones */}
+                    <div className='space-y-2'>
+                      {user.role === 'vendedor' && (
+                        <div className='text-sm text-orange-600 bg-orange-50 px-3 py-2 rounded'>
+                          ⚠️ Al cambiar a comprador, se perderán todos los productos registrados
+                        </div>
+                      )}
+                      {user.role === 'comprador' && (
+                        <div className='text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded'>
+                          ℹ️ Al cambiar a vendedor, el usuario requerirá aprobación administrativa
+                        </div>
+                      )}
+                      
+                      {user.role === 'vendedor' && (vendorProducts.get(user.id) || 0) > 0 && (
+                        <div className='text-sm text-red-600 bg-red-50 px-3 py-2 rounded font-medium'>
+                          🔒 No se puede cambiar el rol: el usuario tiene {vendorProducts.get(user.id)} productos registrados
+                        </div>
+                      )}
+                      
+                      {changingRoles.has(user.id) && (
+                        <div className='flex items-center gap-2 text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded'>
+                          <div className='loading loading-spinner loading-sm'></div>
+                          <span>Procesando cambio de rol...</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Gestión específica para vendedores */}
+            {user.role === 'vendedor' && (
+              <Card>
+                <CardContent className='p-4'>
+                  <h3 className='text-lg font-semibold mb-4 flex items-center gap-2'>
+                    <Icon category='Interface' name='MdiStore' className='w-5 h-5' />
+                    Gestión de Vendedor
+                  </h3>
+                  <div className='space-y-4'>
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-2'>
+                        Estado de aprobación:
+                      </label>
+                      <span className={`inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium ${
+                        user.vendedor_estado === 'aprobado' ? 'bg-green-100 text-green-800'
+                        : user.vendedor_estado === 'rechazado' ? 'bg-red-100 text-red-800'
+                        : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {user.vendedor_estado === 'aprobado' && <Icon category='Interface' name='MdiCheckCircle' className='w-4 h-4' />}
+                        {user.vendedor_estado === 'pendiente' && <Icon category='Interface' name='MdiClock' className='w-4 h-4' />}
+                        {user.vendedor_estado === 'rechazado' && <Icon category='Interface' name='MdiCloseCircle' className='w-4 h-4' />}
+                        {user.vendedor_estado === 'aprobado' ? 'Aprobado' 
+                         : user.vendedor_estado === 'rechazado' ? 'Rechazado'
+                         : 'Pendiente de aprobación'}
+                      </span>
+                    </div>
+                    
+                    {canShowButton(user, 'vendorActions') && (
+                      <div className='flex gap-3'>
+                        <Button
+                          onClick={() => onVendorStatusChange(user.id, 'aprobado')}
+                          className='bg-green-600 hover:bg-green-700 text-white'
+                          size='sm'
+                        >
+                          <Icon category='Interface' name='MdiCheck' className='w-4 h-4 mr-2' />
+                          Aprobar Vendedor
+                        </Button>
+                        <Button
+                          onClick={() => onVendorStatusChange(user.id, 'rechazado')}
+                          className='bg-red-600 hover:bg-red-700 text-white'
+                          size='sm'
+                        >
+                          <Icon category='Interface' name='MdiClose' className='w-4 h-4 mr-2' />
+                          Rechazar Vendedor
+                        </Button>
+                      </div>
+                    )}
+                    
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 mb-2'>
+                        Productos registrados:
+                      </label>
+                      <span className='inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 text-sm rounded-full'>
+                        <Icon category='Interface' name='MdiPackageVariant' className='w-4 h-4' />
+                        {vendorProducts.get(user.id) || 0} productos
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Acciones de administración */}
+            <Card>
+              <CardContent className='p-4'>
+                <h3 className='text-lg font-semibold mb-4 flex items-center gap-2'>
+                  <Icon category='Interface' name='MdiCog' className='w-5 h-5' />
+                  Acciones de Administración
+                </h3>
+                <div className='flex flex-wrap gap-3'>
+                  {canShowButton(user, 'blockActions') && (
+                    <>
+                      {!user.bloqueado && (
+                        <Button
+                          onClick={() => onUserBlock(user.id, true)}
+                          className='bg-orange-600 hover:bg-orange-700 text-white'
+                          size='sm'
+                        >
+                          <Icon category='Interface' name='MdiBlockHelper' className='w-4 h-4 mr-2' />
+                          Bloquear Usuario
+                        </Button>
+                      )}
+                      {user.bloqueado && (
+                        <Button
+                          onClick={() => onUserBlock(user.id, false)}
+                          className='bg-green-600 hover:bg-green-700 text-white'
+                          size='sm'
+                        >
+                          <Icon category='Interface' name='MdiCheckCircle' className='w-4 h-4 mr-2' />
+                          Desbloquear Usuario
+                        </Button>
+                      )}
+                    </>
+                  )}
+                  
+                  {canShowButton(user, 'deleteUser') && (
+                    <Button
+                      onClick={() => onUserDelete(user.id)}
+                      className='bg-red-600 hover:bg-red-700 text-white'
+                      size='sm'
+                    >
+                      <Icon category='Interface' name='MdiDelete' className='w-4 h-4 mr-2' />
+                      Eliminar Usuario
+                    </Button>
+                  )}
+                </div>
+                
+                {user.email === SUPER_ADMIN_EMAIL && (
+                  <div className='mt-4 text-sm text-green-600 bg-green-50 px-3 py-2 rounded'>
+                    👑 Este es el Super Administrador del sistema. Solo puede ser modificado por sí mismo.
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
