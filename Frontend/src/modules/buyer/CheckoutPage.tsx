@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useCart } from './CartContext';
 import { supabase } from '../../lib/supabaseClient';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/shadcn/card';
 import { Input } from '@/components/ui/shadcn/input';
 import { Button } from '@/components/ui/shadcn/button';
@@ -60,6 +61,7 @@ interface CardForm {
 
 export default function CheckoutPage() {
   const { items, total, clear } = useCart();
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<PaymentStep>('resumen');
   const [loading, setLoading] = useState(false);
   const [agree, setAgree] = useState(false);
@@ -173,7 +175,24 @@ export default function CheckoutPage() {
   };
 
   const handleCardChange = (field: keyof CardForm, value: string) => {
-    setCard(prev => ({ ...prev, [field]: value }));
+    let processedValue = value;
+    
+    // Formatear número de tarjeta con espacios
+    if (field === 'numero') {
+      processedValue = value.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, '$1 ');
+    }
+    
+    // Formatear fecha de expiración
+    if (field === 'expiracion') {
+      processedValue = value.replace(/\D/g, '').replace(/(\d{2})(?=\d)/, '$1/');
+    }
+    
+    // Limitar CVV a números
+    if (field === 'cvv') {
+      processedValue = value.replace(/\D/g, '');
+    }
+    
+    setCard(prev => ({ ...prev, [field]: processedValue }));
   };
 
   const handleAddressSelect = (address: UserAddress) => {
@@ -206,7 +225,15 @@ export default function CheckoutPage() {
     }
     if (currentStep === 'pago') {
       if (paymentMethod === 'tarjeta') {
-        return card.numero && card.expiracion && card.cvv && card.nombre;
+        const numeroLimpio = card.numero.replace(/\s/g, '');
+        return (
+          numeroLimpio.length >= 13 && 
+          numeroLimpio.length <= 19 &&
+          card.expiracion.match(/^(0[1-9]|1[0-2])\/([0-9]{2})$/) &&
+          card.cvv.length >= 3 && 
+          card.cvv.length <= 4 &&
+          card.nombre.trim().length > 0
+        );
       }
       return true; // Contraentrega no requiere validación
     }
@@ -227,14 +254,66 @@ export default function CheckoutPage() {
 
   const processOrder = async () => {
     setLoading(true);
+    try {
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+      
+      if (!token) {
+        throw new Error('No hay sesión activa');
+      }
 
-    // Simular procesamiento
-    setTimeout(() => {
-      setLoading(false);
-      alert('¡Pedido procesado exitosamente! 🎉');
-      clear();
-      // Aquí redirigirías a la página de confirmación
-    }, 2000);
+      const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL as string | undefined;
+      if (!backendUrl) {
+        throw new Error('Backend no configurado');
+      }
+
+      const response = await fetch(`${backendUrl.replace(/\/$/, '')}/rpc/crear_pedido`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          items: items.map(item => ({
+            producto_id: item.productoId,
+            cantidad: item.cantidad
+          })),
+          shipping: {
+            nombre: shipping.nombre,
+            direccion: shipping.direccion,
+            ciudad: shipping.ciudad,
+            telefono: shipping.telefono
+          },
+          payment: {
+            metodo: paymentMethod,
+            ...(paymentMethod === 'tarjeta' && {
+              tarjeta: {
+                numero: card.numero.replace(/\s/g, ''), // Remover espacios
+                nombre: card.nombre,
+                expiracion: card.expiracion,
+                cvv: card.cvv
+              }
+            })
+          },
+          simulate_payment: true
+        })
+      });
+
+      const result = await response.json();
+      
+      if (response.ok && result.ok) {
+        clear();
+        alert(`¡Pedido creado exitosamente! ID: ${result.order_id}`);
+        // Redirigir a la página de recibo o confirmación
+        navigate(`/recibo/${result.order_id}`);
+      } else {
+        throw new Error(result.error || 'Error al crear el pedido');
+      }
+    } catch (error: any) {
+      console.error('Error processing order:', error);
+      alert(`Error al procesar el pedido: ${error.message}`);
+    }
+    setLoading(false);
   };
 
   // Renderizado de pasos
@@ -629,6 +708,22 @@ export default function CheckoutPage() {
           {/* Formulario de tarjeta */}
           {paymentMethod === 'tarjeta' && (
             <div className='mt-6 space-y-4'>
+              {/* Banner de simulación */}
+              <div className='bg-blue-50 border border-blue-200 rounded-lg p-4'>
+                <div className='flex items-center gap-2 mb-2'>
+                  <Icon
+                    category='Estados y Feedback'
+                    name='TablerInfoCircle'
+                    className='w-5 h-5 text-blue-600'
+                  />
+                  <h4 className='font-medium text-blue-900'>Pago Simulado</h4>
+                </div>
+                <p className='text-sm text-blue-700'>
+                  Este es un entorno de demostración. No se procesarán pagos reales.
+                  Puedes usar cualquier información de tarjeta para probar el flujo.
+                </p>
+              </div>
+              
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                 <div className='space-y-2'>
                   <label className='form-label'>Número de tarjeta</label>
@@ -636,7 +731,11 @@ export default function CheckoutPage() {
                     value={card.numero}
                     onChange={e => handleCardChange('numero', e.target.value)}
                     placeholder='1234 5678 9012 3456'
+                    maxLength={19} // 16 dígitos + 3 espacios
                   />
+                  <p className='text-xs text-gray-500'>
+                    📝 Simulación: Usa cualquier número (evita 0000 para probar errores)
+                  </p>
                 </div>
                 <div className='space-y-2'>
                   <label className='form-label'>Nombre en la tarjeta</label>
@@ -654,7 +753,11 @@ export default function CheckoutPage() {
                       handleCardChange('expiracion', e.target.value)
                     }
                     placeholder='MM/AA'
+                    maxLength={5} // MM/AA
                   />
+                  <p className='text-xs text-gray-500'>
+                    📝 Formato: MM/AA (ej: 12/25)
+                  </p>
                 </div>
                 <div className='space-y-2'>
                   <label className='form-label'>CVV</label>
@@ -662,7 +765,11 @@ export default function CheckoutPage() {
                     value={card.cvv}
                     onChange={e => handleCardChange('cvv', e.target.value)}
                     placeholder='123'
+                    maxLength={4}
                   />
+                  <p className='text-xs text-gray-500'>
+                    📝 Simulación: Usa cualquier CVV (evita 000 para probar errores)
+                  </p>
                 </div>
               </div>
             </div>

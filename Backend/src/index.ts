@@ -330,6 +330,18 @@ const crearPedidoFullSchema = z.object({
       telefono: z.string().min(5)
     })
     .optional(),
+  payment: z
+    .object({
+      metodo: z.enum(['tarjeta', 'contraentrega']),
+      // Información de tarjeta simulada (solo para demostración)
+      tarjeta: z.object({
+        numero: z.string().min(13).max(19),
+        nombre: z.string().min(1),
+        expiracion: z.string().regex(/^(0[1-9]|1[0-2])\/([0-9]{2})$/), // MM/YY
+        cvv: z.string().min(3).max(4)
+      }).optional()
+    })
+    .optional(),
   simulate_payment: z.boolean().optional()
 });
 
@@ -375,7 +387,35 @@ app.post('/rpc/crear_pedido', async (req: Request, res: Response, next: NextFunc
       return res.status(403).json({ error: 'Solo compradores pueden crear pedidos' });
     }
 
-    const { items, shipping, simulate_payment } = parsed.data;
+    const { items, shipping, payment, simulate_payment } = parsed.data;
+
+    // Simular validación de tarjeta (solo para demostración)
+    if (payment?.metodo === 'tarjeta' && payment.tarjeta) {
+      const { numero, nombre, expiracion, cvv } = payment.tarjeta;
+      
+      // Simulaciones de validación de tarjeta
+      console.log('[SIMULACIÓN] Procesando pago con tarjeta:', {
+        numero: `****-****-****-${numero.slice(-4)}`,
+        nombre,
+        expiracion,
+        cvv: '***'
+      });
+      
+      // Simular algunos casos de fallo (para demostración)
+      if (numero.includes('0000')) {
+        return res.status(400).json({ 
+          error: 'Tarjeta rechazada: Número inválido (simulado)',
+          code: 'CARD_DECLINED'
+        });
+      }
+      
+      if (cvv === '000') {
+        return res.status(400).json({ 
+          error: 'CVV inválido (simulado)',
+          code: 'INVALID_CVV'
+        });
+      }
+    }
 
     // Crear pedido: usar RPC backend con user_id explícito para evitar depender de claims del JWT en PostgREST
     const { data: orderId, error: errPedido } = await supabaseUser.rpc('crear_pedido_backend', { p_user_id: caller.id, items });
@@ -399,6 +439,32 @@ app.post('/rpc/crear_pedido', async (req: Request, res: Response, next: NextFunc
         p_ciudad: shipping.ciudad,
         p_telefono: shipping.telefono
       });
+    }
+
+    // Guardar información de pago simulada (solo para registro)
+    if (payment && orderId) {
+      const admin = getSupabaseAdmin();
+      
+      // Crear registro de pago simulado en la tabla order_payments
+      const paymentRecord = {
+        order_id: orderId,
+        metodo: payment.metodo,
+        estado: 'simulado',
+        ...(payment.metodo === 'tarjeta' && payment.tarjeta && {
+          // Solo guardar últimos 4 dígitos y datos no sensibles
+          last4: payment.tarjeta.numero.slice(-4),
+          nombre_tarjeta: payment.tarjeta.nombre,
+          exp_mm: parseInt(payment.tarjeta.expiracion.split('/')[0]),
+          exp_yy: parseInt(payment.tarjeta.expiracion.split('/')[1])
+        })
+      };
+      
+      try {
+        await admin.from('order_payments').insert(paymentRecord);
+      } catch (paymentError) {
+        console.warn('[crear_pedido] No se pudo guardar info de pago:', paymentError);
+        // No bloquear la creación del pedido por este error
+      }
     }
 
     // Simular pago si se solicitó

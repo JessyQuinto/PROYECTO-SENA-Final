@@ -1,16 +1,9 @@
 import React from 'react';
+import { Navigate } from 'react-router-dom';
 
 const Orders: React.FC = () => {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Mis Pedidos</h1>
-      <div className="bg-card rounded-lg p-6 border border-border">
-        <p className="text-muted-foreground">
-          Historial de pedidos en desarrollo.
-        </p>
-      </div>
-    </div>
-  );
+  // Redirigir a la implementación completa de pedidos
+  return <Navigate to="/mis-pedidos" replace />;
 };
 
 export default Orders;
