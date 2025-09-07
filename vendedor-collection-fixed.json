@@ -1,0 +1,416 @@
+{
+  "info": {
+    "_postman_id": "6fdc9403-3498-4864-b2b7-04ebdbe0976b",
+    "name": "Tesoros Chocó API - Flujo Vendedor",
+    "description": "# API Tesoros Chocó - Flujo Completo para Vendedor\n\n## 🏗️ Arquitectura\n```\nReact Frontend ↔ Express Backend ↔ Supabase (PostgreSQL + Auth)\n```\n\n## 🔑 Variables Principales\n- `backend_base_url`: http://localhost:4000\n- `supabase_rest_url`: https://jdmexfawmetmfabpwlfs.supabase.co\n- `vendor_email`: quintojessy2222@gmail.com\n- `vendor_password`: Rulexi700.\n- `demo_categoria_id`: a7114981-678c-412e-8648-017f02548872\n\n## ⚡ Orden de Ejecución\n1. Health Check\n2. Auth Supabase (con credenciales de vendedor)\n3. Crear Producto\n4. Actualizar Producto\n5. Marcar Item como Enviado\n\n## ⚠️ Prerequisitos\n- Backend ejecutándose en puerto 4000\n- Vendedor debe estar aprobado en el sistema",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "updatedAt": "2025-09-07T21:11:41.000Z",
+    "createdAt": "2025-09-07T19:21:04.000Z",
+    "lastUpdatedBy": "13226867",
+    "uid": "13226867-6fdc9403-3498-4864-b2b7-04ebdbe0976b"
+  },
+  "item": [
+    {
+      "name": "🔍 Health Check",
+      "item": [
+        {
+          "name": "GET /health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.code === 200);",
+                  "pm.test('Service OK', () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.ok).to.be.true;",
+                  "  pm.expect(j.service).to.equal('backend-demo');",
+                  "});",
+                  "console.log('✅ Backend health check passed');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "a25a4931-b3a9-4942-8e9b-080f5244621f",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backend_base_url}}/health",
+              "host": [
+                "{{backend_base_url}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          },
+          "response": [],
+          "uid": "13226867-a25a4931-b3a9-4942-8e9b-080f5244621f"
+        }
+      ],
+      "id": "33951a26-9edd-4dc0-9cc2-9d0710e66a5d",
+      "description": "Verificar estado del backend Express",
+      "uid": "13226867-33951a26-9edd-4dc0-9cc2-9d0710e66a5d"
+    },
+    {
+      "name": "🔐 Auth Vendedor",
+      "item": [
+        {
+          "name": "POST Supabase Auth - Vendedor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  pm.test('Auth successful', () => !!j.access_token);",
+                  "  pm.collectionVariables.set('vendor_auth_token', j.access_token || '');",
+                  "  pm.collectionVariables.set('vendor_user_id', j.user?.id || '');",
+                  "  console.log('✅ Authenticated with Supabase as vendor');",
+                  "} else {",
+                  "  pm.test('Auth failed', () => false);",
+                  "  console.log('❌ Auth error:', pm.response.text());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "56ab2334-49be-4b33-bd20-7712aaec1954",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "apikey",
+                "value": "{{supabase_anon_key}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{vendor_email}}\",\"password\":\"{{vendor_password}}\"}"
+            },
+            "url": {
+              "raw": "{{supabase_rest_url}}/auth/v1/token?grant_type=password",
+              "host": [
+                "{{supabase_rest_url}}"
+              ],
+              "path": [
+                "auth",
+                "v1",
+                "token"
+              ],
+              "query": [
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "uid": "13226867-56ab2334-49be-4b33-bd20-7712aaec1954"
+        },
+        {
+          "name": "POST Backend Post-Signup - Vendedor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('vendor_user_id')) {",
+                  "  pm.test('Skip - no vendor_user_id', () => true);",
+                  "  return;",
+                  "}",
+                  "if (pm.response.code === 200) {",
+                  "  pm.test('Post-Signup successful', () => pm.response.code === 200);",
+                  "  console.log('✅ Vendor profile synced');",
+                  "} else {",
+                  "  pm.test('Post-Signup failed', () => false);",
+                  "  console.log('❌ Post-Signup error:', pm.response.text());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "e4d6d673-0845-467c-846f-e714602d5251",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"user_id\":\"{{vendor_user_id}}\",\"email\":\"{{vendor_email}}\",\"role\":\"vendedor\"}"
+            },
+            "url": {
+              "raw": "{{backend_base_url}}/auth/post-signup",
+              "host": [
+                "{{backend_base_url}}"
+              ],
+              "path": [
+                "auth",
+                "post-signup"
+              ]
+            }
+          },
+          "response": [],
+          "uid": "13226867-e4d6d673-0845-467c-846f-e714602d5251"
+        }
+      ],
+      "id": "65ec9697-f5f1-4af3-ad7e-839cfb30e232",
+      "description": "Autenticación directa con Supabase (simula frontend) con credenciales de vendedor",
+      "uid": "13226867-65ec9697-f5f1-4af3-ad7e-839cfb30e232"
+    },
+    {
+      "name": "📦 Gestión de Productos",
+      "item": [
+        {
+          "name": "POST /productos - Crear Producto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('vendor_auth_token')) {",
+                  "  pm.test('Skip - no auth token', () => true);",
+                  "  return;",
+                  "}",
+                  "if (pm.response.code === 201) {",
+                  "  const j = pm.response.json();",
+                  "  pm.collectionVariables.set('product_id', j.id || '');",
+                  "  pm.test('Product created', () => !!j.id);",
+                  "  console.log('✅ Product created:', j.id);",
+                  "} else {",
+                  "  pm.test('Product creation failed', () => false);",
+                  "  console.log('❌ Product error:', pm.response.text());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "63510c44-f242-454b-ac05-1d27504c00c3",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{vendor_auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nombre\":\"Producto de prueba - Postman\",\"descripcion\":\"Producto creado desde Postman para pruebas\",\"precio\":150000,\"stock\":5,\"categoria_id\":\"{{demo_categoria_id}}\"}"
+            },
+            "url": {
+              "raw": "{{backend_base_url}}/productos",
+              "host": [
+                "{{backend_base_url}}"
+              ],
+              "path": [
+                "productos"
+              ]
+            }
+          },
+          "response": [],
+          "uid": "13226867-63510c44-f242-454b-ac05-1d27504c00c3"
+        },
+        {
+          "name": "PUT /productos/:id - Actualizar Producto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('vendor_auth_token')) {",
+                  "  pm.test('Skip - no auth token', () => true);",
+                  "  return;",
+                  "}",
+                  "if (!pm.collectionVariables.get('product_id')) {",
+                  "  pm.test('Skip - no product_id', () => true);",
+                  "  return;",
+                  "}",
+                  "if (pm.response.code === 200) {",
+                  "  pm.test('Product updated', () => pm.response.code === 200);",
+                  "  console.log('✅ Product updated');",
+                  "} else {",
+                  "  pm.test('Product update failed', () => false);",
+                  "  console.log('❌ Product update error:', pm.response.text());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "272bdc80-f350-47db-80ae-10f62b04b38a",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{vendor_auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nombre\":\"Producto de prueba - Actualizado\",\"descripcion\":\"Producto actualizado desde Postman para pruebas\",\"precio\":175000,\"stock\":3}"
+            },
+            "url": {
+              "raw": "{{backend_base_url}}/productos/{{product_id}}",
+              "host": [
+                "{{backend_base_url}}"
+              ],
+              "path": [
+                "productos",
+                "{{product_id}}"
+              ]
+            }
+          },
+          "response": [],
+          "uid": "13226867-272bdc80-f350-47db-80ae-10f62b04b38a"
+        }
+      ],
+      "id": "a7ec34c8-a445-4b17-b9e6-2903783f4f1a",
+      "description": "Gestión de productos por parte del vendedor",
+      "uid": "13226867-a7ec34c8-a445-4b17-b9e6-2903783f4f1a"
+    },
+    {
+      "name": "🚚 Gestión de Envíos",
+      "item": [
+        {
+          "name": "POST /order-items/:id/shipped - Marcar Item como Enviado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('vendor_auth_token')) {",
+                  "  pm.test('Skip - no auth token', () => true);",
+                  "  return;",
+                  "}",
+                  "if (!pm.collectionVariables.get('order_item_id')) {",
+                  "  pm.test('Skip - no order_item_id', () => true);",
+                  "  return;",
+                  "}",
+                  "if (pm.response.code === 200) {",
+                  "  pm.test('Order item shipped', () => pm.response.code === 200);",
+                  "  console.log('✅ Order item marked as shipped');",
+                  "} else {",
+                  "  pm.test('Order item shipping failed', () => false);",
+                  "  console.log('❌ Order item shipping error:', pm.response.text());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "2aeb28d2-9283-427d-b563-f7350a58cf97",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{vendor_auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{backend_base_url}}/order-items/{{order_item_id}}/shipped",
+              "host": [
+                "{{backend_base_url}}"
+              ],
+              "path": [
+                "order-items",
+                "{{order_item_id}}",
+                "shipped"
+              ]
+            }
+          },
+          "response": [],
+          "uid": "13226867-2aeb28d2-9283-427d-b563-f7350a58cf97"
+        }
+      ],
+      "id": "7c59570a-3b59-4a16-8688-74178cf9d154",
+      "description": "Marcar items de pedido como enviados",
+      "uid": "13226867-7c59570a-3b59-4a16-8688-74178cf9d154"
+    }
+  ],
+  "variable": [
+    {
+      "id": "83910e04-8464-4b1f-bc0a-45c5fb6c66ca",
+      "key": "backend_base_url",
+      "value": "http://localhost:4000"
+    },
+    {
+      "id": "6a554b84-e456-435e-8ede-1dc9c0b2f100",
+      "key": "supabase_rest_url",
+      "value": "https://jdmexfawmetmfabpwlfs.supabase.co"
+    },
+    {
+      "id": "fb7fe06c-384b-4157-bb83-2b71e0656289",
+      "key": "supabase_anon_key",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkbWV4ZmF3bWV0bWZhYnB3bGZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ2MzAzMTYsImV4cCI6MjA3MDIwNjMxNn0.nb6WPz87vBq5CjZuL4LB8ZV45jeD-B-a4qzJh0j4J6g"
+    },
+    {
+      "id": "7b988c0c-5e78-4509-98be-6856fbe92b2e",
+      "key": "vendor_email",
+      "value": "quintojessy2222@gmail.com"
+    },
+    {
+      "id": "fe5a20ba-bc34-4839-bf7d-110563a7eeee",
+      "key": "vendor_password",
+      "value": "Rulexi700."
+    },
+    {
+      "id": "4292d103-acb5-410a-b150-6ba27278dbb2",
+      "key": "demo_categoria_id",
+      "value": "a7114981-678c-412e-8648-017f02548872"
+    },
+    {
+      "id": "12170e56-4575-403e-ae9a-9ded318e5300",
+      "key": "vendor_auth_token",
+      "value": ""
+    },
+    {
+      "id": "238b83c1-da93-40ab-83a1-82bf1bd304ef",
+      "key": "vendor_user_id",
+      "value": ""
+    },
+    {
+      "id": "d3dbadca-d0b1-4987-9460-a1b7d945a5e7",
+      "key": "product_id",
+      "value": ""
+    },
+    {
+      "id": "57382de5-1534-43de-ab4b-1a841ae055c5",
+      "key": "order_item_id",
+      "value": "2bf88230-147b-47d0-b99a-b5274ca7e35d"
+    }
+  ]
+}

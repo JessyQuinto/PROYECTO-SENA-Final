@@ -561,6 +561,136 @@ app.post('/order-items/:id/shipped', rateLimit, requireUser, async (req: Request
   } catch (e) { next(e); }
 });
 
+// ==============================
+// Product Management for Vendors
+// ==============================
+
+const crearProductoSchema = z.object({
+  nombre: z.string().min(1),
+  descripcion: z.string().optional(),
+  precio: z.number().positive(),
+  stock: z.number().int().nonnegative(),
+  categoria_id: z.string().uuid().optional(),
+  imagen_url: z.string().url().optional()
+});
+
+// Create product (vendors only)
+app.post('/productos', rateLimit, requireApprovedVendor, async (req: Request, res: Response, next: NextFunction) => {
+  const parsed = crearProductoSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'Payload inválido', detail: parsed.error.flatten() });
+  
+  try {
+    const { nombre, descripcion, precio, stock, categoria_id, imagen_url } = parsed.data;
+    const user = (req as any).user;
+    
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from('productos')
+      .insert({
+        vendedor_id: user.id,
+        nombre,
+        descripcion,
+        precio,
+        stock,
+        categoria_id,
+        imagen_url,
+        estado: 'activo'
+      })
+      .select()
+      .single();
+      
+    if (error) return res.status(500).json({ error: error.message });
+    res.status(201).json(data);
+  } catch (e) { next(e); }
+});
+
+// Update product (vendors only - own products)
+app.put('/productos/:id', rateLimit, requireApprovedVendor, async (req: Request, res: Response, next: NextFunction) => {
+  const parsed = crearProductoSchema.partial().safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'Payload inválido', detail: parsed.error.flatten() });
+  
+  try {
+    const user = (req as any).user;
+    const productoId = req.params.id;
+    
+    // Verify the product belongs to this vendor
+    const supabase = getSupabaseAdmin();
+    const { data: existingProduct, error: fetchError } = await supabase
+      .from('productos')
+      .select('id, vendedor_id')
+      .eq('id', productoId)
+      .single();
+      
+    if (fetchError || !existingProduct) {
+      return res.status(404).json({ error: 'Producto no encontrado' });
+    }
+    
+    if (existingProduct.vendedor_id !== user.id) {
+      return res.status(403).json({ error: 'No autorizado para modificar este producto' });
+    }
+    
+    const { data, error } = await supabase
+      .from('productos')
+      .update(parsed.data)
+      .eq('id', productoId)
+      .select()
+      .single();
+      
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+  } catch (e) { next(e); }
+});
+
+// Endpoint para actualizar usuarios (requiere admin)
+const updateUserSchema = z.object({
+  vendedor_estado: z.enum(['pendiente', 'aprobado', 'rechazado']).optional(),
+  bloqueado: z.boolean().optional(),
+  role: z.enum(['admin', 'vendedor', 'comprador']).optional()
+}).strict();
+
+app.put('/users/:id', rateLimit, requireAdminJwt, async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.params.id;
+  const parsed = updateUserSchema.safeParse(req.body);
+  
+  if (!parsed.success) {
+    return res.status(400).json({ 
+      error: 'Payload inválido', 
+      detail: parsed.error.flatten() 
+    });
+  }
+  
+  try {
+    const supabase = getSupabaseAdmin();
+    
+    // Actualizar el usuario
+    const { data, error } = await supabase
+      .from('users')
+      .update(parsed.data)
+      .eq('id', userId)
+      .select()
+      .single();
+      
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+    
+    if (!data) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+    
+    // Si se cambia el rol, también actualizar app_metadata
+    if (parsed.data.role) {
+      await supabase.auth.admin.updateUserById(userId, { 
+        app_metadata: { role: parsed.data.role } 
+      });
+    }
+    
+    res.json(data);
+  } catch (e) {
+    next(e);
+  }
+});
+
 // =========================================================
 // DEV ONLY helper: seed or ensure an admin user (password reset)
 // Guarded by header X-Dev-Secret == process.env.DEV_SEED_SECRET and NODE_ENV!=='production'

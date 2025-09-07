@@ -1,5 +1,5 @@
 {
-  "id": "e0cec56e-ec05-4256-91a1-ce8fd3b5f791",
+  "id": "2f97c816-8784-4cef-ac97-dbcc076a02a7",
   "name": "Tesoros Chocó - Desarrollo",
   "values": [
     {
@@ -19,17 +19,6 @@
       "type": "secret"
     },
     {
-      "key": "admin_email",
-      "value": "admin@tesoros-choco.com",
-      "enabled": true
-    },
-    {
-      "key": "admin_password",
-      "value": "admin123",
-      "enabled": true,
-      "type": "secret"
-    },
-    {
       "key": "vendor_email",
       "value": "quintojessy2222@gmail.com",
       "enabled": true
@@ -41,30 +30,28 @@
       "type": "secret"
     },
     {
-      "key": "comprador_email",
-      "value": "marianareyesgonzalez4@gmail.com",
-      "enabled": true
-    },
-    {
-      "key": "comprador_password",
-      "value": "Rulexi700.",
-      "enabled": true,
-      "type": "secret"
-    },
-    {
-      "key": "dev_seed_secret",
-      "value": "CHANGEME_DEV_SECRET",
-      "enabled": true,
-      "type": "secret"
-    },
-    {
-      "key": "demo_producto_id",
-      "value": "228eddbe-8f20-43f4-a8aa-bb699a9f7b9b",
-      "enabled": true
-    },
-    {
       "key": "demo_categoria_id",
       "value": "a7114981-678c-412e-8648-017f02548872",
+      "enabled": true
+    },
+    {
+      "key": "vendor_auth_token",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "vendor_user_id",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "product_id",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "order_item_id",
+      "value": "2bf88230-147b-47d0-b99a-b5274ca7e35d",
       "enabled": true
     }
   ]
