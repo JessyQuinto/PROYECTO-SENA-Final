@@ -424,9 +424,27 @@ app.post('/rpc/crear_pedido', async (req: Request, res: Response, next: NextFunc
         message: errPedido.message,
         code: (errPedido as any).code,
         details: (errPedido as any).details,
-        hint: (errPedido as any).hint
+        hint: (errPedido as any).hint,
+        user_id: caller.id,
+        items_count: items.length
       });
-      return res.status(400).json({ error: errPedido.message, code: (errPedido as any).code, details: (errPedido as any).details, hint: (errPedido as any).hint });
+      
+      // Determinar mensaje de error más amigable
+      let userMessage = errPedido.message;
+      if (errPedido.message?.includes('Stock insuficiente')) {
+        userMessage = 'Algunos productos no tienen stock suficiente. Por favor, revisa tu carrito.';
+      } else if (errPedido.message?.includes('Producto no encontrado')) {
+        userMessage = 'Uno o más productos ya no están disponibles.';
+      } else if (errPedido.message?.includes('ambiguous')) {
+        userMessage = 'Error interno del sistema. Por favor, inténtalo de nuevo.';
+      }
+      
+      return res.status(400).json({ 
+        error: userMessage, 
+        code: (errPedido as any).code, 
+        details: (errPedido as any).details, 
+        hint: (errPedido as any).hint 
+      });
     }
 
     // Guardar envío si viene (RPC con user_id explícito)

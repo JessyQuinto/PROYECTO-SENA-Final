@@ -307,11 +307,31 @@ export default function CheckoutPage() {
         // Redirigir a la página de recibo o confirmación
         navigate(`/recibo/${result.order_id}`);
       } else {
-        throw new Error(result.error || 'Error al crear el pedido');
+        // Mostrar error más detallado
+        const errorMessage = result.error || 'Error desconocido al crear el pedido';
+        const errorCode = result.code ? ` (Código: ${result.code})` : '';
+        const errorDetails = result.details ? `\nDetalles: ${JSON.stringify(result.details)}` : '';
+        throw new Error(`${errorMessage}${errorCode}${errorDetails}`);
       }
     } catch (error: any) {
       console.error('Error processing order:', error);
-      alert(`Error al procesar el pedido: ${error.message}`);
+      
+      // Mostrar error más amigable al usuario
+      let userMessage = 'Error al procesar el pedido';
+      
+      if (error.message) {
+        if (error.message.includes('invalid input value for enum')) {
+          userMessage = 'Error interno del sistema. Por favor, inténtalo más tarde.';
+        } else if (error.message.includes('stock')) {
+          userMessage = 'Algunos productos no tienen stock suficiente.';
+        } else if (error.message.includes('tarjeta') || error.message.includes('CVV')) {
+          userMessage = error.message; // Mostrar errores de tarjeta directamente
+        } else {
+          userMessage = error.message;
+        }
+      }
+      
+      alert(userMessage);
     }
     setLoading(false);
   };
