@@ -14,6 +14,16 @@ Esta colección de Postman contiene todas las pruebas necesarias para verificar 
 2. Importar el entorno `Tesoros_Choco_Environment.postman_environment.json` en Postman
 3. Seleccionar el entorno "Tesoros Chocó - Desarrollo"
 
+## 🆕 Nueva Colección de Pruebas para Comprador
+
+Adicionalmente, se ha creado una colección específica para pruebas del perfil de comprador:
+
+1. Importar la colección `Tesoros_Choco_Comprador_Tests.postman_collection.json` en Postman
+2. Importar el entorno `Tesoros_Choco_Environment.postman_environment.json` en Postman
+3. Seleccionar el entorno "Tesoros Chocó - Comprador"
+
+Para más detalles sobre esta colección, consultar el archivo `README_COMPRADOR.md`.
+
 ## 🧪 Ejecución de Pruebas
 
 La colección está organizada en carpetas lógicas:
@@ -39,6 +49,10 @@ La colección está organizada en carpetas lógicas:
 ### 7. 🔒 Admin Users Management
 - Crea nuevos usuarios
 - Cambia roles de usuarios
+
+## 🧪 Ejecución de Pruebas para Comprador
+
+Adicionalmente, se ha creado una colección específica para pruebas del perfil de comprador. Consultar el archivo `README_COMPRADOR.md` para más detalles.
 
 ## 🎯 Orden de Ejecución Recomendado
 
