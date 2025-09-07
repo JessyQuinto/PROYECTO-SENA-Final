@@ -174,14 +174,20 @@ CREATE TABLE app_config (
 #### **8. audit_log**
 ```sql
 CREATE TABLE audit_log (
-  id BIGSERIAL PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   actor_id UUID REFERENCES users(id),
-  action TEXT NOT NULL,
-  entity TEXT NOT NULL,
+  action audit_action_type NOT NULL,
+  entity_table TEXT NOT NULL,
   entity_id UUID,
   old_values JSONB,
   new_values JSONB,
-  created_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  processed_at TIMESTAMPTZ,
+  entity_type audit_entity_type NOT NULL,
+  ip_address INET,
+  user_agent TEXT,
+  session_id TEXT
 );
 ```
 
@@ -199,7 +205,8 @@ CREATE TABLE user_address (
   departamento TEXT NOT NULL,
   codigo_postal TEXT,
   es_predeterminada BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 ```
 
@@ -215,7 +222,8 @@ CREATE TABLE user_payment_profile (
   exp_mm SMALLINT,
   exp_yy SMALLINT,
   es_predeterminada BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 ```
 
@@ -227,7 +235,12 @@ CREATE TABLE order_shipping (
   direccion TEXT NOT NULL,
   ciudad TEXT NOT NULL,
   telefono TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT now(),
+  user_address_id UUID REFERENCES user_address(id),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  direccion2 TEXT,
+  departamento TEXT,
+  codigo_postal TEXT
 );
 ```
 
@@ -235,7 +248,42 @@ CREATE TABLE order_shipping (
 ```sql
 CREATE TABLE invoice_counters (
   year INTEGER PRIMARY KEY,
-  last_number INTEGER DEFAULT 0
+  last_number INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+#### **13. order_item_snapshot**
+```sql
+CREATE TABLE order_item_snapshot (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_item_id UUID NOT NULL REFERENCES order_items(id),
+  producto_nombre TEXT NOT NULL,
+  producto_descripcion TEXT,
+  producto_imagen_url TEXT,
+  precio_capturado NUMERIC NOT NULL CHECK (precio_capturado > 0),
+  vendedor_nombre TEXT NOT NULL,
+  categoria_nombre TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  categoria_slug TEXT,
+  vendedor_email TEXT
+);
+```
+
+#### **14. order_payments**
+```sql
+CREATE TABLE order_payments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id UUID NOT NULL UNIQUE REFERENCES orders(id),
+  metodo TEXT NOT NULL CHECK (metodo = ANY (ARRAY['tarjeta', 'contraentrega'])),
+  estado TEXT DEFAULT 'simulado' CHECK (estado = ANY (ARRAY['simulado', 'procesado', 'fallido'])),
+  last4 TEXT,
+  nombre_tarjeta TEXT,
+  exp_mm INTEGER CHECK (exp_mm >= 1 AND exp_mm <= 12),
+  exp_yy INTEGER CHECK (exp_yy >= 0 AND exp_yy <= 99),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 ```
 
@@ -259,6 +307,20 @@ CREATE TYPE address_tipo AS ENUM ('envio', 'facturacion');
 
 -- Métodos de pago
 CREATE TYPE payment_method AS ENUM ('tarjeta', 'contraentrega');
+
+-- Tipos de acción para auditoría
+CREATE TYPE audit_action_type AS ENUM (
+  'CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 
+  'STATUS_CHANGE', 'APPROVE', 'REJECT', 'BLOCK', 'UNBLOCK', 
+  'LOW_STOCK_ALERT', 'ORDER_STATUS_CHANGE', 'NEW_EVALUATION'
+);
+
+-- Tipos de entidad para auditoría
+CREATE TYPE audit_entity_type AS ENUM (
+  'users', 'productos', 'categorias', 'orders', 'order_items', 
+  'evaluaciones', 'user_address', 'user_payment_profile', 
+  'order_shipping'
+);
 ```
 
 ### **Vista Materializada**
@@ -340,7 +402,7 @@ Estas opciones se ajustan desde el Dashboard de Supabase (Auth > Providers > Ema
 ```json
 {
   "email": "vendedor@ejemplo.com",
-  "action": "aprobado" | "rechazado",
+  "action": "aprobado" | "rechazado" | "bloqueado" | "reactivado" | "eliminado",
   "nombre": "Nombre del Vendedor",
   "from": "Tesoros Chocó <noreply@tesoros-choco.app>"
 }
@@ -357,7 +419,8 @@ Estas opciones se ajustan desde el Dashboard de Supabase (Auth > Providers > Ema
   "action": "receipt" | "shipped",
   "email": "cliente@ejemplo.com",
   "order_id": "uuid-del-pedido",
-  "nombre": "Nombre del Cliente"
+  "nombre": "Nombre del Cliente",
+  "from": "Tesoros Chocó <noreply@tesoros-choco.app>"
 }
 ```
 
@@ -382,51 +445,6 @@ Estas opciones se ajustan desde el Dashboard de Supabase (Auth > Providers > Ema
 **Endpoint**: `POST /functions/v1/self-account`
 
 **Payload**: `{}` (usa el usuario autenticado)
-
-### **5. notify-order-status**
-**Propósito**: Notificar cambios de estado de pedidos (procesando, enviado, entregado, cancelado)
-
-**Endpoint**: `POST /functions/v1/notify-order-status`
-
-**Payload**:
-```json
-{
-  "order_id": "uuid-del-pedido",
-  "status": "procesando|enviado|entregado|cancelado",
-  "recipient_email": "cliente@ejemplo.com",
-  "recipient_name": "Nombre",
-  "from": "Opcional Nombre <noreply@tesoros-choco.app>"
-}
-```
-
-### **6. notify-low-stock**
-**Propósito**: Notificar a vendedores cuando el stock está por debajo de umbral
-
-**Endpoint**: `POST /functions/v1/notify-low-stock`
-
-**Payload**:
-```json
-{
-  "producto_id": "uuid",
-  "vendedor_email": "vendedor@ejemplo.com",
-  "vendedor_nombre": "Nombre"
-}
-```
-
-### **7. notify-evaluation**
-**Propósito**: Notificaciones de evaluaciones (nueva evaluación; recordatorio a comprador)
-
-**Endpoint**: `POST /functions/v1/notify-evaluation`
-
-**Payload**:
-```json
-{
-  "type": "new_evaluation|evaluation_reminder",
-  "recipient_email": "destinatario@ejemplo.com",
-  "recipient_name": "Nombre",
-  "data": { "producto_id": "uuid", "puntuacion": 5, "comentario": "..." }
-}
-```
 
 ---
 

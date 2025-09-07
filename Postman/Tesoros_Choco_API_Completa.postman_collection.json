@@ -1,0 +1,531 @@
+{
+  "info": {
+    "_postman_id": "eb4660c1-7955-4ac2-8b41-d9f99484d0e5",
+    "name": "Tesoros Chocó API - DOCUMENTADA",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "🔍 Health Check",
+      "item": [
+        {
+          "name": "GET /health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.code === 200);",
+                  "pm.test('Service OK', () => {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.ok).to.be.true;",
+                  "  pm.expect(j.service).to.equal('backend-demo');",
+                  "});",
+                  "console.log('✅ Backend health check passed');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backend_base_url}}/health",
+              "host": [
+                "{{backend_base_url}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🌱 Dev Seed",
+      "item": [
+        {
+          "name": "POST /dev/ensure-admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 403) {",
+                  "  pm.test('Forbidden - Backend needs restart', () => pm.response.code === 403);",
+                  "  console.log('❌ DEV_SEED_SECRET not loaded - restart backend');",
+                  "  return;",
+                  "}",
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  pm.test('Admin created', () => j.ok === true);",
+                  "  if (j.user_id) pm.collectionVariables.set('admin_user_id', j.user_id);",
+                  "  console.log('✅ Admin user ensured');",
+                  "} else {",
+                  "  console.log('❌ Error:', pm.response.text());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Dev-Secret",
+                "value": "{{dev_seed_secret}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{admin_email}}\",\"password\":\"{{admin_password}}\"}"
+            },
+            "url": {
+              "raw": "{{backend_base_url}}/dev/ensure-admin",
+              "host": [
+                "{{backend_base_url}}"
+              ],
+              "path": [
+                "dev",
+                "ensure-admin"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔐 Auth",
+      "item": [
+        {
+          "name": "POST Supabase Auth",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  pm.test('Auth successful', () => !!j.access_token);",
+                  "  pm.collectionVariables.set('auth_token', j.access_token || '');",
+                  "  pm.collectionVariables.set('user_id', j.user?.id || '');",
+                  "  console.log('✅ Authenticated with Supabase');",
+                  "} else {",
+                  "  pm.test('Auth failed', () => false);",
+                  "  console.log('❌ Auth error:', pm.response.text());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "apikey",
+                "value": "{{supabase_anon_key}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{admin_email}}\",\"password\":\"{{admin_password}}\"}"
+            },
+            "url": {
+              "raw": "{{supabase_rest_url}}/auth/v1/token?grant_type=password",
+              "host": [
+                "{{supabase_rest_url}}"
+              ],
+              "path": [
+                "auth",
+                "v1",
+                "token"
+              ],
+              "query": [
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST Backend Post-Signup",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('user_id')) {",
+                  "  pm.test('Skip - no user_id', () => true);",
+                  "  return;",
+                  "}",
+                  "pm.test('Status 200', () => pm.response.code === 200);",
+                  "console.log('✅ User profile synced');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"user_id\":\"{{user_id}}\",\"email\":\"{{admin_email}}\",\"role\":\"admin\"}"
+            },
+            "url": {
+              "raw": "{{backend_base_url}}/auth/post-signup",
+              "host": [
+                "{{backend_base_url}}"
+              ],
+              "path": [
+                "auth",
+                "post-signup"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🛒 Pedidos",
+      "item": [
+        {
+          "name": "POST /rpc/crear_pedido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('auth_token')) {",
+                  "  pm.test('Skip - no auth token', () => true);",
+                  "  return;",
+                  "}",
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  pm.collectionVariables.set('order_id', j.order_id || '');",
+                  "  pm.test('Order created', () => !!j.order_id);",
+                  "  console.log('✅ Order created:', j.order_id);",
+                  "} else {",
+                  "  pm.test('Order failed', () => false);",
+                  "  console.log('❌ Order error:', pm.response.text());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"items\":[{\"producto_id\":\"{{demo_producto_id}}\",\"cantidad\":1}]}"
+            },
+            "url": {
+              "raw": "{{backend_base_url}}/rpc/crear_pedido",
+              "host": [
+                "{{backend_base_url}}"
+              ],
+              "path": [
+                "rpc",
+                "crear_pedido"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "💳 Pagos",
+      "item": [
+        {
+          "name": "POST /payments/simulate",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('order_id')) {",
+                  "  pm.test('Skip - no order_id', () => true);",
+                  "  return;",
+                  "}",
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  pm.test('Payment simulated', () => j.ok === true);",
+                  "  console.log('✅ Payment simulated successfully');",
+                  "} else {",
+                  "  pm.test('Payment failed', () => false);",
+                  "  console.log('❌ Payment error:', pm.response.text());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"order_id\":\"{{order_id}}\",\"approved\":true}"
+            },
+            "url": {
+              "raw": "{{backend_base_url}}/payments/simulate",
+              "host": [
+                "{{backend_base_url}}"
+              ],
+              "path": [
+                "payments",
+                "simulate"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📦 Estados",
+      "item": [
+        {
+          "name": "POST /orders/:id/delivered",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('order_id')) {",
+                  "  pm.test('Skip - no order', () => true);",
+                  "  return;",
+                  "}",
+                  "pm.test('Status 200', () => pm.response.code === 200);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{backend_base_url}}/orders/{{order_id}}/delivered",
+              "host": [
+                "{{backend_base_url}}"
+              ],
+              "path": [
+                "orders",
+                "{{order_id}}",
+                "delivered"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔒 Admin Users Management",
+      "item": [
+        {
+          "name": "POST /admin/create-user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('auth_token')) {",
+                  "  pm.test('Skip - no auth token', () => true);",
+                  "  return;",
+                  "}",
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  pm.test('User created', () => j.ok === true);",
+                  "  if (j.user_id) pm.collectionVariables.set('new_user_id', j.user_id);",
+                  "  console.log('✅ User created:', j.user_id);",
+                  "} else {",
+                  "  pm.test('User creation failed', () => false);",
+                  "  console.log('❌ User creation error:', pm.response.text());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"test@example.com\",\"password\":\"password123\",\"role\":\"comprador\"}"
+            },
+            "url": {
+              "raw": "{{backend_base_url}}/admin/create-user",
+              "host": [
+                "{{backend_base_url}}"
+              ],
+              "path": [
+                "admin",
+                "create-user"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /admin/users/:id/role",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('auth_token')) {",
+                  "  pm.test('Skip - no auth token', () => true);",
+                  "  return;",
+                  "}",
+                  "if (!pm.collectionVariables.get('new_user_id')) {",
+                  "  pm.test('Skip - no user id', () => true);",
+                  "  return;",
+                  "}",
+                  "pm.test('Status 200', () => pm.response.code === 200);",
+                  "console.log('✅ User role updated');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"role\":\"vendedor\"}"
+            },
+            "url": {
+              "raw": "{{backend_base_url}}/admin/users/{{new_user_id}}/role",
+              "host": [
+                "{{backend_base_url}}"
+              ],
+              "path": [
+                "admin",
+                "users",
+                "{{new_user_id}}",
+                "role"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "backend_base_url",
+      "value": "http://localhost:4000"
+    },
+    {
+      "key": "supabase_rest_url",
+      "value": "https://jdmexfawmetmfabpwlfs.supabase.co"
+    },
+    {
+      "key": "supabase_anon_key",
+      "value": "{{vault:supabase-anon-api-key}}"
+    },
+    {
+      "key": "admin_email",
+      "value": "admin@tesoros-choco.com"
+    },
+    {
+      "key": "admin_password",
+      "value": "admin123"
+    },
+    {
+      "key": "demo_producto_id",
+      "value": "228eddbe-8f20-43f4-a8aa-bb699a9f7b9b"
+    },
+    {
+      "key": "dev_seed_secret",
+      "value": "CHANGEME_DEV_SECRET"
+    },
+    {
+      "key": "auth_token",
+      "value": ""
+    },
+    {
+      "key": "user_id",
+      "value": ""
+    },
+    {
+      "key": "admin_user_id",
+      "value": ""
+    },
+    {
+      "key": "order_id",
+      "value": ""
+    },
+    {
+      "key": "new_user_id",
+      "value": ""
+    },
+    {
+      "key": "_documentation_version",
+      "value": "v2.0-complete"
+    }
+  ]
+}
