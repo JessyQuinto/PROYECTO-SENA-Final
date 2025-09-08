@@ -119,6 +119,72 @@ app.post('/auth/post-signup', async (req: Request, res: Response, next: NextFunc
 // ==============================
 // Auth middlewares (JWT-based)
 // ==============================
+
+// Consolidated authentication middleware with parameters
+const authenticate = (options: { 
+  role?: 'admin' | 'vendedor' | 'comprador', 
+  vendedorEstado?: 'aprobado',
+  allowBlocked?: boolean 
+} = {}) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = await getUserFromAuthHeader(req);
+      if (!user) return res.status(401).json({ error: 'No autenticado' });
+      
+      // Verify role if specified
+      if (options.role) {
+        const role = (user.app_metadata as any)?.role;
+        if (role !== options.role) {
+          return res.status(403).json({ 
+            error: `No autorizado. Se requiere rol: ${options.role}` 
+          });
+        }
+      }
+      
+      // Verify user status in database if role validation needed
+      if (options.role || options.vendedorEstado) {
+        const supabaseUser = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!, {
+          global: { headers: { Authorization: req.headers.authorization! } },
+          auth: { autoRefreshToken: false, persistSession: false }
+        });
+        
+        const { data: userProfile, error: profileError } = await supabaseUser
+          .from('users')
+          .select('role, vendedor_estado, bloqueado')
+          .eq('id', user.id)
+          .single();
+          
+        if (profileError || !userProfile) {
+          return res.status(401).json({ error: 'Perfil de usuario no encontrado' });
+        }
+        
+        // Check if user is blocked unless explicitly allowed
+        if (userProfile.bloqueado && !options.allowBlocked) {
+          return res.status(403).json({ error: 'Usuario bloqueado' });
+        }
+        
+        // Check vendor status if required
+        if (options.vendedorEstado && userProfile.vendedor_estado !== options.vendedorEstado) {
+          return res.status(403).json({ 
+            error: `Vendedor debe estar ${options.vendedorEstado} para acceder a este recurso` 
+          });
+        }
+      }
+      
+      (req as any).user = user;
+      next();
+    } catch (e) { 
+      next(e); 
+    }
+  };
+};
+
+// Export specific middleware functions for backward compatibility
+const requireUser = authenticate();
+const requireAdminJwt = authenticate({ role: 'admin' });
+const requireApprovedVendor = authenticate({ role: 'vendedor', vendedorEstado: 'aprobado' });
+const requireApprovedBuyer = authenticate({ role: 'comprador' });
+
 const RATE_WINDOW_MS = 60_000; // 1 minuto
 const RATE_MAX_REQUESTS = 30;
 const rateStore = new Map<string, { count: number; resetAt: number }>();
@@ -152,102 +218,8 @@ const getUserFromAuthHeader = async (req: Request) => {
   return data.user as any | null;
 };
 
-const requireUser = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const user = await getUserFromAuthHeader(req);
-    if (!user) return res.status(401).json({ error: 'No autenticado' });
-    (req as any).user = user;
-    next();
-  } catch (e) { next(e); }
-};
-
-const requireAdminJwt = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const user = await getUserFromAuthHeader(req);
-    if (!user) return res.status(401).json({ error: 'No autenticado' });
-    const role = (user.app_metadata as any)?.role;
-    if (role !== 'admin') return res.status(403).json({ error: 'No autorizado' });
-    (req as any).user = user;
-    next();
-  } catch (e) { next(e); }
-};
-
-// ✅ NUEVO: Middleware para validar vendedores aprobados
-const requireApprovedVendor = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const user = await getUserFromAuthHeader(req);
-    if (!user) return res.status(401).json({ error: 'No autenticado' });
-    
-    // Verificar rol y estado en la base de datos
-    const supabaseUser = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!, {
-      global: { headers: { Authorization: req.headers.authorization! } },
-      auth: { autoRefreshToken: false, persistSession: false }
-    });
-    
-    const { data: userProfile, error: profileError } = await supabaseUser
-      .from('users')
-      .select('role, vendedor_estado, bloqueado')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError || !userProfile) {
-      return res.status(401).json({ error: 'Perfil de usuario no encontrado' });
-    }
-
-    if (userProfile.bloqueado) {
-      return res.status(403).json({ error: 'Usuario bloqueado' });
-    }
-
-    if (userProfile.role !== 'vendedor') {
-      return res.status(403).json({ error: 'Solo vendedores pueden acceder a este recurso' });
-    }
-
-    if (userProfile.vendedor_estado !== 'aprobado') {
-      return res.status(403).json({ error: 'Vendedor debe estar aprobado para acceder a este recurso' });
-    }
-
-    (req as any).user = user;
-    next();
-  } catch (e) { next(e); }
-};
-
-// ✅ NUEVO: Middleware para validar compradores
-const requireApprovedBuyer = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const user = await getUserFromAuthHeader(req);
-    if (!user) return res.status(401).json({ error: 'No autenticado' });
-    
-    // Verificar rol y estado en la base de datos
-    const supabaseUser = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!, {
-      global: { headers: { Authorization: req.headers.authorization! } },
-      auth: { autoRefreshToken: false, persistSession: false }
-    });
-    
-    const { data: userProfile, error: profileError } = await supabaseUser
-      .from('users')
-      .select('role, bloqueado')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError || !userProfile) {
-      return res.status(401).json({ error: 'Perfil de usuario no encontrado' });
-    }
-
-    if (userProfile.bloqueado) {
-      return res.status(403).json({ error: 'Usuario bloqueado' });
-    }
-
-    if (userProfile.role !== 'comprador') {
-      return res.status(403).json({ error: 'Solo compradores pueden acceder a este recurso' });
-    }
-
-    (req as any).user = user;
-    next();
-  } catch (e) { next(e); }
-};
-
 const setRoleSchema = z.object({ role: z.enum(['admin', 'vendedor', 'comprador']) });
-app.post('/admin/users/:id/role', rateLimit, requireAdminJwt, async (req: Request, res: Response, next: NextFunction) => {
+app.post('/admin/users/:id/role', rateLimit, authenticate({ role: 'admin' }), async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.params.id;
   const parsed = setRoleSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Payload inválido', detail: parsed.error.flatten() });
@@ -267,7 +239,7 @@ const createUserSchema = z.object({
   nombre: z.string().optional()
 });
 
-app.post('/admin/create-user', rateLimit, requireAdminJwt, async (req: Request, res: Response, next: NextFunction) => {
+app.post('/admin/create-user', rateLimit, authenticate({ role: 'admin' }), async (req: Request, res: Response, next: NextFunction) => {
   const parsed = createUserSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Payload inválido', detail: parsed.error.flatten() });
   const { email, password, role, nombre } = parsed.data;
@@ -525,7 +497,7 @@ app.post('/payments/simulate', async (req: Request, res: Response, next: NextFun
 // ==============================
 // Order state endpoints (centralized, JWT-based)
 // ==============================
-app.post('/orders/:id/cancel', rateLimit, requireUser, async (req: Request, res: Response, next: NextFunction) => {
+app.post('/orders/:id/cancel', rateLimit, authenticate(), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization || '';
     const supabaseUser = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!, {
@@ -537,7 +509,7 @@ app.post('/orders/:id/cancel', rateLimit, requireUser, async (req: Request, res:
   } catch (e) { next(e); }
 });
 
-app.post('/orders/:id/delivered', rateLimit, requireUser, async (req: Request, res: Response, next: NextFunction) => {
+app.post('/orders/:id/delivered', rateLimit, authenticate(), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization || '';
     const supabaseUser = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!, {
@@ -549,7 +521,7 @@ app.post('/orders/:id/delivered', rateLimit, requireUser, async (req: Request, r
   } catch (e) { next(e); }
 });
 
-app.post('/order-items/:id/shipped', rateLimit, requireUser, async (req: Request, res: Response, next: NextFunction) => {
+app.post('/order-items/:id/shipped', rateLimit, authenticate(), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization || '';
     const supabaseUser = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!, {
@@ -575,7 +547,7 @@ const crearProductoSchema = z.object({
 });
 
 // Create product (vendors only)
-app.post('/productos', rateLimit, requireApprovedVendor, async (req: Request, res: Response, next: NextFunction) => {
+app.post('/productos', rateLimit, authenticate({ role: 'vendedor', vendedorEstado: 'aprobado' }), async (req: Request, res: Response, next: NextFunction) => {
   const parsed = crearProductoSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Payload inválido', detail: parsed.error.flatten() });
   
@@ -604,8 +576,8 @@ app.post('/productos', rateLimit, requireApprovedVendor, async (req: Request, re
   } catch (e) { next(e); }
 });
 
-// Update product (vendors only - own products)
-app.put('/productos/:id', rateLimit, requireApprovedVendor, async (req: Request, res: Response, next: NextFunction) => {
+// Update product endpoint with stock monitoring
+app.put('/productos/:id', rateLimit, authenticate({ role: 'vendedor', vendedorEstado: 'aprobado' }), async (req: Request, res: Response, next: NextFunction) => {
   const parsed = crearProductoSchema.partial().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Payload inválido', detail: parsed.error.flatten() });
   
@@ -617,7 +589,7 @@ app.put('/productos/:id', rateLimit, requireApprovedVendor, async (req: Request,
     const supabase = getSupabaseAdmin();
     const { data: existingProduct, error: fetchError } = await supabase
       .from('productos')
-      .select('id, vendedor_id')
+      .select('id, vendedor_id, stock')
       .eq('id', productoId)
       .single();
       
@@ -627,6 +599,32 @@ app.put('/productos/:id', rateLimit, requireApprovedVendor, async (req: Request,
     
     if (existingProduct.vendedor_id !== user.id) {
       return res.status(403).json({ error: 'No autorizado para modificar este producto' });
+    }
+    
+    // Check if stock is being updated and if it's below threshold
+    if (parsed.data.stock !== undefined && parsed.data.stock < existingProduct.stock) {
+      // Stock decreased, check if it's below threshold
+      const threshold = 5; // Default threshold, could be configurable per vendor
+      if (parsed.data.stock <= threshold) {
+        // Trigger low stock notification
+        try {
+          const projectRef = new URL(process.env.SUPABASE_URL!).host.split('.')[0];
+          await fetch(`https://${projectRef}.functions.supabase.co/notify-low-stock`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}` // Use service role key for internal calls
+            },
+            body: JSON.stringify({
+              producto_id: productoId,
+              stock_actual: parsed.data.stock,
+              umbral: threshold
+            })
+          }).catch(() => {}); // Ignore notification errors
+        } catch (e) {
+          console.warn('Failed to notify low stock:', e);
+        }
+      }
     }
     
     const { data, error } = await supabase
@@ -648,7 +646,7 @@ const updateUserSchema = z.object({
   role: z.enum(['admin', 'vendedor', 'comprador']).optional()
 }).strict();
 
-app.put('/users/:id', rateLimit, requireAdminJwt, async (req: Request, res: Response, next: NextFunction) => {
+app.put('/users/:id', rateLimit, authenticate({ role: 'admin' }), async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.params.id;
   const parsed = updateUserSchema.safeParse(req.body);
   
@@ -689,6 +687,328 @@ app.put('/users/:id', rateLimit, requireAdminJwt, async (req: Request, res: Resp
   } catch (e) {
     next(e);
   }
+});
+
+// ==============================
+// Evaluation / Review System
+// ==============================
+
+const createEvaluationSchema = z.object({
+  order_item_id: z.string().uuid(),
+  puntuacion: z.number().int().min(1).max(5),
+  comentario: z.string().optional()
+});
+
+// Create evaluation (buyers only)
+app.post('/evaluaciones', rateLimit, authenticate({ role: 'comprador' }), async (req: Request, res: Response, next: NextFunction) => {
+  const parsed = createEvaluationSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'Payload inválido', detail: parsed.error.flatten() });
+  
+  try {
+    const { order_item_id, puntuacion, comentario } = parsed.data;
+    const user = (req as any).user;
+    
+    const supabase = getSupabaseAdmin();
+    
+    // Verify the order item belongs to this buyer and is delivered
+    const { data: orderItem, error: fetchError } = await supabase
+      .from('order_items')
+      .select('id, order_id, producto_id')
+      .eq('id', order_item_id)
+      .single();
+      
+    if (fetchError || !orderItem) {
+      return res.status(404).json({ error: 'Ítem de pedido no encontrado' });
+    }
+    
+    // Verify the order belongs to this buyer and is delivered
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .select('id, comprador_id, estado')
+      .eq('id', orderItem.order_id)
+      .eq('comprador_id', user.id)
+      .eq('estado', 'entregado')
+      .single();
+      
+    if (orderError || !order) {
+      return res.status(403).json({ error: 'No autorizado para evaluar este ítem' });
+    }
+    
+    // Check if evaluation already exists
+    const { data: existingEvaluation } = await supabase
+      .from('evaluaciones')
+      .select('id')
+      .eq('comprador_id', user.id)
+      .eq('order_item_id', order_item_id)
+      .maybeSingle();
+      
+    if (existingEvaluation) {
+      return res.status(400).json({ error: 'Ya has evaluado este ítem' });
+    }
+    
+    // Create evaluation
+    const { data, error } = await supabase
+      .from('evaluaciones')
+      .insert({
+        comprador_id: user.id,
+        producto_id: orderItem.producto_id,
+        order_item_id,
+        puntuacion,
+        comentario: comentario || null
+      })
+      .select()
+      .single();
+      
+    if (error) return res.status(500).json({ error: error.message });
+    
+    // Trigger notification to vendor
+    try {
+      const projectRef = new URL(process.env.SUPABASE_URL!).host.split('.')[0];
+      await fetch(`https://${projectRef}.functions.supabase.co/notify-evaluation`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': req.headers.authorization!
+        },
+        body: JSON.stringify({
+          producto_id: orderItem.producto_id,
+          puntuacion,
+          comentario
+        })
+      }).catch(() => {}); // Ignore notification errors
+    } catch (e) {
+      console.warn('Failed to notify vendor of new evaluation:', e);
+    }
+    
+    res.status(201).json(data);
+  } catch (e) { next(e); }
+});
+
+// Get product evaluations (public endpoint)
+app.get('/productos/:id/evaluaciones', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const productoId = req.params.id;
+    
+    const supabase = getSupabaseAdmin();
+    
+    // Get evaluations with buyer information (only name, not email)
+    const { data, error } = await supabase
+      .from('evaluaciones')
+      .select(`
+        id,
+        puntuacion,
+        comentario,
+        created_at,
+        users!evaluaciones_comprador_id_fkey (
+          nombre_completo
+        )
+      `)
+      .eq('producto_id', productoId)
+      .order('created_at', { ascending: false });
+      
+    if (error) return res.status(500).json({ error: error.message });
+    
+    // Transform data to hide sensitive information
+    const evaluations = data.map(e => ({
+      id: e.id,
+      puntuacion: e.puntuacion,
+      comentario: e.comentario,
+      created_at: e.created_at,
+      comprador_nombre: e.users?.nombre_completo || 'Comprador'
+    }));
+    
+    res.json(evaluations);
+  } catch (e) { next(e); }
+});
+
+// Get vendor average rating
+app.get('/vendedores/:id/calificacion', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const vendedorId = req.params.id;
+    
+    const supabase = getSupabaseAdmin();
+    
+    // Get average rating for all products from this vendor
+    const { data, error } = await supabase
+      .from('evaluaciones')
+      .select('puntuacion')
+      .eq('productos.vendedor_id', vendedorId);
+      
+    if (error) return res.status(500).json({ error: error.message });
+    
+    if (data.length === 0) {
+      return res.json({ promedio: 0, total: 0 });
+    }
+    
+    const total = data.length;
+    const suma = data.reduce((acc, e) => acc + e.puntuacion, 0);
+    const promedio = Math.round((suma / total) * 100) / 100; // Round to 2 decimals
+    
+    res.json({ promedio, total });
+  } catch (e) { next(e); }
+});
+
+// ==============================
+// Sales Reports Endpoints
+// ==============================
+
+// Get vendor sales report
+app.get('/reportes/ventas/vendedor', rateLimit, authenticate({ role: 'vendedor', vendedorEstado: 'aprobado' }), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = (req as any).user;
+    const { periodo } = req.query; // 'dia', 'semana', 'mes', 'anio'
+    
+    const supabase = getSupabaseAdmin();
+    
+    // Calculate date range based on period
+    let startDate = new Date();
+    switch (periodo) {
+      case 'dia':
+        startDate.setDate(startDate.getDate() - 1);
+        break;
+      case 'semana':
+        startDate.setDate(startDate.getDate() - 7);
+        break;
+      case 'mes':
+        startDate.setMonth(startDate.getMonth() - 1);
+        break;
+      case 'anio':
+        startDate.setFullYear(startDate.getFullYear() - 1);
+        break;
+      default:
+        startDate.setMonth(startDate.getMonth() - 1); // Default to last month
+    }
+    
+    // Get sales data
+    const { data, error } = await supabase
+      .from('order_items')
+      .select(`
+        id,
+        cantidad,
+        precio_unitario,
+        subtotal,
+        created_at,
+        orders!inner(estado),
+        productos(nombre)
+      `)
+      .eq('vendedor_id', user.id)
+      .eq('orders.estado', 'entregado')
+      .gte('created_at', startDate.toISOString());
+      
+    if (error) return res.status(500).json({ error: error.message });
+    
+    // Calculate summary statistics
+    const totalVentas = data.reduce((sum, item) => sum + item.subtotal, 0);
+    const totalProductos = data.reduce((sum, item) => sum + item.cantidad, 0);
+    const productosVendidos = [...new Set(data.map(item => item.productos?.nombre))].length;
+    
+    // Group by date for chart data
+    const ventasPorDia: Record<string, { ventas: number; productos: number }> = {};
+    data.forEach(item => {
+      const date = new Date(item.created_at).toISOString().split('T')[0];
+      if (!ventasPorDia[date]) {
+        ventasPorDia[date] = { ventas: 0, productos: 0 };
+      }
+      ventasPorDia[date].ventas += item.subtotal;
+      ventasPorDia[date].productos += item.cantidad;
+    });
+    
+    res.json({
+      resumen: {
+        total_ventas: totalVentas,
+        total_productos: totalProductos,
+        productos_unicos: productosVendidos,
+        periodo: {
+          inicio: startDate.toISOString(),
+          fin: new Date().toISOString()
+        }
+      },
+      ventas_por_dia: ventasPorDia,
+      detalles: data.map(item => ({
+        producto: item.productos?.nombre,
+        cantidad: item.cantidad,
+        precio_unitario: item.precio_unitario,
+        subtotal: item.subtotal,
+        fecha: item.created_at
+      }))
+    });
+  } catch (e) { next(e); }
+});
+
+// Get top selling products report
+app.get('/reportes/productos/top', rateLimit, authenticate({ role: 'admin' }), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { limite = 10 } = req.query;
+    
+    const supabase = getSupabaseAdmin();
+    
+    // Get top selling products
+    const { data, error } = await supabase.rpc('top_productos_por_ventas', { limite: parseInt(limite as string) || 10 });
+      
+    if (error) return res.status(500).json({ error: error.message });
+    
+    res.json(data);
+  } catch (e) { next(e); }
+});
+
+// Get vendor trends report
+app.get('/reportes/tendencias/vendedor/:id', rateLimit, authenticate({ role: 'admin' }), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const vendedorId = req.params.id;
+    
+    const supabase = getSupabaseAdmin();
+    
+    // Get vendor information
+    const { data: vendor, error: vendorError } = await supabase
+      .from('users')
+      .select('id, email, nombre_completo')
+      .eq('id', vendedorId)
+      .single();
+      
+    if (vendorError) return res.status(404).json({ error: 'Vendedor no encontrado' });
+    
+    // Get monthly sales data for the last 6 months
+    const months = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push(date);
+    }
+    
+    const monthlyData = [];
+    for (const month of months) {
+      const startOfMonth = new Date(month.getFullYear(), month.getMonth(), 1);
+      const endOfMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+      
+      const { data: salesData, error: salesError } = await supabase
+        .from('order_items')
+        .select('subtotal, cantidad')
+        .eq('vendedor_id', vendedorId)
+        .eq('orders.estado', 'entregado')
+        .gte('created_at', startOfMonth.toISOString())
+        .lte('created_at', endOfMonth.toISOString());
+      
+      if (!salesError && salesData) {
+        const totalVentas = salesData.reduce((sum, item) => sum + item.subtotal, 0);
+        const totalProductos = salesData.reduce((sum, item) => sum + item.cantidad, 0);
+        
+        monthlyData.push({
+          mes: month.toISOString().slice(0, 7), // YYYY-MM
+          total_ventas: totalVentas,
+          total_productos: totalProductos
+        });
+      }
+    }
+    
+    res.json({
+      vendedor: {
+        id: vendor.id,
+        email: vendor.email,
+        nombre: vendor.nombre_completo
+      },
+      tendencias_mensuales: monthlyData
+    });
+  } catch (e) { next(e); }
 });
 
 // =========================================================

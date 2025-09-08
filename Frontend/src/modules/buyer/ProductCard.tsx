@@ -44,26 +44,6 @@ const ProductCardBase: React.FC<ProductCardProps> = ({
     ? Date.now() - createdAt.getTime() < 1000 * 60 * 60 * 24 * 14
     : false;
 
-  const handleAddToCart = () => {
-    // Verificar si el usuario puede añadir al carrito
-    if (!requireCartAccess({
-      message: 'Debes iniciar sesión para añadir productos al carrito',
-      returnTo: '/productos'
-    })) {
-      return; // El usuario fue redirigido al login
-    }
-
-    // Usuario autenticado y con rol correcto, añadir al carrito
-    add({
-      productoId: product.id,
-      nombre: product.nombre,
-      precio: Number(product.precio),
-      cantidad: 1,
-      imagenUrl: product.imagen_url || undefined,
-      stock: product.stock,
-    });
-  };
-
   const goToDetail = () => navigate(`/productos/${product.id}`);
 
   return (
@@ -159,6 +139,25 @@ const ProductCardBase: React.FC<ProductCardProps> = ({
           </p>
         )}
 
+        {/* Rating display */}
+        {avg !== undefined && avg > 0 && (
+          <div className='flex items-center gap-1 mb-2'>
+            <div className='flex'>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Icon
+                  key={star}
+                  category="Catálogo y producto"
+                  name={star <= Math.round(avg) ? "MdiStar" : "MdiStarOutline"}
+                  className={`w-4 h-4 ${star <= Math.round(avg) ? 'text-yellow-400' : 'text-gray-300'}`}
+                />
+              ))}
+            </div>
+            <span className='text-xs text-gray-600'>
+              {avg.toFixed(1)}
+            </span>
+          </div>
+        )}
+
         <div className='flex items-center justify-between gap-2'>
           <div className='flex flex-col'>
             <span className='text-lg md:text-xl font-bold text-primary'>
@@ -187,7 +186,25 @@ const ProductCardBase: React.FC<ProductCardProps> = ({
             `}
             onClick={e => {
               e.stopPropagation();
-              handleAddToCart();
+              if (Number(product.stock) > 0) {
+                // Verificar si el usuario puede añadir al carrito
+                if (!requireCartAccess({
+                  message: 'Debes iniciar sesión para añadir productos al carrito',
+                  returnTo: '/productos'
+                })) {
+                  return; // El usuario fue redirigido al login
+                }
+
+                // Usuario autenticado y con rol correcto, añadir al carrito
+                add({
+                  productoId: product.id,
+                  nombre: product.nombre,
+                  precio: Number(product.precio),
+                  cantidad: 1,
+                  imagenUrl: product.imagen_url || undefined,
+                  stock: product.stock,
+                });
+              }
             }}
             disabled={Number(product.stock) <= 0}
             aria-label={`Añadir ${product.nombre} al carrito`}

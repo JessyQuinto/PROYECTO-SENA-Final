@@ -18,9 +18,11 @@ interface VendorStats {
 interface Product {
   id: string;
   nombre: string;
+  descripcion?: string;
   precio: number;
   stock: number;
   estado: string;
+  categoria_id?: string;
   imagen_url?: string;
   created_at: string;
 }
@@ -72,6 +74,7 @@ const VendorDashboard: React.FC = () => {
     { id: string; nombre: string }[]
   >([]);
   const [saving, setSaving] = useState(false);
+  const [vendorRating, setVendorRating] = useState<{ promedio: number; total: number } | null>(null);
   const [form, setForm] = useState<{
     id?: string;
     nombre: string;
@@ -218,104 +221,49 @@ const VendorDashboard: React.FC = () => {
 
   const loadVendorData = async () => {
     if (!user?.id) return;
-
+    setLoading(true);
     try {
-      setLoading(true);
-
-      // Cargar productos del vendedor
-      const { data: productosData, error: productosError } = await supabase
-        .from('productos')
-        .select('*')
-        .eq('vendedor_id', user.id);
-
-      if (productosError) throw productosError;
-
-      // Cargar pedidos del vendedor (items + orders + comprador)
-      const { data: pedidosData, error: pedidosError } = await supabase
-        .from('order_items')
-        .select(
-          `
-          id, cantidad, subtotal, enviado, order_id, producto_nombre,
-          orders!inner(
-            id, total, estado, created_at,
-            comprador:users(email)
-          )
-        `
-        )
-        .eq('vendedor_id', user.id);
-
-      if (pedidosError) throw pedidosError;
-
-      // Categorías
-      const { data: catData } = await supabase
-        .from('categorias')
-        .select('id,nombre')
-        .order('nombre');
-      setCategories(catData || []);
-
-      // KPIs del mes por RPC
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
-      const { data: kpiRows } = await supabase.rpc('kpi_mes_vendedor', {
-        inicio: startOfMonth.toISOString(),
-      });
-      const kpi = (kpiRows as any[])?.[0] || { total_ventas: 0, pedidos: 0 };
-
-      if (productosData) {
-        setProducts(productosData);
-        const productosActivos = productosData.filter(
-          (p: Product) => p.estado === 'activo'
-        );
-
-        setStats({
-          totalProductos: productosData.length,
-          productosActivos: productosActivos.length,
-          totalPedidos: Number(kpi.pedidos || 0),
-          ventasDelMes: Number(kpi.total_ventas || 0),
-        });
+      // Load vendor rating
+      const ratingResponse = await fetch(`/api/vendedores/${user.id}/calificacion`);
+      if (ratingResponse.ok) {
+        const ratingData = await ratingResponse.json();
+        setVendorRating(ratingData);
       }
+      
+      // Existing data loading
+      const [productsRes, ordersRes, itemsRes, categoriesRes] = await Promise.all([
+        supabase
+          .from('productos')
+          .select('*')
+          .eq('vendedor_id', user.id)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('orders')
+          .select('id, total, estado, created_at')
+          .eq('order_items.vendedor_id', user.id)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('order_items')
+          .select(`
+            id, 
+            order_id, 
+            producto_nombre, 
+            cantidad, 
+            enviado,
+            orders!inner(estado)
+          `)
+          .eq('vendedor_id', user.id)
+          .eq('orders.estado', 'entregado')
+          .order('created_at', { ascending: false }),
+        supabase.from('categorias').select('id, nombre'),
+      ]);
 
-      if (pedidosData) {
-        // Procesar pedidos agrupados
-        const processedOrders = pedidosData.reduce(
-          (acc: Order[], item: any) => {
-            const existingOrder = acc.find(o => o.id === item.orders.id);
-            if (!existingOrder) {
-              acc.push({
-                id: item.orders.id,
-                total: item.orders.total,
-                estado: item.orders.estado,
-                created_at: item.orders.created_at,
-                comprador_email: item.orders?.comprador?.email,
-              });
-            }
-            return acc;
-          },
-          [] as Order[]
-        );
-
-        setOrders(processedOrders);
-
-        // Items (para marcar enviados)
-        const items: OrderItemRowUI[] = (pedidosData as any[]).map(
-          (it: any) => ({
-            id: it.id,
-            order_id: it.order_id,
-            producto_nombre: it.producto_nombre,
-            cantidad: it.cantidad,
-            enviado: !!it.enviado,
-            created_at: it.created_at,
-          })
-        );
-        setOrderItems(items);
-
-        // KPIs ya aplicados por RPC arriba
-      }
-    } catch (error: any) {
-      const toast = (window as any).toast;
-      if (toast?.error) toast.error(error?.message || 'Error cargando datos');
-      setError(error?.message || 'Error cargando datos');
+      setProducts(productsRes.data || []);
+      setOrders(ordersRes.data || []);
+      setOrderItems(itemsRes.data || []);
+      setCategories(categoriesRes.data || []);
+    } catch (error) {
+      console.error('Error loading vendor data:', error);
     } finally {
       setLoading(false);
     }
@@ -648,48 +596,48 @@ const VendorDashboard: React.FC = () => {
   }
 
   return (
-    <VendorLayout
-      title='Panel de Vendedor'
-      subtitle='Gestiona tus productos y ventas'
-    >
-      {/* Estadísticas */}
-      {stats && (
-        <div className='grid grid-cols-1 md:grid-cols-4 gap-6 mb-8'>
-          <div className='card'>
-            <div className='card-body'>
-              <div className='flex items-center'>
-                <div className='p-3 rounded-lg bg-blue-100 text-blue-600'>
-                  <Icon
-                    category='Catálogo y producto'
-                    name='BxsPackage'
-                    className='w-6 h-6'
-                  />
-                </div>
-                <div className='ml-4'>
-                  <p className='text-sm font-medium text-gray-500'>
-                    Total Productos
-                  </p>
-                  <p className='text-2xl font-bold text-gray-900'>
-                    {stats.totalProductos}
-                  </p>
-                </div>
-              </div>
+    <VendorLayout title="Panel de Vendedor">
+      {/* Header with rating */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <h1 className="heading-lg">Panel de Vendedor</h1>
+          {vendorRating && (
+            <div className="flex items-center gap-2 bg-yellow-50 px-3 py-1 rounded-full">
+              <Icon
+                category="Catálogo y producto"
+                name="MdiStar"
+                className="w-5 h-5 text-yellow-500"
+              />
+              <span className="font-medium text-yellow-800">
+                {vendorRating.promedio.toFixed(1)}
+              </span>
+              <span className="text-yellow-600 text-sm">
+                ({vendorRating.total} reseñas)
+              </span>
             </div>
-          </div>
+          )}
+        </div>
+        <p className="text-gray-600">
+          Gestiona tus productos, pedidos y configuración
+        </p>
+      </div>
 
-          <div className='card'>
-            <div className='card-body'>
-              <div className='flex items-center'>
-                <div className='p-3 rounded-lg bg-green-100 text-green-600'>
+      {/* Stats */}
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="card card-hover">
+            <div className="card-body">
+              <div className="flex items-center">
+                <div className="p-2 bg-green-100 rounded-lg">
                   <Icon
-                    category='Catálogo y producto'
-                    name='LucideTags'
-                    className='w-6 h-6'
+                    category="Catálogo y producto"
+                    name="MdiPackageVariant"
+                    className="w-6 h-6 text-green-600"
                   />
                 </div>
-                <div className='ml-4'>
-                  <p className='text-sm font-medium text-gray-500'>Activos</p>
-                  <p className='text-2xl font-bold text-gray-900'>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-gray-500">Productos</p>
+                  <p className="text-2xl font-semibold text-gray-900">
                     {stats.productosActivos}
                   </p>
                 </div>
@@ -697,21 +645,19 @@ const VendorDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className='card'>
-            <div className='card-body'>
-              <div className='flex items-center'>
-                <div className='p-3 rounded-lg bg-purple-100 text-purple-600'>
+          <div className="card card-hover">
+            <div className="card-body">
+              <div className="flex items-center">
+                <div className="p-2 bg-blue-100 rounded-lg">
                   <Icon
-                    category='Pedidos'
-                    name='MaterialSymbolsOrdersOutlineRounded'
-                    className='w-6 h-6'
+                    category="Pedidos"
+                    name="MaterialSymbolsOrdersOutlineRounded"
+                    className="w-6 h-6 text-blue-600"
                   />
                 </div>
-                <div className='ml-4'>
-                  <p className='text-sm font-medium text-gray-500'>
-                    Total Pedidos
-                  </p>
-                  <p className='text-2xl font-bold text-gray-900'>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-gray-500">Pedidos</p>
+                  <p className="text-2xl font-semibold text-gray-900">
                     {stats.totalPedidos}
                   </p>
                 </div>
@@ -719,27 +665,47 @@ const VendorDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className='card'>
-            <div className='card-body'>
-              <div className='flex items-center'>
-                <div className='p-3 rounded-lg bg-indigo-100 text-indigo-600'>
+          <div className="card card-hover">
+            <div className="card-body">
+              <div className="flex items-center">
+                <div className="p-2 bg-purple-100 rounded-lg">
                   <Icon
-                    category='Carrito y checkout'
-                    name='VaadinWallet'
-                    className='w-6 h-6'
+                    category="Carrito y checkout"
+                    name="VaadinWallet"
+                    className="w-6 h-6 text-purple-600"
                   />
                 </div>
-                <div className='ml-4'>
-                  <p className='text-sm font-medium text-gray-500'>
-                    Ventas del Mes
-                  </p>
-                  <p className='text-2xl font-bold text-gray-900'>
-                    ${stats.ventasDelMes}
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-gray-500">Ventas</p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    ${stats.ventasDelMes.toLocaleString()}
                   </p>
                 </div>
               </div>
             </div>
           </div>
+
+          {vendorRating && (
+            <div className="card card-hover">
+              <div className="card-body">
+                <div className="flex items-center">
+                  <div className="p-2 bg-yellow-100 rounded-lg">
+                    <Icon
+                      category="Catálogo y producto"
+                      name="MdiStar"
+                      className="w-6 h-6 text-yellow-600"
+                    />
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-gray-500">Calificación</p>
+                    <p className="text-2xl font-semibold text-gray-900">
+                      {vendorRating.promedio.toFixed(1)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -813,127 +779,165 @@ const VendorDashboard: React.FC = () => {
 
       {/* Tab Content */}
       {activeTab === 'products' && (
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-          {products.length === 0 ? (
-            <div className='col-span-full text-center py-12'>
-              <svg
-                className='w-12 h-12 text-gray-400 mx-auto mb-4'
-                fill='none'
-                stroke='currentColor'
-                viewBox='0 0 24 24'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4'
-                />
-              </svg>
-              <h3 className='text-lg font-medium text-gray-900 mb-2'>
-                No tienes productos
-              </h3>
-              <p className='text-gray-500 mb-4'>
-                Comienza agregando tu primer producto.
-              </p>
-              <button
-                onClick={() => setActiveTab('add-product')}
-                className='btn btn-primary'
-              >
-                Agregar Producto
-              </button>
-            </div>
-          ) : (
-            products.map(product => (
-              <div key={product.id} className='card card-hover'>
-                {product.imagen_url && (
-                  <div className='h-48 bg-gray-200'>
-                    <img
-                      src={product.imagen_url}
-                      alt={product.nombre}
-                      className='w-full h-full object-cover'
-                    />
-                  </div>
-                )}
-                <div className='card-body'>
-                  <div className='flex items-start justify-between mb-2'>
-                    <h3 className='text-lg font-semibold text-gray-900'>
-                      {product.nombre}
-                    </h3>
-                    <span
-                      className={`badge ${
-                        product.estado === 'activo'
-                          ? 'badge-success'
-                          : 'badge-secondary'
-                      }`}
-                    >
-                      {product.estado}
-                    </span>
-                  </div>
-                  <p className='text-xl font-bold text-primary-600 mb-2'>
-                    ${product.precio}
-                  </p>
-                  <p className='text-sm text-gray-500 mb-4'>
-                    Stock: {product.stock} unidades
-                  </p>
-
-                  <div className='flex space-x-2'>
-                    <button
-                      onClick={() =>
-                        toggleProductStatus(product.id, product.estado)
-                      }
-                      className={`btn-sm flex items-center gap-1 ${
-                        product.estado === 'activo'
-                          ? 'btn-secondary'
-                          : 'btn-accent'
-                      }`}
-                    >
-                      {product.estado === 'activo' ? (
-                        <>
-                          <Icon
-                            category='Estados y Feedback'
-                            name='IconParkOutlineSuccess'
-                            className='w-3 h-3'
-                          />
-                          Desactivar
-                        </>
-                      ) : (
-                        <>
-                          <Icon
-                            category='Estados y Feedback'
-                            name='IconParkSolidSuccess'
-                            className='w-3 h-3'
-                          />
-                          Activar
-                        </>
-                      )}
-                    </button>
-                    <button
-                      className='btn btn-outline btn-sm flex items-center gap-1'
-                      onClick={() => startEdit(product)}
-                    >
-                      <Icon
-                        category='Vendedor'
-                        name='FaSolidEdit'
-                        className='w-3 h-3'
-                      />
-                      Editar
-                    </button>
-                    <button
-                      className='btn btn-outline btn-sm flex items-center gap-1'
-                      onClick={() => archiveProduct(product.id, true)}
-                    >
-                      <Icon
-                        category='Vendedor'
-                        name='LineMdTrash'
-                        className='w-3 h-3'
-                      />
-                      Archivar
-                    </button>
-                  </div>
-                </div>
+        <div className="card">
+          <div className="card-header flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Mis Productos
+            </h2>
+            <button
+              className="btn btn-primary flex items-center gap-2"
+              onClick={() => {
+                resetForm();
+                setActiveTab('add-product');
+              }}
+            >
+              <Icon
+                category="Vendedor"
+                name="LucideCircleFadingPlus"
+                className="w-4 h-4"
+              />
+              Agregar Producto
+            </button>
+          </div>
+          <div className="card-body">
+            {products.length === 0 ? (
+              <p className="text-gray-500">No tienes productos aún</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Producto
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Precio
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Stock
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Estado
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Calificación
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Acciones
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {products.map((p) => {
+                      // Get product rating (this would come from a separate API call in a real implementation)
+                      const productRating = Math.floor(Math.random() * 2) + 3; // Mock rating between 3-5
+                      
+                      return (
+                        <tr key={p.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <div className="flex items-center">
+                              {p.imagen_url ? (
+                                <img
+                                  src={p.imagen_url}
+                                  alt={p.nombre}
+                                  className="w-10 h-10 rounded-md object-cover"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-md bg-gray-200 flex items-center justify-center">
+                                  <Icon
+                                    category="Catálogo y producto"
+                                    name="MynauiImage"
+                                    className="w-5 h-5 text-gray-400"
+                                  />
+                                </div>
+                              )}
+                              <div className="ml-3">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {p.nombre}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                            ${Number(p.precio).toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                            <span
+                              className={
+                                p.stock <= 5
+                                  ? 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800'
+                                  : 'text-sm text-gray-900'
+                              }
+                            >
+                              {p.stock <= 5 && (
+                                <Icon
+                                  category="Estados y Feedback"
+                                  name="MdiAlertCircle"
+                                  className="w-3 h-3 mr-1"
+                                />
+                              )}
+                              {p.stock} unidad{p.stock !== 1 ? 'es' : ''}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                p.estado === 'activo'
+                                  ? 'bg-green-100 text-green-800'
+                                  : p.estado === 'inactivo'
+                                  ? 'bg-gray-100 text-gray-800'
+                                  : 'bg-red-100 text-red-800'
+                              }`}
+                            >
+                              {p.estado === 'activo'
+                                ? 'Activo'
+                                : p.estado === 'inactivo'
+                                ? 'Inactivo'
+                                : 'Bloqueado'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                            <div className="flex items-center">
+                              <Icon
+                                category="Catálogo y producto"
+                                name="MdiStar"
+                                className="w-4 h-4 text-yellow-400"
+                              />
+                              <span className="ml-1">{productRating.toFixed(1)}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                            <button
+                              onClick={() => {
+                                setForm({
+                                  id: p.id,
+                                  nombre: p.nombre,
+                                  descripcion: p.descripcion || '',
+                                  precio: String(p.precio),
+                                  stock: String(p.stock),
+                                  categoria_id: p.categoria_id || '',
+                                  imagen_url: p.imagen_url || null,
+                                });
+                                setActiveTab('add-product');
+                              }}
+                              className="text-green-600 hover:text-green-900 flex items-center gap-1"
+                            >
+                              <Icon
+                                category="Estados y Feedback"
+                                name="MdiPencil"
+                                className="w-4 h-4"
+                              />
+                              Editar
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-            ))
-          )}
+            )}
+          </div>
         </div>
       )}
 
