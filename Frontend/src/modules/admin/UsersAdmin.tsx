@@ -616,11 +616,30 @@ const UsersAdmin: React.FC = () => {
 
       if (error) {
         console.error('[changeUserRole] Error de Supabase:', error);
-        throw error;
+        throw new Error(`Error de Supabase: ${error.message || 'Error desconocido'}`);
       }
 
-      if (!data?.success) {
-        throw new Error(data?.error || 'Error desconocido al cambiar rol');
+      // ✅ MEJORADO: Verificar la estructura de la respuesta
+      console.log('[changeUserRole] Estructura de data:', data);
+      console.log('[changeUserRole] Tipo de data:', typeof data);
+      console.log('[changeUserRole] data es array:', Array.isArray(data));
+      
+      // Si data es un array, tomar el primer elemento
+      const result = Array.isArray(data) ? data[0] : data;
+      
+      if (!result) {
+        throw new Error('Respuesta vacía de la función RPC');
+      }
+
+      console.log('[changeUserRole] Resultado procesado:', result);
+
+      if (result.success === false) {
+        throw new Error(result.error || 'Error desconocido al cambiar rol');
+      }
+
+      // Verificar que result tenga las propiedades esperadas
+      if (typeof result !== 'object' || result === null) {
+        throw new Error('Respuesta inválida de la función RPC');
       }
 
       // ✅ MEJORADO: Actualizar estado local con datos de la RPC
@@ -629,8 +648,8 @@ const UsersAdmin: React.FC = () => {
           u.id === id
             ? {
                 ...u,
-                role: newRole,
-                vendedor_estado: newRole === 'vendedor' ? 'pendiente' : null,
+                role: result.new_role || newRole,
+                vendedor_estado: (result.new_role || newRole) === 'vendedor' ? 'pendiente' : null,
               }
             : u
         )
@@ -638,7 +657,7 @@ const UsersAdmin: React.FC = () => {
 
       // ✅ NUEVO: Mostrar mensaje de éxito más informativo
       (window as any).toast?.success(
-        `✅ Rol cambiado exitosamente: ${data.old_role} → ${data.new_role}`, 
+        `✅ Rol cambiado exitosamente: ${result.old_role || 'desconocido'} → ${result.new_role || newRole}`, 
         {
           role: 'admin',
           action: 'update',
@@ -655,8 +674,8 @@ const UsersAdmin: React.FC = () => {
           window.dispatchEvent(new CustomEvent('userRoleChanged', {
             detail: { 
               userId: id, 
-              oldRole: data.old_role,
-              newRole: data.new_role,
+              oldRole: result.old_role,
+              newRole: result.new_role,
               timestamp: Date.now()
             }
           }));
