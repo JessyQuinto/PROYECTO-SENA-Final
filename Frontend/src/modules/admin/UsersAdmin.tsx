@@ -32,6 +32,15 @@ const UsersAdmin: React.FC = () => {
     email?: string;
   } | null>(null);
   
+  // Nuevos estados para filtros avanzados
+  const [roleFilter, setRoleFilter] = useState<'all' | UserRole>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'blocked'>('all');
+  const [vendorStatusFilter, setVendorStatusFilter] = useState<'all' | 'pendiente' | 'aprobado' | 'rechazado'>('all');
+  const [sortBy, setSortBy] = useState<'created_at' | 'email' | 'role'>('created_at');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  
   // ✅ NUEVO: Hook para acceder al carrito
   const { items: cartItems } = useCart();
   
@@ -66,14 +75,70 @@ const UsersAdmin: React.FC = () => {
   const SUPER_ADMIN_EMAIL = 'admin@tesoros-choco.com';
 
   const filtered = useMemo(() => {
+    let result = users;
+    
+    // Filtro de búsqueda
     const q = query.trim().toLowerCase();
-    if (!q) return users;
-    return users.filter(
-      u =>
-        (u.email || '').toLowerCase().includes(q) ||
-        (u.nombre_completo || '').toLowerCase().includes(q)
-    );
-  }, [users, query]);
+    if (q) {
+      result = result.filter(
+        u =>
+          (u.email || '').toLowerCase().includes(q) ||
+          (u.nombre_completo || '').toLowerCase().includes(q)
+      );
+    }
+    
+    // Filtro por rol
+    if (roleFilter !== 'all') {
+      result = result.filter(u => u.role === roleFilter);
+    }
+    
+    // Filtro por estado de cuenta
+    if (statusFilter !== 'all') {
+      if (statusFilter === 'active') {
+        result = result.filter(u => !u.bloqueado);
+      } else if (statusFilter === 'blocked') {
+        result = result.filter(u => u.bloqueado);
+      }
+    }
+    
+    // Filtro por estado de vendedor
+    if (vendorStatusFilter !== 'all') {
+      result = result.filter(u => 
+        (u.vendedor_estado === vendorStatusFilter) || 
+        (u.vendedor_estado === null && vendorStatusFilter === 'pendiente')
+      );
+    }
+    
+    // Ordenamiento
+    result = [...result].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'email':
+          comparison = (a.email || '').localeCompare(b.email || '');
+          break;
+        case 'role':
+          comparison = (a.role || '').localeCompare(b.role || '');
+          break;
+        case 'created_at':
+        default:
+          comparison = new Date(a.created_at || '').getTime() - new Date(b.created_at || '').getTime();
+          break;
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+    
+    return result;
+  }, [users, query, roleFilter, statusFilter, vendorStatusFilter, sortBy, sortOrder]);
+
+  // Paginación
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filtered.slice(startIndex, startIndex + itemsPerPage);
+  }, [filtered, currentPage]);
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
 
   // ✅ MEJORADO: Función de carga más robusta
   const load = useCallback(async (showLoading = true) => {
@@ -658,164 +723,330 @@ const UsersAdmin: React.FC = () => {
         </div>
 
         <div className='space-y-4'>
-          {/* ✅ NUEVO: Controles de auto-refresh y estado */}
-          <div className='flex flex-col sm:flex-row gap-4 items-center justify-between'>
-            <div className='flex-1'>
-              <input
-                type='text'
-                placeholder='Buscar usuarios por email o nombre...'
-                className='input input-bordered w-full'
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-              />
-            </div>
-            
-            {/* ✅ MEJORADO: Panel de control de auto-refresh más elegante */}
-            <div className='flex items-center justify-between bg-white p-4 rounded-lg border border-gray-200 shadow-sm'>
-              <div className='flex items-center gap-6'>
-                <div className='flex items-center gap-3'>
-                  <input
-                    type='checkbox'
-                    id='autoRefresh'
-                    className='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2'
-                    checked={autoRefreshEnabled}
-                    onChange={(e) => setAutoRefreshEnabled(e.target.checked)}
-                  />
-                  <label htmlFor='autoRefresh' className='text-sm font-medium text-gray-700'>
-                    Auto-refresh
-                  </label>
-                </div>
-                
-                {autoRefreshEnabled && (
-                  <div className='flex items-center gap-2'>
-                    <label className='text-sm text-gray-600'>Cada:</label>
-                    <select
-                      className='px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-                      value={refreshInterval}
-                      onChange={(e) => setRefreshInterval(Number(e.target.value))}
-                    >
-                      <option value={30000}>30 segundos</option>
-                      <option value={60000}>1 minuto</option>
-                      <option value={120000}>2 minutos</option>
-                      <option value={300000}>5 minutos</option>
-                    </select>
-                  </div>
-                )}
+          {/* Panel de filtros y búsqueda */}
+          <div className='bg-white p-4 rounded-lg border border-gray-200 shadow-sm'>
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4'>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-1'>Búsqueda</label>
+                <input
+                  type='text'
+                  placeholder='Email o nombre...'
+                  className='input input-bordered w-full'
+                  value={query}
+                  onChange={e => {
+                    setQuery(e.target.value);
+                    setCurrentPage(1); // Resetear a primera página al buscar
+                  }}
+                />
               </div>
               
-              <div className='flex items-center gap-4'>
-                <button
-                  onClick={() => load(true)}
-                  className='inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
-                  disabled={loading}
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-1'>Rol</label>
+                <select
+                  className='select select-bordered w-full'
+                  value={roleFilter}
+                  onChange={e => {
+                    setRoleFilter(e.target.value as 'all' | UserRole);
+                    setCurrentPage(1);
+                  }}
                 >
-                  {loading ? (
-                    <div className='loading loading-spinner loading-xs'></div>
-                  ) : (
-                    <Icon category='Interface' name='MdiRefresh' className='w-4 h-4' />
-                  )}
-                  Actualizar
-                </button>
-                
-                <div className='text-sm text-gray-500'>
-                  Última actualización: {lastRefresh.toLocaleTimeString()}
+                  <option value='all'>Todos los roles</option>
+                  <option value='admin'>Administrador</option>
+                  <option value='vendedor'>Vendedor</option>
+                  <option value='comprador'>Comprador</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-1'>Estado</label>
+                <select
+                  className='select select-bordered w-full'
+                  value={statusFilter}
+                  onChange={e => {
+                    setStatusFilter(e.target.value as 'all' | 'active' | 'blocked');
+                    setCurrentPage(1);
+                  }}
+                >
+                  <option value='all'>Todos los estados</option>
+                  <option value='active'>Activo</option>
+                  <option value='blocked'>Bloqueado</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-1'>Estado Vendedor</label>
+                <select
+                  className='select select-bordered w-full'
+                  value={vendorStatusFilter}
+                  onChange={e => {
+                    setVendorStatusFilter(e.target.value as 'all' | 'pendiente' | 'aprobado' | 'rechazado');
+                    setCurrentPage(1);
+                  }}
+                >
+                  <option value='all'>Todos</option>
+                  <option value='pendiente'>Pendiente</option>
+                  <option value='aprobado'>Aprobado</option>
+                  <option value='rechazado'>Rechazado</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
+              <div className='flex items-center gap-4'>
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>Ordenar por</label>
+                  <select
+                    className='select select-bordered'
+                    value={sortBy}
+                    onChange={e => {
+                      setSortBy(e.target.value as 'created_at' | 'email' | 'role');
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <option value='created_at'>Fecha de registro</option>
+                    <option value='email'>Email</option>
+                    <option value='role'>Rol</option>
+                  </select>
                 </div>
+                
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>Dirección</label>
+                  <select
+                    className='select select-bordered'
+                    value={sortOrder}
+                    onChange={e => {
+                      setSortOrder(e.target.value as 'asc' | 'desc');
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <option value='desc'>Descendente</option>
+                    <option value='asc'>Ascendente</option>
+                  </select>
+                </div>
+              </div>
+              
+              <button
+                onClick={() => {
+                  setQuery('');
+                  setRoleFilter('all');
+                  setStatusFilter('all');
+                  setVendorStatusFilter('all');
+                  setSortBy('created_at');
+                  setSortOrder('desc');
+                  setCurrentPage(1);
+                }}
+                className='btn btn-outline'
+              >
+                Limpiar filtros
+              </button>
+            </div>
+          </div>
+
+          {/* Controles de auto-refresh y estado */}
+          <div className='flex flex-col sm:flex-row gap-4 items-center justify-between'>
+            {/* ✅ MEJORADO: Panel de control de auto-refresh más elegante */}
+            <div className='flex items-center gap-6'>
+              <div className='flex items-center gap-3'>
+                <input
+                  type='checkbox'
+                  id='autoRefresh'
+                  className='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2'
+                  checked={autoRefreshEnabled}
+                  onChange={(e) => setAutoRefreshEnabled(e.target.checked)}
+                />
+                <label htmlFor='autoRefresh' className='text-sm font-medium text-gray-700'>
+                  Auto-refresh
+                </label>
+              </div>
+              
+              {autoRefreshEnabled && (
+                <div className='flex items-center gap-2'>
+                  <label className='text-sm text-gray-600'>Cada:</label>
+                  <select
+                    className='px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                    value={refreshInterval}
+                    onChange={(e) => setRefreshInterval(Number(e.target.value))}
+                  >
+                    <option value={30000}>30 segundos</option>
+                    <option value={60000}>1 minuto</option>
+                    <option value={120000}>2 minutos</option>
+                    <option value={300000}>5 minutos</option>
+                  </select>
+                </div>
+              )}
+            </div>
+            
+            <div className='flex items-center gap-4'>
+              <button
+                onClick={() => load(true)}
+                className='inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                disabled={loading}
+              >
+                {loading ? (
+                  <div className='loading loading-spinner loading-xs'></div>
+                ) : (
+                  <Icon category='Interface' name='MdiRefresh' className='w-4 h-4' />
+                )}
+                Actualizar
+              </button>
+              
+              <div className='text-sm text-gray-500'>
+                Última actualización: {lastRefresh.toLocaleTimeString()}
               </div>
             </div>
           </div>
 
-          {/* 🆕 NUEVO: Tabla limpia de usuarios */}
-          {filtered.length === 0 ? (
+          {/* Tabla de usuarios con paginación */}
+          {paginatedUsers.length === 0 ? (
             <div className='text-center py-12 text-muted-foreground'>
               <Icon category='Interface' name='MdiAccountGroup' className='w-16 h-16 mx-auto mb-4 text-gray-300' />
               <h3 className='text-lg font-medium mb-2'>No se encontraron usuarios</h3>
-              <p className='text-sm'>Intenta ajustar los filtros de búsqueda</p>
+              <p className='text-sm'>
+                {query || roleFilter !== 'all' || statusFilter !== 'all' || vendorStatusFilter !== 'all'
+                  ? 'Intenta ajustar los filtros de búsqueda'
+                  : 'No hay usuarios registrados en el sistema'}
+              </p>
             </div>
           ) : (
-            <Card className='shadow-sm'>
-              <CardContent className='p-0'>
-                <div className='overflow-x-auto'>
-                  <table className='w-full'>
-                    <thead className='bg-gray-50 border-b border-gray-200'>
-                      <tr>
-                        <th className='px-6 py-4 text-left text-sm font-semibold text-gray-700'>Usuario</th>
-                        <th className='px-6 py-4 text-left text-sm font-semibold text-gray-700'>Rol</th>
-                        <th className='px-6 py-4 text-left text-sm font-semibold text-gray-700'>Estado</th>
-                        <th className='px-6 py-4 text-left text-sm font-semibold text-gray-700'>Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody className='divide-y divide-gray-200'>
-                      {filtered.map(u => (
-                        <tr key={u.id} className='hover:bg-gray-50 transition-colors duration-150'>
-                          {/* Información básica del usuario */}
-                          <td className='px-6 py-4'>
-                            <div className='flex items-center space-x-3'>
-                              <div className='h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold'>
-                                {(u.nombre_completo || u.email || 'U').charAt(0).toUpperCase()}
-                              </div>
-                              <div>
-                                <p className='text-sm font-semibold text-gray-900'>
-                                  {u.nombre_completo || 'Sin nombre'}
-                                </p>
-                                <p className='text-sm text-gray-600'>{u.email}</p>
-                              </div>
-                            </div>
-                          </td>
-                          
-                          {/* Rol del usuario */}
-                          <td className='px-6 py-4'>
-                            <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
-                              u.role === 'admin' ? 'bg-red-100 text-red-800'
-                              : u.role === 'vendedor' ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-blue-100 text-blue-800'
-                            }`}>
-                              {u.role === 'admin' ? '🛡️ Admin' : u.role === 'vendedor' ? '🏪 Vendedor' : '🛒 Comprador'}
-                            </span>
-                          </td>
-                          
-                          {/* Estado del usuario */}
-                          <td className='px-6 py-4'>
-                            <div className='flex flex-col space-y-1'>
-                              <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                                u.bloqueado ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                              }`}>
-                                {u.bloqueado ? '🚫 Bloqueado' : '✓ Activo'}
-                              </span>
-                              {u.role === 'vendedor' && (
-                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                                  u.vendedor_estado === 'aprobado' ? 'bg-emerald-100 text-emerald-800'
-                                  : u.vendedor_estado === 'rechazado' ? 'bg-orange-100 text-orange-800'
-                                  : 'bg-amber-100 text-amber-800'
-                                }`}>
-                                  {u.vendedor_estado === 'aprobado' ? '✓ Aprobado'
-                                   : u.vendedor_estado === 'rechazado' ? '❌ Rechazado'
-                                   : '🕰️ Pendiente'}
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          
-                          {/* Acciones */}
-                          <td className='px-6 py-4'>
-                            <Button
-                              onClick={() => openUserDetails(u)}
-                              className='inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white'
-                              size='sm'
-                            >
-                              <Icon category='Interface' name='MdiEye' className='w-4 h-4' />
-                              Ver Detalles
-                            </Button>
-                          </td>
+            <>
+              <Card className='shadow-sm'>
+                <CardContent className='p-0'>
+                  <div className='overflow-x-auto'>
+                    <table className='w-full'>
+                      <thead className='bg-gray-50 border-b border-gray-200'>
+                        <tr>
+                          <th className='px-6 py-4 text-left text-sm font-semibold text-gray-700'>Usuario</th>
+                          <th className='px-6 py-4 text-left text-sm font-semibold text-gray-700'>Rol</th>
+                          <th className='px-6 py-4 text-left text-sm font-semibold text-gray-700'>Estado</th>
+                          <th className='px-6 py-4 text-left text-sm font-semibold text-gray-700'>Acciones</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className='divide-y divide-gray-200'>
+                        {paginatedUsers.map(u => (
+                          <tr key={u.id} className='hover:bg-gray-50 transition-colors duration-150'>
+                            {/* Información básica del usuario */}
+                            <td className='px-6 py-4'>
+                              <div className='flex items-center space-x-3'>
+                                <div className='h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold'>
+                                  {(u.nombre_completo || u.email || 'U').charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                  <p className='text-sm font-semibold text-gray-900'>
+                                    {u.nombre_completo || 'Sin nombre'}
+                                  </p>
+                                  <p className='text-sm text-gray-600'>{u.email}</p>
+                                </div>
+                              </div>
+                            </td>
+                            
+                            {/* Rol del usuario */}
+                            <td className='px-6 py-4'>
+                              <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
+                                u.role === 'admin' ? 'bg-red-100 text-red-800'
+                                : u.role === 'vendedor' ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-blue-100 text-blue-800'
+                              }`}>
+                                {u.role === 'admin' ? '🛡️ Admin' : u.role === 'vendedor' ? '🏪 Vendedor' : '🛒 Comprador'}
+                              </span>
+                            </td>
+                            
+                            {/* Estado del usuario */}
+                            <td className='px-6 py-4'>
+                              <div className='flex flex-col space-y-1'>
+                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                                  u.bloqueado ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                                }`}>
+                                  {u.bloqueado ? '🚫 Bloqueado' : '✓ Activo'}
+                                </span>
+                                {u.role === 'vendedor' && (
+                                  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                                    u.vendedor_estado === 'aprobado' ? 'bg-emerald-100 text-emerald-800'
+                                    : u.vendedor_estado === 'rechazado' ? 'bg-orange-100 text-orange-800'
+                                    : 'bg-amber-100 text-amber-800'
+                                  }`}>
+                                    {u.vendedor_estado === 'aprobado' ? '✓ Aprobado'
+                                     : u.vendedor_estado === 'rechazado' ? '❌ Rechazado'
+                                     : '🕰️ Pendiente'}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            
+                            {/* Acciones */}
+                            <td className='px-6 py-4'>
+                              <Button
+                                onClick={() => openUserDetails(u)}
+                                className='inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white'
+                                size='sm'
+                              >
+                                <Icon category='Interface' name='MdiEye' className='w-4 h-4' />
+                                Ver Detalles
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Paginación */}
+              {totalPages > 1 && (
+                <div className='flex justify-between items-center'>
+                  <div className='text-sm text-gray-600'>
+                    Mostrando {Math.min((currentPage - 1) * itemsPerPage + 1, filtered.length)}-
+                    {Math.min(currentPage * itemsPerPage, filtered.length)} de {filtered.length} usuarios
+                  </div>
+                  
+                  <div className='flex gap-2'>
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className='px-3 py-1 rounded border disabled:opacity-50'
+                    >
+                      Anterior
+                    </button>
+                    
+                    {[...Array(Math.min(5, totalPages))].map((_, i) => {
+                      const page = 
+                        totalPages <= 5 
+                          ? i + 1 
+                          : currentPage <= 3 
+                            ? i + 1 
+                            : currentPage >= totalPages - 2 
+                              ? totalPages - 4 + i 
+                              : currentPage - 2 + i;
+                              
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`px-3 py-1 rounded ${
+                            currentPage === page 
+                              ? 'bg-blue-600 text-white' 
+                              : 'border'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      );
+                    })}
+                    
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className='px-3 py-1 rounded border disabled:opacity-50'
+                    >
+                      Siguiente
+                    </button>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+              )}
+            </>
           )}
 
-          {/* 🆕 NUEVO: Modal de detalles del usuario */}
+          {/* Modal de detalles del usuario */}
           {showUserModal && selectedUser && (
             <UserDetailsModal
               user={selectedUser}
@@ -991,7 +1222,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
                       )}
                       
                       {changingRoles.has(user.id) && (
-                        <div className='flex items-center gap-2 text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded'>
+                        <div className='flex items-center gap-2 text-sm text-blue-600 bg-blue-50 px-33 py-2 rounded'>
                           <div className='loading loading-spinner loading-sm'></div>
                           <span>Procesando cambio de rol...</span>
                         </div>

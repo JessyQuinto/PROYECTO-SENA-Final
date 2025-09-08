@@ -314,7 +314,8 @@ const crearPedidoFullSchema = z.object({
       }).optional()
     })
     .optional(),
-  simulate_payment: z.boolean().optional()
+  simulate_payment: z.boolean().optional(),
+  is_quick_checkout: z.boolean().optional() // Nuevo campo
 });
 
 // Ejecuta la RPC `crear_pedido` en contexto del usuario (JWT del header) y opcionalmente guarda envío y simula pago
@@ -359,11 +360,63 @@ app.post('/rpc/crear_pedido', async (req: Request, res: Response, next: NextFunc
       return res.status(403).json({ error: 'Solo compradores pueden crear pedidos' });
     }
 
-    const { items, shipping, payment, simulate_payment } = parsed.data;
+    const { items, shipping, payment, simulate_payment, is_quick_checkout } = parsed.data;
+
+    // Para checkout rápido, usar perfiles guardados si no se proporcionan
+    let shippingData = shipping;
+    let paymentData = payment;
+    
+    if (is_quick_checkout) {
+      // Si es checkout rápido pero no se proporcionaron datos, obtener de perfiles guardados
+      if (!shippingData) {
+        const { data: savedAddresses } = await supabaseUser
+          .from('user_address')
+          .select('*')
+          .eq('user_id', caller.id)
+          .eq('tipo', 'envio')
+          .eq('es_predeterminada', true)
+          .limit(1)
+          .maybeSingle();
+          
+        if (savedAddresses) {
+          shippingData = {
+            nombre: savedAddresses.nombre,
+            direccion: savedAddresses.direccion,
+            ciudad: savedAddresses.ciudad,
+            telefono: savedAddresses.telefono || ''
+          };
+        }
+      }
+      
+      if (!paymentData) {
+        const { data: savedPayments } = await supabaseUser
+          .from('user_payment_profile')
+          .select('*')
+          .eq('user_id', caller.id)
+          .eq('es_predeterminada', true)
+          .limit(1)
+          .maybeSingle();
+          
+        if (savedPayments) {
+          paymentData = {
+            metodo: savedPayments.metodo
+          };
+        }
+      }
+    }
+
+    // Validación de datos requeridos
+    if (!shippingData) {
+      return res.status(400).json({ error: 'Faltan datos de envío' });
+    }
+    
+    if (!paymentData) {
+      return res.status(400).json({ error: 'Faltan datos de pago' });
+    }
 
     // Simular validación de tarjeta (solo para demostración)
-    if (payment?.metodo === 'tarjeta' && payment.tarjeta) {
-      const { numero, nombre, expiracion, cvv } = payment.tarjeta;
+    if (paymentData?.metodo === 'tarjeta' && paymentData.tarjeta) {
+      const { numero, nombre, expiracion, cvv } = paymentData.tarjeta;
       
       // Simulaciones de validación de tarjeta
       console.log('[SIMULACIÓN] Procesando pago con tarjeta:', {
@@ -420,32 +473,32 @@ app.post('/rpc/crear_pedido', async (req: Request, res: Response, next: NextFunc
     }
 
     // Guardar envío si viene (RPC con user_id explícito)
-    if (shipping && orderId) {
+    if (shippingData && orderId) {
       await supabaseUser.rpc('guardar_envio_backend', {
         p_user_id: caller.id,
         p_order_id: orderId,
-        p_nombre: shipping.nombre,
-        p_direccion: shipping.direccion,
-        p_ciudad: shipping.ciudad,
-        p_telefono: shipping.telefono
+        p_nombre: shippingData.nombre,
+        p_direccion: shippingData.direccion,
+        p_ciudad: shippingData.ciudad,
+        p_telefono: shippingData.telefono
       });
     }
 
     // Guardar información de pago simulada (solo para registro)
-    if (payment && orderId) {
+    if (paymentData && orderId) {
       const admin = getSupabaseAdmin();
       
       // Crear registro de pago simulado en la tabla order_payments
       const paymentRecord = {
         order_id: orderId,
-        metodo: payment.metodo,
+        metodo: paymentData.metodo,
         estado: 'simulado',
-        ...(payment.metodo === 'tarjeta' && payment.tarjeta && {
+        ...(paymentData.metodo === 'tarjeta' && paymentData.tarjeta && {
           // Solo guardar últimos 4 dígitos y datos no sensibles
-          last4: payment.tarjeta.numero.slice(-4),
-          nombre_tarjeta: payment.tarjeta.nombre,
-          exp_mm: parseInt(payment.tarjeta.expiracion.split('/')[0]),
-          exp_yy: parseInt(payment.tarjeta.expiracion.split('/')[1])
+          last4: paymentData.tarjeta.numero.slice(-4),
+          nombre_tarjeta: paymentData.tarjeta.nombre,
+          exp_mm: parseInt(paymentData.tarjeta.expiracion.split('/')[0]),
+          exp_yy: parseInt(paymentData.tarjeta.expiracion.split('/')[1])
         })
       };
       

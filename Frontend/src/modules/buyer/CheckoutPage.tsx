@@ -102,6 +102,9 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<
     'tarjeta' | 'contraentrega'
   >('tarjeta');
+  
+  // Nuevo estado para checkout simplificado
+  const [isQuickCheckout, setIsQuickCheckout] = useState(false);
 
   // Cargar perfiles guardados desde la base de datos
   useEffect(() => {
@@ -267,6 +270,36 @@ export default function CheckoutPage() {
         throw new Error('Backend no configurado');
       }
 
+      // Usar datos simplificados para checkout rápido
+      const shippingData = isQuickCheckout ? {
+        nombre: addresses.find(a => a.tipo === 'envio' && a.es_predeterminada)?.nombre || shipping.nombre,
+        direccion: addresses.find(a => a.tipo === 'envio' && a.es_predeterminada)?.direccion || shipping.direccion,
+        ciudad: addresses.find(a => a.tipo === 'envio' && a.es_predeterminada)?.ciudad || shipping.ciudad,
+        telefono: addresses.find(a => a.tipo === 'envio' && a.es_predeterminada)?.telefono || shipping.telefono
+      } : shipping;
+
+      const paymentData = isQuickCheckout ? {
+        metodo: payments.find(p => p.es_predeterminada)?.metodo || paymentMethod,
+        ...(payments.find(p => p.es_predeterminada)?.metodo === 'tarjeta' && {
+          tarjeta: {
+            numero: '****',
+            nombre: 'Tarjeta guardada',
+            expiracion: '****',
+            cvv: '***'
+          }
+        })
+      } : {
+        metodo: paymentMethod,
+        ...(paymentMethod === 'tarjeta' && {
+          tarjeta: {
+            numero: card.numero.replace(/\s/g, ''),
+            nombre: card.nombre,
+            expiracion: card.expiracion,
+            cvv: card.cvv
+          }
+        })
+      };
+
       const response = await fetch(`${backendUrl.replace(/\/$/, '')}/rpc/crear_pedido`, {
         method: 'POST',
         headers: {
@@ -278,24 +311,10 @@ export default function CheckoutPage() {
             producto_id: item.productoId,
             cantidad: item.cantidad
           })),
-          shipping: {
-            nombre: shipping.nombre,
-            direccion: shipping.direccion,
-            ciudad: shipping.ciudad,
-            telefono: shipping.telefono
-          },
-          payment: {
-            metodo: paymentMethod,
-            ...(paymentMethod === 'tarjeta' && {
-              tarjeta: {
-                numero: card.numero.replace(/\s/g, ''), // Remover espacios
-                nombre: card.nombre,
-                expiracion: card.expiracion,
-                cvv: card.cvv
-              }
-            })
-          },
-          simulate_payment: true
+          shipping: shippingData,
+          payment: paymentData,
+          simulate_payment: true,
+          is_quick_checkout: isQuickCheckout // Nuevo parámetro
         })
       });
 
@@ -304,10 +323,8 @@ export default function CheckoutPage() {
       if (response.ok && result.ok) {
         clear();
         alert(`¡Pedido creado exitosamente! ID: ${result.order_id}`);
-        // Redirigir a la página de recibo o confirmación
         navigate(`/recibo/${result.order_id}`);
       } else {
-        // Mostrar error más detallado
         const errorMessage = result.error || 'Error desconocido al crear el pedido';
         const errorCode = result.code ? ` (Código: ${result.code})` : '';
         const errorDetails = result.details ? `\nDetalles: ${JSON.stringify(result.details)}` : '';
@@ -316,7 +333,6 @@ export default function CheckoutPage() {
     } catch (error: any) {
       console.error('Error processing order:', error);
       
-      // Mostrar error más amigable al usuario
       let userMessage = 'Error al procesar el pedido';
       
       if (error.message) {
@@ -325,7 +341,7 @@ export default function CheckoutPage() {
         } else if (error.message.includes('stock')) {
           userMessage = 'Algunos productos no tienen stock suficiente.';
         } else if (error.message.includes('tarjeta') || error.message.includes('CVV')) {
-          userMessage = error.message; // Mostrar errores de tarjeta directamente
+          userMessage = error.message;
         } else {
           userMessage = error.message;
         }
@@ -340,43 +356,104 @@ export default function CheckoutPage() {
   const renderResumen = () => (
     <div className='card card-hover'>
       <div className='card-body'>
-        <h2 className='text-2xl font-bold text-gray-900 mb-6'>
-          📋 Resumen de tu compra
-        </h2>
-
-        <div className='space-y-4'>
-          <h3 className='text-lg font-semibold mb-4'>
-            🛍️ Productos ({items.length})
-          </h3>
-          {items.map((item, index) => (
-            <div
-              key={index}
-              className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'
+        <div className='flex justify-between items-center mb-6'>
+          <h2 className='text-2xl font-bold text-gray-900'>
+            {isQuickCheckout ? '_checkout_rápido' : '📋 Resumen de tu compra'}
+          </h2>
+          {!isQuickCheckout && (
+            <button 
+              onClick={() => setIsQuickCheckout(true)}
+              className='text-sm text-blue-600 hover:text-blue-800'
             >
-              <div className='flex items-center space-x-3'>
-                <img
-                  src={item.imagenUrl || ''}
-                  alt={item.nombre}
-                  className='w-12 h-12 rounded object-cover'
-                />
-                <div>
-                  <p className='font-medium'>{item.nombre}</p>
-                  <p className='text-sm text-gray-600'>
-                    Cantidad: {item.cantidad}
-                  </p>
+              Usar checkout rápido
+            </button>
+          )}
+        </div>
+
+        {isQuickCheckout ? (
+          // Vista simplificada para checkout rápido
+          <div className='space-y-6'>
+            <div className='bg-blue-50 p-4 rounded-lg'>
+              <h3 className='font-medium text-blue-900 mb-2'>_checkout express</h3>
+              <p className='text-sm text-blue-700'>
+                Usando tu dirección y método de pago predeterminados
+              </p>
+            </div>
+            
+            <div className='space-y-4'>
+              <h3 className='text-lg font-semibold'>🛍️ Productos ({items.length})</h3>
+              {items.map((item, index) => (
+                <div key={index} className='flex items-center justify-between p-3 bg-gray-50 rounded'>
+                  <div className='flex items-center space-x-3'>
+                    <img
+                      src={item.imagenUrl || ''}
+                      alt={item.nombre}
+                      className='w-10 h-10 rounded object-cover'
+                    />
+                    <div>
+                      <p className='font-medium text-sm'>{item.nombre}</p>
+                      <p className='text-xs text-gray-600'>Cantidad: {item.cantidad}</p>
+                    </div>
+                  </div>
+                  <p className='font-semibold text-sm'>${item.precio * item.cantidad}</p>
+                </div>
+              ))}
+              
+              <div className='border-t pt-4'>
+                <div className='flex justify-between text-lg font-bold'>
+                  <span>Total:</span>
+                  <span className='text-green-600'>${total}</span>
                 </div>
               </div>
-              <p className='font-semibold'>${item.precio * item.cantidad}</p>
-            </div>
-          ))}
-
-          <div className='border-t pt-4'>
-            <div className='flex justify-between text-lg font-bold'>
-              <span>Total:</span>
-              <span className='text-green-600'>${total}</span>
+              
+              <div className='flex items-center space-x-2 mt-4'>
+                <Checkbox
+                  id='quick-agree'
+                  checked={agree}
+                  onCheckedChange={checked => setAgree(checked as boolean)}
+                />
+                <label htmlFor='quick-agree' className='text-sm'>
+                  Acepto los términos y condiciones
+                </label>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          // Vista estándar
+          <div className='space-y-4'>
+            <h3 className='text-lg font-semibold mb-4'>
+              🛍️ Productos ({items.length})
+            </h3>
+            {items.map((item, index) => (
+              <div
+                key={index}
+                className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'
+              >
+                <div className='flex items-center space-x-3'>
+                  <img
+                    src={item.imagenUrl || ''}
+                    alt={item.nombre}
+                    className='w-12 h-12 rounded object-cover'
+                  />
+                  <div>
+                    <p className='font-medium'>{item.nombre}</p>
+                    <p className='text-sm text-gray-600'>
+                      Cantidad: {item.cantidad}
+                    </p>
+                  </div>
+                </div>
+                <p className='font-semibold'>${item.precio * item.cantidad}</p>
+              </div>
+            ))}
+
+            <div className='border-t pt-4'>
+              <div className='flex justify-between text-lg font-bold'>
+                <span>Total:</span>
+                <span className='text-green-600'>${total}</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -857,6 +934,18 @@ export default function CheckoutPage() {
   );
 
   const renderStepContent = () => {
+    // Si es checkout rápido, solo mostrar resumen y confirmación
+    if (isQuickCheckout) {
+      switch (currentStep) {
+        case 'resumen':
+          return renderResumen();
+        case 'confirmacion':
+          return renderConfirmacion();
+        default:
+          return renderResumen();
+      }
+    }
+    
     switch (currentStep) {
       case 'resumen':
         return renderResumen();
@@ -889,77 +978,105 @@ export default function CheckoutPage() {
         {/* Header */}
         <div className='text-center mb-8'>
           <h1 className='text-3xl font-bold text-gray-900 mb-2'>
-            Finalizar compra
+            {isQuickCheckout ? 'Checkout Express' : 'Finalizar compra'}
           </h1>
-          <p className='text-gray-600'>Completa tu pedido en pocos pasos</p>
+          <p className='text-gray-600'>
+            {isQuickCheckout 
+              ? 'Completa tu pedido rápidamente' 
+              : 'Completa tu pedido en pocos pasos'}
+          </p>
         </div>
 
-        {/* Progress bar */}
+        {/* Progress bar - simplificada para checkout rápido */}
         <div className='card card-hover mb-8'>
           <div className='card-body'>
             <div className='flex items-center justify-between'>
-              {(
-                ['resumen', 'envio', 'pago', 'confirmacion'] as PaymentStep[]
-              ).map((step, index) => (
-                <div key={step} className='flex items-center'>
-                  <div
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium ${
-                      currentStep === step
-                        ? 'bg-green-600 text-white'
-                        : index <
-                            [
-                              'resumen',
-                              'envio',
-                              'pago',
-                              'confirmacion',
-                            ].indexOf(currentStep)
-                          ? 'bg-green-100 text-green-600'
-                          : 'bg-gray-100 text-gray-400'
-                    }`}
-                  >
-                    {index <
-                    ['resumen', 'envio', 'pago', 'confirmacion'].indexOf(
-                      currentStep
-                    ) ? (
+              {isQuickCheckout ? (
+                <>
+                  <div className='flex items-center'>
+                    <div className='w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium bg-green-600 text-white'>
+                      1
+                    </div>
+                    <span className='ml-2 text-sm font-medium text-green-600'>
+                      Resumen
+                    </span>
+                    <div className='w-16 h-0.5 mx-4 bg-green-600' />
+                    <div className='w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium bg-green-100 text-green-600'>
                       <Icon
                         category='Estados y Feedback'
                         name='IconParkSolidSuccess'
                         className='w-4 h-4'
                       />
-                    ) : (
-                      index + 1
+                    </div>
+                    <span className='ml-2 text-sm font-medium text-green-600'>
+                      Confirmar
+                    </span>
+                  </div>
+                </>
+              ) : (
+                (
+                  ['resumen', 'envio', 'pago', 'confirmacion'] as PaymentStep[]
+                ).map((step, index) => (
+                  <div key={step} className='flex items-center'>
+                    <div
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium ${
+                        currentStep === step
+                          ? 'bg-green-600 text-white'
+                          : index <
+                              [
+                                'resumen',
+                                'envio',
+                                'pago',
+                                'confirmacion',
+                              ].indexOf(currentStep)
+                            ? 'bg-green-100 text-green-600'
+                            : 'bg-gray-100 text-gray-400'
+                      }`}
+                    >
+                      {index <
+                      ['resumen', 'envio', 'pago', 'confirmacion'].indexOf(
+                        currentStep
+                      ) ? (
+                        <Icon
+                          category='Estados y Feedback'
+                          name='IconParkSolidSuccess'
+                          className='w-4 h-4'
+                        />
+                      ) : (
+                        index + 1
+                      )}
+                    </div>
+                    <span
+                      className={`ml-2 text-sm font-medium ${
+                        currentStep === step ||
+                        index <
+                          ['resumen', 'envio', 'pago', 'confirmacion'].indexOf(
+                            currentStep
+                          )
+                          ? 'text-green-600'
+                          : 'text-gray-500'
+                      }`}
+                    >
+                      {step === 'resumen' && 'Resumen'}
+                      {step === 'envio' && 'Envío'}
+                      {step === 'pago' && 'Pago'}
+                      {step === 'confirmacion' && 'Confirmar'}
+                    </span>
+                    {index < 3 && (
+                      <div
+                        className={`w-16 h-0.5 mx-4 ${
+                          index <
+                          ['resumen', 'envio', 'pago', 'confirmacion'].indexOf(
+                            currentStep
+                          )
+                            ? 'bg-green-600'
+                            : 'bg-gray-200'
+                        }`}
+                      />
                     )}
                   </div>
-                  <span
-                    className={`ml-2 text-sm font-medium ${
-                      currentStep === step ||
-                      index <
-                        ['resumen', 'envio', 'pago', 'confirmacion'].indexOf(
-                          currentStep
-                        )
-                        ? 'text-green-600'
-                        : 'text-gray-500'
-                    }`}
-                  >
-                    {step === 'resumen' && 'Resumen'}
-                    {step === 'envio' && 'Envío'}
-                    {step === 'pago' && 'Pago'}
-                    {step === 'confirmacion' && 'Confirmar'}
-                  </span>
-                  {index < 3 && (
-                    <div
-                      className={`w-16 h-0.5 mx-4 ${
-                        index <
-                        ['resumen', 'envio', 'pago', 'confirmacion'].indexOf(
-                          currentStep
-                        )
-                          ? 'bg-green-600'
-                          : 'bg-gray-200'
-                      }`}
-                    />
-                  )}
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -1001,32 +1118,64 @@ export default function CheckoutPage() {
 
                 {/* Navigation buttons */}
                 <div className='space-y-3'>
-                  {currentStep !== 'resumen' && (
-                    <Button
-                      onClick={prevStep}
-                      variant='outline'
-                      className='w-full'
-                    >
-                      Atrás
-                    </Button>
-                  )}
-
-                  {currentStep !== 'confirmacion' ? (
-                    <Button
-                      onClick={nextStep}
-                      disabled={!canProceed()}
-                      className='w-full'
-                    >
-                      Continuar
-                    </Button>
+                  {isQuickCheckout ? (
+                    <>
+                      {currentStep !== 'resumen' && (
+                        <Button
+                          onClick={prevStep}
+                          variant='outline'
+                          className='w-full'
+                        >
+                          Atrás
+                        </Button>
+                      )}
+                      {currentStep !== 'confirmacion' ? (
+                        <Button
+                          onClick={nextStep}
+                          disabled={!canProceed()}
+                          className='w-full'
+                        >
+                          Continuar
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={processOrder}
+                          disabled={!agree || loading}
+                          className='w-full'
+                        >
+                          {loading ? 'Procesando...' : 'Confirmar pedido express'}
+                        </Button>
+                      )}
+                    </>
                   ) : (
-                    <Button
-                      onClick={processOrder}
-                      disabled={!agree || loading}
-                      className='w-full'
-                    >
-                      {loading ? 'Procesando...' : 'Confirmar pedido'}
-                    </Button>
+                    <>
+                      {currentStep !== 'resumen' && (
+                        <Button
+                          onClick={prevStep}
+                          variant='outline'
+                          className='w-full'
+                        >
+                          Atrás
+                        </Button>
+                      )}
+                      {currentStep !== 'confirmacion' ? (
+                        <Button
+                          onClick={nextStep}
+                          disabled={!canProceed()}
+                          className='w-full'
+                        >
+                          Continuar
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={processOrder}
+                          disabled={!agree || loading}
+                          className='w-full'
+                        >
+                          {loading ? 'Procesando...' : 'Confirmar pedido'}
+                        </Button>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

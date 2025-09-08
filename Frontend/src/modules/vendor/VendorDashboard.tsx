@@ -1317,161 +1317,235 @@ const VendorDashboard: React.FC = () => {
       )}
 
       {activeTab === 'config' && (
-        <div className='card max-w-2xl'>
-          <div className='card-header'>
-            <h2 className='text-lg font-semibold text-gray-900'>
-              Configuración
-            </h2>
-          </div>
-          <div className='card-body space-y-6'>
-            <div>
-              <h3 className='font-medium mb-2'>Perfil del vendedor</h3>
-              <div className='space-y-3'>
-                <label className='form-label'>Biografía</label>
-                <textarea
-                  className='form-textarea'
-                  value={cfgBio}
-                  onChange={e => setCfgBio(e.target.value)}
-                  placeholder='Cuenta tu historia, técnicas, materiales y territorio...'
-                ></textarea>
+        <div className='space-y-6'>
+          {/* Sección de perfil mejorada */}
+          <div className='card'>
+            <div className='card-header'>
+              <h2 className='text-lg font-semibold text-gray-900'>
+                Perfil del vendedor
+              </h2>
+            </div>
+            <div className='card-body space-y-6'>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                 <div>
-                  <label className='form-label'>Logo / Imagen</label>
-                  <input
-                    type='file'
-                    accept='image/*'
-                    onChange={e => {
-                      const f = e.target.files?.[0];
-                      if (f) uploadVendorLogo(f);
-                    }}
-                    disabled={cfgLogoUploading}
-                  />
-                  {vendorSettings.logoUrl && (
-                    <div className='mt-2'>
-                      <img
-                        src={vendorSettings.logoUrl}
-                        alt='logo'
-                        className='w-24 h-24 object-cover rounded'
+                  <h3 className='font-medium mb-3'>Información pública</h3>
+                  <div className='space-y-4'>
+                    <div>
+                      <label className='form-label'>Biografía</label>
+                      <textarea
+                        className='form-textarea'
+                        value={cfgBio}
+                        onChange={e => setCfgBio(e.target.value)}
+                        placeholder='Cuenta tu historia, técnicas, materiales y territorio...'
+                        rows={4}
+                      ></textarea>
+                    </div>
+                    
+                    <div>
+                      <label className='form-label'>Logo / Imagen</label>
+                      <input
+                        type='file'
+                        accept='image/*'
+                        onChange={e => {
+                          const f = e.target.files?.[0];
+                          if (f) uploadVendorLogo(f);
+                        }}
+                        disabled={cfgLogoUploading}
+                      />
+                      {vendorSettings.logoUrl && (
+                        <div className='mt-2'>
+                          <img
+                            src={vendorSettings.logoUrl}
+                            alt='logo'
+                            className='w-24 h-24 object-cover rounded'
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className='font-medium mb-3'>Información de contacto</h3>
+                  <div className='space-y-4'>
+                    <div className='form-group'>
+                      <label className='form-label'>Email de contacto</label>
+                      <input
+                        type='email'
+                        className='form-input'
+                        value={user?.email || ''}
+                        disabled
+                      />
+                      <p className='text-xs text-gray-500 mt-1'>
+                        Este es el email asociado a tu cuenta
+                      </p>
+                    </div>
+                    
+                    <div className='form-group'>
+                      <label className='form-label'>Teléfono de contacto</label>
+                      <input
+                        type='tel'
+                        className='form-input'
+                        placeholder='(+57) 300 123 4567'
                       />
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className='border-t pt-4'>
-              <h3 className='font-medium mb-2'>Preferencias</h3>
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+          {/* Sección de preferencias mejorada */}
+          <div className='card'>
+            <div className='card-header'>
+              <h2 className='text-lg font-semibold text-gray-900'>
+                Preferencias
+              </h2>
+            </div>
+            <div className='card-body space-y-6'>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                 <div>
-                  <label className='form-label'>
-                    Estado por defecto al crear producto
-                  </label>
-                  <select
-                    className='form-select'
-                    value={cfgDefaultStatus}
-                    onChange={e => setCfgDefaultStatus(e.target.value as any)}
-                  >
-                    <option value='activo'>Activo</option>
-                    <option value='inactivo'>Inactivo</option>
-                  </select>
+                  <h3 className='font-medium mb-3'>Productos</h3>
+                  <div className='space-y-4'>
+                    <div>
+                      <label className='form-label'>
+                        Estado por defecto al crear producto
+                      </label>
+                      <select
+                        className='form-select'
+                        value={cfgDefaultStatus}
+                        onChange={e => setCfgDefaultStatus(e.target.value as any)}
+                      >
+                        <option value='activo'>Activo</option>
+                        <option value='inactivo'>Inactivo</option>
+                      </select>
+                    </div>
+                    
+                    <label className='inline-flex items-center gap-2'>
+                      <input
+                        type='checkbox'
+                        checked={cfgHideOOS}
+                        onChange={e => setCfgHideOOS(e.target.checked)}
+                      />
+                      Ocultar productos sin stock
+                    </label>
+                  </div>
                 </div>
-                <label className='inline-flex items-center gap-2'>
-                  <input
-                    type='checkbox'
-                    checked={cfgHideOOS}
-                    onChange={e => setCfgHideOOS(e.target.checked)}
-                  />
-                  Ocultar productos sin stock
-                </label>
+                
+                <div>
+                  <h3 className='font-medium mb-3'>Notificaciones</h3>
+                  <div className='space-y-3'>
+                    <label className='inline-flex items-center gap-2'>
+                      <input
+                        type='checkbox'
+                        checked={cfgNotifNewOrder}
+                        onChange={e => setCfgNotifNewOrder(e.target.checked)}
+                      />
+                      Correo cuando ingrese un pedido nuevo
+                    </label>
+                    <label className='inline-flex items-center gap-2'>
+                      <input
+                        type='checkbox'
+                        checked={cfgNotifItemShipped}
+                        onChange={e => setCfgNotifItemShipped(e.target.checked)}
+                      />
+                      Correo cuando un ítem se marque enviado
+                    </label>
+                  </div>
+                </div>
               </div>
             </div>
+          </div>
 
-            <div className='border-t pt-4'>
-              <h3 className='font-medium mb-2'>Notificaciones</h3>
-              <label className='inline-flex items-center gap-2'>
-                <input
-                  type='checkbox'
-                  checked={cfgNotifNewOrder}
-                  onChange={e => setCfgNotifNewOrder(e.target.checked)}
-                />
-                Correo cuando ingrese un pedido nuevo
-              </label>
-              <label className='inline-flex items-center gap-2'>
-                <input
-                  type='checkbox'
-                  checked={cfgNotifItemShipped}
-                  onChange={e => setCfgNotifItemShipped(e.target.checked)}
-                />
-                Correo cuando un ítem se marque enviado
-              </label>
+          {/* Sección de privacidad y seguridad */}
+          <div className='card'>
+            <div className='card-header'>
+              <h2 className='text-lg font-semibold text-gray-900'>
+                Privacidad y seguridad
+              </h2>
             </div>
-
-            <div className='flex gap-3'>
-              <button
-                className='btn btn-primary flex items-center gap-2'
-                onClick={saveVendorSettings}
-              >
-                <Icon
-                  category='Estados y Feedback'
-                  name='IconParkSolidSuccess'
-                  className='w-4 h-4'
-                />
-                Guardar cambios
-              </button>
-              <button
-                className='btn btn-danger ml-auto flex items-center gap-2'
-                onClick={async () => {
-                  if (
-                    !confirm(
-                      '¿Eliminar tu cuenta? Esta acción es irreversible.'
-                    )
-                  )
-                    return;
-                  try {
-                    const session = (await supabase.auth.getSession()).data
-                      .session;
-                    const token = session?.access_token;
-                    const supaUrl = (import.meta as any).env
-                      ?.VITE_SUPABASE_URL as string | undefined;
-                    if (supaUrl && token) {
-                      const projectRef = new URL(supaUrl).host.split('.')[0];
-                      const resp = await fetch(
-                        `https://${projectRef}.functions.supabase.co/self-account`,
-                        {
-                          method: 'POST',
-                          headers: {
-                            'Content-Type': 'application/json',
-                            Authorization: `Bearer ${token}`,
-                          },
+            <div className='card-body'>
+              <div className='space-y-4'>
+                <div className='p-4 bg-blue-50 rounded-lg'>
+                  <h3 className='font-medium text-blue-900 mb-2'>Cambiar contraseña</h3>
+                  <p className='text-sm text-blue-700 mb-3'>
+                    Para cambiar tu contraseña, ve a la configuración de tu cuenta en el panel de autenticación.
+                  </p>
+                  <button className='btn btn-outline btn-sm'>
+                    Ir a configuración de cuenta
+                  </button>
+                </div>
+                
+                <div className='border-t pt-4'>
+                  <h3 className='font-medium text-red-600 mb-2 flex items-center gap-2'>
+                    <Icon
+                      category='Estados y Feedback'
+                      name='BxErrorCircle'
+                      className='w-5 h-5'
+                    />
+                    Eliminar cuenta
+                  </h3>
+                  <p className='text-sm text-gray-600 mb-3'>
+                    Esta acción es irreversible y eliminará todos tus datos del sistema.
+                  </p>
+                  <button
+                    className='btn btn-danger flex items-center gap-2'
+                    onClick={async () => {
+                      if (
+                        !confirm(
+                          '¿Eliminar tu cuenta? Esta acción es irreversible.'
+                        )
+                      )
+                        return;
+                      try {
+                        const session = (await supabase.auth.getSession()).data
+                          .session;
+                        const token = session?.access_token;
+                        const supaUrl = (import.meta as any).env
+                          ?.VITE_SUPABASE_URL as string | undefined;
+                        if (supaUrl && token) {
+                          const projectRef = new URL(supaUrl).host.split('.')[0];
+                          const resp = await fetch(
+                            `https://${projectRef}.functions.supabase.co/self-account`,
+                            {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                Authorization: `Bearer ${token}`,
+                              },
+                            }
+                          );
+                          const j = await resp.json();
+                          if (!resp.ok)
+                            throw new Error(j?.error || 'No se pudo eliminar');
+                          (window as any).toast?.success('Cuenta eliminada', {
+                            action: 'delete',
+                          });
+                          await supabase.auth.signOut();
+                          window.location.href = '/';
                         }
-                      );
-                      const j = await resp.json();
-                      if (!resp.ok)
-                        throw new Error(j?.error || 'No se pudo eliminar');
-                      (window as any).toast?.success('Cuenta eliminada', {
-                        action: 'delete',
-                      });
-                      await supabase.auth.signOut();
-                      window.location.href = '/';
-                    }
-                  } catch (e: any) {
-                    (window as any).toast?.error(
-                      e?.message || 'No se pudo eliminar la cuenta',
-                      { action: 'delete' }
-                    );
-                  }
-                }}
-              >
-                <Icon
-                  category='Estados y Feedback'
-                  name='BxErrorCircle'
-                  className='w-4 h-4'
-                />
-                Eliminar mi cuenta
-              </button>
+                      } catch (e: any) {
+                        (window as any).toast?.error(
+                          e?.message || 'No se pudo eliminar la cuenta',
+                          { action: 'delete' }
+                        );
+                      }
+                    }}
+                  >
+                    <Icon
+                      category='Estados y Feedback'
+                      name='BxErrorCircle'
+                      className='w-4 h-4'
+                    />
+                    Eliminar mi cuenta
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       )}
+
       <VendorStatusNotification />
     </VendorLayout>
   );
