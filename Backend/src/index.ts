@@ -814,7 +814,7 @@ app.get('/productos/:id/evaluaciones', async (req: Request, res: Response, next:
       puntuacion: e.puntuacion,
       comentario: e.comentario,
       created_at: e.created_at,
-      comprador_nombre: e.users?.nombre_completo || 'Comprador'
+      comprador_nombre: e.users && e.users.length > 0 ? e.users[0].nombre_completo || 'Comprador' : 'Comprador'
     }));
     
     res.json(evaluations);
@@ -900,7 +900,9 @@ app.get('/reportes/ventas/vendedor', rateLimit, authenticate({ role: 'vendedor',
     // Calculate summary statistics
     const totalVentas = data.reduce((sum, item) => sum + item.subtotal, 0);
     const totalProductos = data.reduce((sum, item) => sum + item.cantidad, 0);
-    const productosVendidos = [...new Set(data.map(item => item.productos?.nombre))].length;
+    const productosVendidos = [...new Set(data.map(item => 
+      item.productos && item.productos.length > 0 ? item.productos[0].nombre : null
+    ).filter(nombre => nombre !== null))].length;
     
     // Group by date for chart data
     const ventasPorDia: Record<string, { ventas: number; productos: number }> = {};
@@ -925,7 +927,7 @@ app.get('/reportes/ventas/vendedor', rateLimit, authenticate({ role: 'vendedor',
       },
       ventas_por_dia: ventasPorDia,
       detalles: data.map(item => ({
-        producto: item.productos?.nombre,
+        producto: item.productos && item.productos.length > 0 ? item.productos[0].nombre : 'Producto desconocido',
         cantidad: item.cantidad,
         precio_unitario: item.precio_unitario,
         subtotal: item.subtotal,

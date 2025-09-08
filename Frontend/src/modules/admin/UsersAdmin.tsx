@@ -9,6 +9,9 @@ import { Card, CardContent } from '@/components/ui/shadcn/card';
 type UserRole = 'admin' | 'vendedor' | 'comprador';
 type VendedorEstado = 'pendiente' | 'aprobado' | 'rechazado' | null;
 
+// Definir un tipo específico para los estados que se pueden notificar
+type NotifiableVendorStatus = 'aprobado' | 'rechazado' | 'bloqueado' | 'reactivado' | 'eliminado';
+
 interface UsuarioRow {
   id: string;
   email: string | null;
@@ -364,52 +367,22 @@ const UsersAdmin: React.FC = () => {
       console.warn('[refresh] No se pudo notificar cambio de estado:', e);
     }
 
-    // Notificar por correo si está habilitado en app_config
+    // Notificar por correo usando el servicio unificado
     try {
-      const session = (await supabase.auth.getSession()).data.session;
-      const token = session?.access_token;
-      const supaUrl = (import.meta as any).env?.VITE_SUPABASE_URL as
-        | string
-        | undefined;
-      if (!token || !supaUrl) return;
-      const projectRef = new URL(supaUrl).host.split('.')[0];
       const user = users.find(u => u.id === id);
-      // Leer configuración
-      const [{ data: notif }, { data: sender }] = await Promise.all([
-        supabase
-          .from('app_config')
-          .select('value')
-          .eq('key', 'notify_vendor_email_enabled')
-          .maybeSingle(),
-        supabase
-          .from('app_config')
-          .select('value')
-          .eq('key', 'notify_from')
-          .maybeSingle(),
-      ]);
-      // Por defecto habilitado si no existe registro/config (alineado con la Edge Function)
-      const enabled = (notif?.value?.enabled ?? true) as boolean;
-      const from = sender?.value?.from as string | undefined;
-      if (enabled && from && user?.email) {
-        await fetch(
-          `https://${projectRef}.functions.supabase.co/notify-vendor-status`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              action: estado,
-              email: user.email,
-              nombre: user.nombre_completo,
-              from,
-            }),
-          }
-        ).catch(() => {});
+      if (user?.email) {
+        const { notificationService } = await import('../../services/notificationService');
+        // Solo pasar valores válidos a la función de notificación
+        if (estado === 'aprobado' || estado === 'rechazado') {
+          await notificationService.sendVendorStatusNotification(
+            user.email,
+            estado,
+            user.nombre_completo || undefined
+          );
+        }
       }
     } catch (e) {
-      console.warn('[notify-vendor-status] status warning', e);
+      console.warn('[notification-service] status warning', e);
     }
   };
 
@@ -433,53 +406,20 @@ const UsersAdmin: React.FC = () => {
         }
       );
 
-      // Notificar por correo si está habilitado en app_config
+      // Notificar por correo usando el servicio unificado
       try {
-        const session = (await supabase.auth.getSession()).data.session;
-        const token = session?.access_token;
-        const supaUrl = (import.meta as any).env?.VITE_SUPABASE_URL as
-          | string
-          | undefined;
-        if (!token || !supaUrl) return;
-        const projectRef = new URL(supaUrl).host.split('.')[0];
         const u = users.find(x => x.id === id);
         if (u?.email) {
-          const [{ data: notif }, { data: sender }] = await Promise.all([
-            supabase
-              .from('app_config')
-              .select('value')
-              .eq('key', 'notify_vendor_email_enabled')
-              .maybeSingle(),
-            supabase
-              .from('app_config')
-              .select('value')
-              .eq('key', 'notify_from')
-              .maybeSingle(),
-          ]);
-          const enabled = (notif?.value?.enabled ?? true) as boolean;
-          const from = sender?.value?.from as string | undefined;
-          if (enabled) {
-            const action = blocked ? 'bloqueado' : 'reactivado';
-            await fetch(
-              `https://${projectRef}.functions.supabase.co/notify-vendor-status`,
-              {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                  action,
-                  email: u.email,
-                  nombre: u.nombre_completo,
-                  from,
-                }),
-              }
-            ).catch(() => {});
-          }
+          const { notificationService } = await import('../../services/notificationService');
+          const action: 'bloqueado' | 'reactivado' = blocked ? 'bloqueado' : 'reactivado';
+          await notificationService.sendVendorStatusNotification(
+            u.email,
+            action,
+            u.nombre_completo || undefined
+          );
         }
       } catch (e) {
-        console.warn('[notify-vendor-status] suspend warning', e);
+        console.warn('[notification-service] suspend warning', e);
       }
     } catch (e: any) {
       (window as any).toast?.error(e?.message || 'No se pudo suspender', {
@@ -519,44 +459,18 @@ const UsersAdmin: React.FC = () => {
           action: 'delete',
         });
 
-        // Notificar por correo (eliminado)
+        // Notificar por correo usando el servicio unificado
         try {
           if (u?.email) {
-            const [{ data: notif }, { data: sender }] = await Promise.all([
-              supabase
-                .from('app_config')
-                .select('value')
-                .eq('key', 'notify_vendor_email_enabled')
-                .maybeSingle(),
-              supabase
-                .from('app_config')
-                .select('value')
-                .eq('key', 'notify_from')
-                .maybeSingle(),
-            ]);
-            const enabled = (notif?.value?.enabled ?? true) as boolean;
-            const from = sender?.value?.from as string | undefined;
-            if (enabled) {
-              await fetch(
-                `https://${projectRef}.functions.supabase.co/notify-vendor-status`,
-                {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                  },
-                  body: JSON.stringify({
-                    action: 'eliminado',
-                    email: u.email,
-                    nombre: u.nombre_completo,
-                    from,
-                  }),
-                }
-              ).catch(() => {});
-            }
+            const { notificationService } = await import('../../services/notificationService');
+            await notificationService.sendVendorStatusNotification(
+              u.email,
+              'eliminado', // Usar el valor válido directamente
+              u.nombre_completo || undefined
+            );
           }
         } catch (e) {
-          console.warn('[notify-vendor-status] delete warning', e);
+          console.warn('[notification-service] delete warning', e);
         }
       }
     } catch (e: any) {
