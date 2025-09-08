@@ -14,9 +14,14 @@ const localStorageMock = {
   store: {} as Record<string, string>,
 };
 
-Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock,
-});
+// Mock window and localStorage for tests
+// @ts-ignore
+global.window = {
+  localStorage: localStorageMock,
+};
+
+// @ts-ignore
+global.localStorage = localStorageMock;
 
 describe('Cache Keys Constants', () => {
   it('should have all required cache keys', () => {
@@ -35,6 +40,7 @@ describe('Cache Keys Constants', () => {
 describe('Cache Manager', () => {
   beforeEach(() => {
     cache.clear();
+    localStorageMock.store = {};
   });
 
   afterEach(() => {
