@@ -153,7 +153,7 @@ Rulexi700.
 🏪 Vendedor	con stock
 ✓ Activo
 carolinaalexandrazapata@gmail.com
-Rulexi700.
+rULEXI700.
 
 
 🛡️ Admin	
