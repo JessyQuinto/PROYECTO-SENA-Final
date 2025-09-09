@@ -189,7 +189,7 @@ const corsOptions: cors.CorsOptions = {
       callback(new Error('Not allowed by CORS'));
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
   maxAge: 600 // 10 minutos
@@ -214,7 +214,7 @@ app.use((_req: Request, res: Response, next: NextFunction) => {
   // Política de referrer
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   
-  // Content Security Policy
+  // Content Security Policy (en producción, también se aplica Helmet con CSP y HSTS)
   res.setHeader('Content-Security-Policy', [
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
@@ -990,3 +990,5 @@ const securityChecklist = {
 ---
 
 Esta guía de seguridad proporciona una base sólida para proteger Tesoros Chocó contra amenazas comunes y emergentes, implementando las mejores prácticas de la industria y manteniendo un enfoque proactivo en la seguridad de la aplicación.
+
+Nota: Consulta también API.md para requisitos de autenticación y roles por endpoint.

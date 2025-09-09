@@ -39,33 +39,30 @@
 
 ```
 Frontend/src/
-├── auth/                    # Autenticación y autorización
-│   └── AuthContext.tsx     # Contexto de autenticación principal
-├── components/              # Componentes reutilizables
-│   ├── cache/              # Sistema de cache
-│   ├── forms/              # Componentes de formularios
-│   ├── quests/             # Componentes de búsqueda
-│   ├── security/           # Componentes de seguridad
-│   └── ui/                 # Componentes base de UI
-│       ├── Layout/         # Layouts de la aplicación
-│       ├── shadcn/         # Componentes shadcn/ui
-│       └── [otros].tsx     # Componentes especializados
-├── hooks/                   # Hooks personalizados
-├── lib/                     # Utilidades y servicios
-├── modules/                 # Módulos por funcionalidad
-│   ├── admin/              # Panel de administración
-│   ├── buyer/              # Funcionalidades de comprador
-│   ├── vendor/             # Panel de vendedor
-│   ├── App.tsx             # Componente principal de la app
-│   ├── AuthForms.tsx       # Formularios de autenticación
-│   ├── Landing.tsx         # Página de aterrizaje
-│   └── ProtectedRoute.tsx  # Componente de ruta protegida
-├── pages/                   # Páginas de la aplicación
-├── styles/                  # Estilos globales y CSS
-├── test/                    # Configuración de testing
-├── types/                   # Definiciones de TypeScript
-├── main.tsx                 # Punto de entrada de la aplicación
-└── vite-env.d.ts           # Tipos de Vite
+├── auth/
+├── components/
+├── hooks/
+├── lib/                     # Utilidades clave
+│   ├── csp.ts               # Configuración de Content-Security-Policy
+│   ├── errorHandler.ts      # Manejador global de errores
+│   ├── serviceWorker.ts     # Registro SW (producción)
+│   ├── supabaseClient.ts    # Cliente de Supabase
+│   └── logger(.unified).ts  # Utilidades de logging
+├── modules/
+│   ├── admin/
+│   ├── buyer/
+│   ├── vendor/
+│   ├── App.tsx
+│   ├── AuthForms.tsx
+│   ├── Landing.tsx
+│   └── ProtectedRoute.tsx
+├── pages/                   # Pages como Home, Login, Products, etc.
+├── services/                # Servicios (p.ej., notificationService)
+├── styles/
+├── test/
+├── types/
+├── main.tsx
+└── vite-env.d.ts
 ```
 
 ## 🎨 Sistema de Diseño
@@ -262,13 +259,7 @@ interface ThemeConfig {
 - **Coverage**: Reportes de cobertura de código
 
 ### Test Files
-```
-src/test/
-├── setup.ts                 # Configuración global de tests
-├── test-utils.tsx          # Utilidades para testing
-├── cookie-consent.test.tsx # Tests de consentimiento de cookies
-└── logout.test.tsx         # Tests de logout
-```
+Ubicados en `src/test/` con Vitest + Testing Library.
 
 ### Component Testing
 ```typescript

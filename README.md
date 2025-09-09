@@ -34,7 +34,7 @@ El proyecto está estructurado como una aplicación web moderna con arquitectura
 
 ```bash
 git clone <url-del-repositorio>
-cd PROYECTO-SENA-main-main
+cd PROYECTO-SENA-Final
 ```
 
 ### 2. Instalar Dependencias
@@ -81,7 +81,7 @@ FRONTEND_ORIGINS=http://localhost:3000
 ```bash
 cd Backend
 bun run dev
-# El backend estará en http://localhost:3001
+# El backend estará en http://localhost:3001 (o 4000 según PORT)
 ```
 
 #### Terminal 2 - Frontend
@@ -112,12 +112,12 @@ bun run test
 
 ## 📚 Documentación Adicional
 
-- [Arquitectura del Sistema](ARQUITECTURA.md)
-- [Diseño del Sistema](DISEÑO_SISTEMA.md)
-- [Documentación Frontend](FRONTEND.md)
-- [Documentación Backend](BACKEND.md)
-- [API Reference](API.md)
-- [Guía de Despliegue](DEPLOYMENT.md)
+- [Arquitectura del Sistema](Docs/ARQUITECTURA.md)
+- [Diseño del Sistema](Docs/DISEÑO_SISTEMA.md)
+- [Documentación Frontend](Docs/FRONTEND.md)
+- [Documentación Backend](Docs/BACKEND.md)
+- [API del Backend](Docs/API.md)
+- [Guía de Despliegue](Docs/DEPLOYMENT.md)
 
 ## 🤝 Contribución
 

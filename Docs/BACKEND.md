@@ -26,12 +26,15 @@
 ```
 Backend/
 ├── src/
-│   ├── index.ts              # Punto de entrada principal
+│   ├── index.ts               # Servidor de desarrollo (middleware básico)
+│   ├── index.optimized.ts     # Servidor optimizado (helmet, compression, cache, rate headers)
 │   └── lib/
-│       └── supabaseAdmin.ts  # Cliente admin de Supabase
-├── package.json              # Dependencias y scripts
-├── tsconfig.json             # Configuración de TypeScript
-└── .env                      # Variables de entorno
+│       ├── supabaseAdmin.ts   # Cliente admin de Supabase (Service Role)
+│       └── cacheManager.ts    # Capa de cache y pool de conexiones Supabase
+├── package.json               # Dependencias y scripts
+├── tsconfig.json              # Configuración general de TypeScript
+├── tsconfig.optimized.json    # Build dirigido a index.optimized.ts
+└── .env                       # Variables de entorno
 ```
 
 ## 🏗️ Arquitectura del Backend
@@ -125,12 +128,12 @@ res.setHeader('Expires', '0');
 ```
 
 ### 3. Rate Limiting
-- **Protección contra abuso**: Límites configurables por endpoint
-- **Window-based**: Ventanas de tiempo configurables
-- **IP-based**: Limitación por dirección IP
-- **Customizable**: Diferentes límites para diferentes operaciones
+- Desarrollo (index.ts): 30 solicitudes por minuto por IP; devuelve 429 con header Retry-After.
+- Producción (index.optimized.ts): 100 solicitudes por minuto; al exceder, bloqueo de 5 minutos (Retry-After) y cabeceras X-RateLimit-*.
 
 ## 📊 Endpoints Principales
+
+Para especificaciones completas (contratos y roles), ver API.md.
 
 ### 1. Health Check
 ```typescript
@@ -170,33 +173,11 @@ app.post('/auth/post-signup', async (req: Request, res: Response, next: NextFunc
 });
 ```
 
-### 3. Simulación de Pagos
-```typescript
-app.post('/payments/simulate', async (req: Request, res: Response) => {
-  const { order_id, approved } = req.body;
-  
-  if (!order_id) {
-    return res.status(400).json({ error: 'order_id requerido' });
-  }
-  
-  // Simular procesamiento de pago...
-  const success = approved !== false;
-  
-  if (success) {
-    res.json({ 
-      success: true, 
-      message: 'Pago procesado exitosamente',
-      order_id 
-    });
-  } else {
-    res.status(400).json({ 
-      success: false, 
-      message: 'Pago rechazado',
-      order_id 
-    });
-  }
-});
-```
+### 3. Catálogo y pedidos (resumen)
+- GET /api/categories: categorías públicas (cache 1h).
+- GET /api/products: listado filtrable (cache 5m).
+- POST /rpc/crear_pedido_demo: invoca RPC crear_pedido (modo admin para demo).
+- POST /rpc/crear_pedido: crea pedido autenticado, soporta quick checkout y simulate_payment.
 
 ## 🔐 Integración con Supabase
 
@@ -413,28 +394,11 @@ app.post('/api/products', async (req: Request, res: Response) => {
 ## 🧪 Testing
 
 ### 1. Configuración de Tests
-```typescript
-// tsconfig.json para tests
-{
-  "compilerOptions": {
-    "types": ["node", "jest"],
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true
-  },
-  "include": ["src/**/*", "tests/**/*"]
-}
-```
+Se utiliza Vitest con Supertest para pruebas HTTP. Ver vitest.config.ts en la raíz del workspace.
 
 ### 2. Scripts de Testing
-```json
-{
-  "scripts": {
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
-  }
-}
-```
+En Backend/package.json:
+- "test": "vitest run"
 
 ### 3. Ejemplo de Test
 ```typescript
@@ -483,15 +447,9 @@ FRONTEND_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
 ```
 
 ### 2. Scripts de Build
-```json
-{
-  "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "start": "node dist/index.js",
-    "dev": "tsx watch src/index.ts"
-  }
-}
-```
+- dev: tsx watch src/index.ts
+- build:optimized: tsc --project tsconfig.optimized.json
+- start: node dist/index.optimized.js
 
 ### 3. Docker (Opcional)
 ```dockerfile

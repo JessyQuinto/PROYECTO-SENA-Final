@@ -49,6 +49,7 @@
 - **Validation**: Zod para validación de esquemas
 - **CORS**: Configuración flexible para múltiples orígenes
 - **Logging**: Morgan para logs HTTP
+- **Optimizado**: Build de producción con Helmet, Compression, caching y rate headers
 - **Environment**: dotenv para configuración
 
 ### Base de Datos & Infraestructura
@@ -168,7 +169,7 @@ Vendedor → Crear Producto → Supabase Storage → Database → Frontend Displ
 
 ### 3. Flujo de Compra
 ```
-Comprador → Carrito → Checkout → Backend API → Supabase → Confirmación
+Comprador → Carrito → Checkout → Backend API (RPC crear_pedido) → Supabase → Confirmación
 ```
 
 ## 📊 Monitoreo y Observabilidad
@@ -221,6 +222,8 @@ Comprador → Carrito → Checkout → Backend API → Supabase → Confirmació
 - **2FA**: Autenticación de dos factores
 - **OAuth**: Integración con proveedores externos
 - **Audit Logs**: Logs detallados de auditoría
+
+Nota: La especificación de endpoints está en API.md.
 
 ---
 

@@ -46,10 +46,9 @@ git --version
 ```bash
 # Clonar el repositorio
 git clone <url-del-repositorio>
-cd PROYECTO-SENA-main-main
+cd PROYECTO-SENA-Final
 
 # Verificar la estructura del proyecto
-ls -la
 # Debe mostrar: Backend/, Frontend/, Docs/, package.json, etc.
 ```
 
@@ -180,14 +179,14 @@ ALTER TABLE productos ENABLE ROW LEVEL SECURITY;
 #### Terminal 1 - Backend
 ```bash
 cd Backend
-bun run dev
-# El backend estará en http://localhost:3001
+npm run dev
+# El backend estará en http://localhost:3001 (según PORT)
 ```
 
 #### Terminal 2 - Frontend
 ```bash
 cd Frontend
-bun run dev
+npm run dev
 # El frontend estará en http://localhost:3000
 ```
 

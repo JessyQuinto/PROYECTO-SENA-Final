@@ -152,7 +152,7 @@ Comprador → Carrito → Checkout → Validación → Supabase RPC → Confirma
 1. **Carrito**: Comprador agrega productos
 2. **Checkout**: Llena información de envío/pago
 3. **Validación**: Se validan datos y stock
-4. **RPC**: Se llama función `crear_pedido`
+4. **RPC**: Se llama función `crear_pedido` (vía /rpc/crear_pedido)
 5. **Transacción**: Supabase procesa transacción
 6. **Confirmación**: Se confirma orden y se notifica
 
