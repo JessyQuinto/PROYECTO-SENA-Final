@@ -11,10 +11,22 @@ node_modules
 # Environment files
 .env
 .env.*
+.env.local
+.env.development
+.env.production
+.env.test
 Frontend/.env
 Frontend/.env.*
+Frontend/.env.local
+Frontend/.env.development
+Frontend/.env.production
+Frontend/.env.test
 Backend/.env
 Backend/.env.*
+Backend/.env.local
+Backend/.env.development
+Backend/.env.production
+Backend/.env.test
 
 # Logs
 logs
@@ -39,4 +51,4 @@ node_modules/
 
 # Task files
 # tasks.json
-# tasks/ 
+# tasks/
