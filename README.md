@@ -159,6 +159,7 @@ Hemos creado colecciones completas de Postman para probar todas las funcionalida
 - [Documentación Frontend](Docs/FRONTEND.md)
 - [Documentación Backend](Docs/BACKEND.md)
 - [API del Backend](Docs/API.md)
+- [**📋 Guía Completa de Pruebas con Postman**](Docs/POSTMAN_TESTING.md)
 - [Guía de Despliegue](Docs/DEPLOYMENT.md)
 
 ## 🤝 Contribución
