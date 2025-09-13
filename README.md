@@ -99,6 +99,8 @@ bun run dev
 
 ## 🧪 Testing
 
+### Pruebas Unitarias
+
 ```bash
 # Frontend
 cd Frontend
@@ -109,6 +111,46 @@ bun run test:coverage
 cd Backend
 bun run test
 ```
+
+### Pruebas de API con Postman
+
+Hemos creado colecciones completas de Postman para probar todas las funcionalidades del sistema organizadas por rol:
+
+#### 🔗 Colecciones Públicas de Postman
+
+**📋 Administrador**
+- [Tesoros Chocó - Administrador](https://www.postman.com/bold-zodiac-382577/workspace/tesoros-choco/collection/13226867-e1af0bd7-a37c-4674-9089-be540313cdf1?action=share&source=copy-link&creator=13226867)
+- Incluye: Login, gestión de usuarios, categorías, productos, órdenes, aprobación de vendedores
+
+**🛍️ Vendedor**
+- [Tesoros Chocó - Vendedor](https://www.postman.com/bold-zodiac-382577/workspace/tesoros-choco/collection/13226867-b84cdda9-e50f-4590-89ee-4e8febd921a8?action=share&source=copy-link&creator=13226867)
+- Incluye: Login, gestión de productos, órdenes, perfil de vendedor
+
+**🛒 Comprador**
+- [Tesoros Chocó - Comprador](https://www.postman.com/bold-zodiac-382577/workspace/tesoros-choco/collection/13226867-1355fb2b-b951-4c75-8d65-53222eb089ec?action=share&source=copy-link&creator=13226867)
+- Incluye: Login, catálogo de productos, carrito de compras, órdenes, perfil de usuario
+
+#### 🔑 Credenciales de Prueba
+
+- **Administrador**: `admin@tesoros-choco.com` / `admin123`
+- **Vendedor**: `quintojessy2222@gmail.com` / `Rulexi700.`
+- **Comprador**: `marianareyesgonzalez4@gmail.com` / `Rulexi700.`
+
+#### 📝 Características de las Colecciones
+
+- ✅ **Autenticación automática**: Extracción y uso automático de tokens JWT
+- ✅ **Variables dinámicas**: IDs se capturan automáticamente para uso en pruebas subsecuentes
+- ✅ **Validaciones completas**: Tests exhaustivos para cada endpoint
+- ✅ **Logs detallados**: Información completa en la consola de Postman
+- ✅ **Flujos realistas**: Simulan casos de uso reales del sistema
+
+#### 🚀 Cómo usar las colecciones
+
+1. Hacer clic en cualquiera de los enlaces públicos arriba
+2. Importar la colección a tu workspace de Postman
+3. Configurar la variable `vault:supabase-anon-api-key` con tu clave anónima de Supabase
+4. Ejecutar las pruebas en orden secuencial para mejores resultados
+5. Revisar los logs en la consola de Postman para información detallada
 
 ## 📚 Documentación Adicional
 
