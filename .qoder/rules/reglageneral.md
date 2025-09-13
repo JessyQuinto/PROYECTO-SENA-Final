@@ -58,11 +58,7 @@ trigger: manual
 ## 4. Seguridad
 
 ### 4.1 Autenticación
-- Validar tokens JWT en cada solicitud protegida
-- Implementar refresh tokens cuando sea necesario
-- Manejar correctamente la expiración de sesiones
-- Utilizar Supabase Auth para autenticación
-- Implementar control de acceso por roles (RBAC)
+- supabace mcp
 
 ### 4.2 Validación de Datos
 - Validar todas las entradas del usuario en el backend
