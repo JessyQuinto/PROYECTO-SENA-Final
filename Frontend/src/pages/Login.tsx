@@ -35,8 +35,6 @@ const LoginPage: React.FC = () => {
       password: '',
     },
     onSubmit: async values => {
-      // removed debug logging
-
       // Validación manual simple
       if (!values.email) {
         toast.error('El correo electrónico es obligatorio', {
@@ -59,7 +57,11 @@ const LoginPage: React.FC = () => {
         return;
       }
 
-      const result = await signIn(values.email, values.password);
+      // ✅ MEJORADO: Pasar opciones de redirección al signIn
+      const result = await signIn(values.email, values.password, {
+        returnTo: returnTo
+      });
+      
       if (result.error) {
         toast.error(result.error, {
           action: 'login',
@@ -75,30 +77,31 @@ const LoginPage: React.FC = () => {
     },
   });
 
-  useEffect(() => {
-    if (user) {
-      // Redirigir al usuario a la página de donde vino o a la página principal
-      navigate(returnTo || '/');
-    }
-  }, [user, navigate, returnTo]);
+  // ✅ MEJORADO: El useEffect ya no es necesario porque la redirección 
+  // se maneja automáticamente en AuthContext
+  // useEffect(() => {
+  //   if (user) {
+  //     navigate(returnTo || '/');
+  //   }
+  // }, [user, navigate, returnTo]);
 
   return (
-    <div className='min-h-[calc(100vh-120px)] grid place-items-center'>
-      <div className='container max-w-5xl'>
-        <div className='grid md:grid-cols-3 gap-8 items-start'>
-          {/* Sidebar con características */}
-          <div className='hidden md:block md:col-span-1'>
+    <div className='min-h-[calc(100vh-80px)] sm:min-h-[calc(100vh-120px)] grid place-items-center py-4 px-2 sm:py-8 sm:px-4'>
+      <div className='container max-w-sm sm:max-w-md md:max-w-lg lg:max-w-5xl'>
+        <div className='grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 items-start'>
+          {/* Sidebar con características - Solo visible en pantallas grandes */}
+          <div className='hidden lg:block lg:col-span-1'>
             <div className='card card-hover'>
-              <div className='card-body p-5'>
-                <h2 className='card-title text-2xl mb-4'>Bienvenido de vuelta</h2>
-                <p className='opacity-80 mb-6'>Accede a tu cuenta para continuar explorando los tesoros artesanales del Chocó.</p>
-                <div className='space-y-4'>
+              <div className='card-body p-4 sm:p-5'>
+                <h2 className='card-title text-xl sm:text-2xl mb-3 sm:mb-4'>Bienvenido de vuelta</h2>
+                <p className='opacity-80 mb-4 sm:mb-6 text-sm sm:text-base'>Accede a tu cuenta para continuar explorando los tesoros artesanales del Chocó.</p>
+                <div className='space-y-3 sm:space-y-4'>
                   {AuthFeatureSets.login.map((feature, index) => (
-                    <div key={index} className='flex items-center gap-3'>
-                      <div className='w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center'>
+                    <div key={index} className='flex items-center gap-2 sm:gap-3'>
+                      <div className='w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-primary/10 flex items-center justify-center'>
                         {feature.icon}
                       </div>
-                      <span className='text-sm'>{feature.text}</span>
+                      <span className='text-xs sm:text-sm'>{feature.text}</span>
                     </div>
                   ))}
                 </div>
@@ -107,32 +110,32 @@ const LoginPage: React.FC = () => {
           </div>
 
           {/* Formulario de login */}
-          <div className='md:col-span-2'>
+          <div className='lg:col-span-2'>
             <div className='card card-hover'>
-              <div className='card-body p-5'>
-                <div className='text-center mb-4'>
-                  <h1 className='text-2xl font-bold mb-1'>Iniciar Sesión</h1>
+              <div className='card-body p-4 sm:p-5'>
+                <div className='text-center mb-3 sm:mb-4'>
+                  <h1 className='text-xl sm:text-2xl font-bold mb-1'>Iniciar Sesión</h1>
                 </div>
 
                 {/* Mensaje informativo cuando se redirige desde otra página */}
                 {infoMessage && (
-                  <Alert variant="info" className='mb-4'>
+                  <Alert variant="info" className='mb-3 sm:mb-4'>
                     <Icon
                       category='Estados y Feedback'
                       name='LucideInfo'
-                      className='h-4 w-4'
+                      className='h-3 w-3 sm:h-4 sm:w-4'
                     />
-                    <AlertDescription>
+                    <AlertDescription className='text-xs sm:text-sm'>
                       {infoMessage}
                     </AlertDescription>
                   </Alert>
                 )}
 
-                <p className='opacity-80 text-center mb-4 text-sm'>
+                <p className='opacity-80 text-center mb-3 sm:mb-4 text-xs sm:text-sm'>
                   Accede a tu cuenta para continuar
                 </p>
 
-                <form onSubmit={form.handleSubmit} className='space-y-4' noValidate>
+                <form onSubmit={form.handleSubmit} className='space-y-3 sm:space-y-4' noValidate>
                   {/* Screen reader announcement area for form errors */}
                   <div 
                     className='sr-only' 
@@ -148,8 +151,8 @@ const LoginPage: React.FC = () => {
                   </div>
 
                   {/* Email Field */}
-                  <div className='space-y-1.5'>
-                    <Label htmlFor='email' className='text-sm font-medium'>
+                  <div className='space-y-1 sm:space-y-1.5'>
+                    <Label htmlFor='email' className='text-xs sm:text-sm font-medium'>
                       Correo electrónico
                       <span className='text-destructive ml-1' aria-label='campo requerido'>*</span>
                     </Label>
@@ -158,7 +161,7 @@ const LoginPage: React.FC = () => {
                       type='email'
                       placeholder='tu@email.com'
                       {...form.getInputProps('email')}
-                      className={`py-2 ${form.hasError('email') ? 'border-red-500' : ''}`}
+                      className={`py-2 sm:py-2.5 text-sm ${form.hasError('email') ? 'border-red-500' : ''}`}
                       aria-required='true'
                       aria-describedby={form.hasError('email') ? 'email-error' : 'email-hint'}
                       autoComplete='email'
@@ -179,8 +182,8 @@ const LoginPage: React.FC = () => {
                   </div>
 
                   {/* Password Field */}
-                  <div className='space-y-1.5'>
-                    <Label htmlFor='password' className='text-sm font-medium'>
+                  <div className='space-y-1 sm:space-y-1.5'>
+                    <Label htmlFor='password' className='text-xs sm:text-sm font-medium'>
                       Contraseña
                       <span className='text-destructive ml-1' aria-label='campo requerido'>*</span>
                     </Label>
@@ -189,7 +192,7 @@ const LoginPage: React.FC = () => {
                       type='password'
                       placeholder='••••••••'
                       {...form.getInputProps('password')}
-                      className={`py-2 ${form.hasError('password') ? 'border-red-500' : ''}`}
+                      className={`py-2 sm:py-2.5 text-sm ${form.hasError('password') ? 'border-red-500' : ''}`}
                       aria-required='true'
                       aria-describedby={form.hasError('password') ? 'password-error' : 'password-hint'}
                       autoComplete='current-password'
@@ -212,18 +215,18 @@ const LoginPage: React.FC = () => {
                   {/* Submit Button */}
                   <Button
                     type='submit'
-                    className='w-full py-2.5 text-sm font-medium'
+                    className='w-full py-2.5 sm:py-3 text-xs sm:text-sm font-medium'
                     disabled={form.isSubmitting || loading}
                     aria-describedby='submit-status'
                   >
                     {form.isSubmitting || loading ? (
                       <div className='flex items-center gap-2'>
                         <div 
-                          className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin'
+                          className='w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin'
                           role='status'
                           aria-label='Iniciando sesión'
                         ></div>
-                        <span aria-live='polite'>Iniciando sesión...</span>
+                        <span aria-live='polite' className='text-xs sm:text-sm'>Iniciando sesión...</span>
                       </div>
                     ) : (
                       'Iniciar sesión'
@@ -235,8 +238,8 @@ const LoginPage: React.FC = () => {
                 </form>
 
                 {/* Links */}
-                <div className='mt-4 text-center space-y-2'>
-                  <div className='text-sm'>
+                <div className='mt-3 sm:mt-4 text-center space-y-1.5 sm:space-y-2'>
+                  <div className='text-xs sm:text-sm'>
                     <Link
                       to='/forgot-password'
                       className='text-primary hover:underline font-medium'
@@ -244,7 +247,7 @@ const LoginPage: React.FC = () => {
                       ¿Olvidaste tu contraseña?
                     </Link>
                   </div>
-                  <div className='text-sm text-muted-foreground'>
+                  <div className='text-xs sm:text-sm text-muted-foreground'>
                     ¿No tienes una cuenta?{' '}
                     <Link
                       to='/register'

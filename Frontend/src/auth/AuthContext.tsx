@@ -13,6 +13,26 @@ import type { UserRole, VendedorEstado } from '@/types/domain';
 import { useToast } from '@/hooks/useToast';
 import { cleanupUserState, validateCleanup } from '@/lib/stateCleanup';
 
+// Utilidad para redirección automática por rol
+const getRedirectPathForUser = (user: SessionUser, isFirstLogin = false): string => {
+  if (!user.role) return '/';
+  
+  switch (user.role) {
+    case 'admin':
+      return isFirstLogin ? '/admin/bienvenida' : '/admin';
+    case 'vendedor':
+      if (user.vendedor_estado === 'aprobado') {
+        return isFirstLogin ? '/vendedor/bienvenida' : '/vendedor';
+      } else {
+        return '/vendedor/estado'; // Página de estado para vendedores pendientes/rechazados
+      }
+    case 'comprador':
+      return isFirstLogin ? '/comprador/bienvenida' : '/productos';
+    default:
+      return '/';
+  }
+};
+
 interface SessionUser {
   id: string;
   email?: string;
@@ -26,7 +46,7 @@ interface AuthContextValue {
   user: SessionUser | null;
   loading: boolean;
   isSigningOut: boolean; // Nuevo estado para transición
-  signIn(email: string, password: string): Promise<{ error?: string }>;
+  signIn(email: string, password: string, options?: { returnTo?: string }): Promise<{ error?: string }>;
   signUp(
     email: string,
     password: string,
@@ -41,6 +61,7 @@ interface AuthContextValue {
   ): Promise<{ error?: string }>;
   signOut(): Promise<void>;
   refreshProfile(): Promise<void>;
+  redirectUserByRole(isFirstLogin?: boolean): void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -340,7 +361,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [toast]);
 
-  const signIn = useCallback(async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string, options?: { returnTo?: string }) => {
     console.log('[AuthContext] signIn called with email:', email);
 
     if (!supabase) {
@@ -381,6 +402,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log('[AuthContext] Loading profile for user:', data.user.id);
         await loadProfile(data.user.id);
       }
+
+      // ✅ NUEVO: Redirección automática después del login exitoso
+      // Almacenar información de redirección para usar después de que se actualice el estado
+      if (options?.returnTo) {
+        sessionStorage.setItem('auth_return_to', options.returnTo);
+      }
+      sessionStorage.setItem('auth_should_redirect', 'true');
 
       console.log('[AuthContext] Sign in completed successfully');
       return { error: undefined };
@@ -585,9 +613,56 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [profileLoading]);
 
+  // ✅ NUEVA función para redirección automática por rol
+  const redirectUserByRole = useCallback((isFirstLogin = false) => {
+    if (!user) return;
+    
+    const shouldRedirect = sessionStorage.getItem('auth_should_redirect');
+    const returnTo = sessionStorage.getItem('auth_return_to');
+    
+    if (shouldRedirect === 'true') {
+      // Limpiar flags de redirección
+      sessionStorage.removeItem('auth_should_redirect');
+      sessionStorage.removeItem('auth_return_to');
+      
+      // Si hay una URL específica de retorno, usarla
+      if (returnTo && returnTo !== '/login' && returnTo !== '/register') {
+        try {
+          window.history.replaceState({}, document.title, returnTo);
+          return;
+        } catch (e) {
+          console.warn('[AuthContext] Error redirecting to returnTo:', e);
+        }
+      }
+      
+      // Caso contrario, redirección automática por rol
+      const redirectPath = getRedirectPathForUser(user, isFirstLogin);
+      console.log(`[AuthContext] Redirecting ${user.role} to:`, redirectPath);
+      
+      try {
+        window.history.replaceState({}, document.title, redirectPath);
+        
+        // Disparar evento personalizado para notificar cambio de ruta
+        window.dispatchEvent(new CustomEvent('authRedirect', {
+          detail: { path: redirectPath, role: user.role, isFirstLogin }
+        }));
+      } catch (e) {
+        console.error('[AuthContext] Error during role-based redirect:', e);
+      }
+    }
+  }, [user]);
+
+  // ✅ Efecto para manejar redirección cuando el usuario se actualiza
+  useEffect(() => {
+    if (user && !loading) {
+      // Solo redirigir si acabamos de hacer login
+      redirectUserByRole(false);
+    }
+  }, [user, loading, redirectUserByRole]);
+
   return (
     <AuthContext.Provider
-      value={{ user, loading, isSigningOut, signIn, signUp, signOut, refreshProfile }}
+      value={{ user, loading, isSigningOut, signIn, signUp, signOut, refreshProfile, redirectUserByRole }}
     >
       {children}
     </AuthContext.Provider>

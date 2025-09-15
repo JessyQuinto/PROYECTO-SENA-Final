@@ -31,6 +31,12 @@ const AdminSettings = lazy(() => import('./admin/AdminSettings'));
 // Vendor modules
 const VendorDashboard = lazy(() => import('./vendor/VendorDashboard'));
 
+// Welcome/Onboarding pages
+const AdminWelcomePage = lazy(() => import('@/pages/AdminWelcome'));
+const VendorWelcomePage = lazy(() => import('@/pages/VendorWelcome'));
+const BuyerWelcomePage = lazy(() => import('@/pages/BuyerWelcome'));
+const VendorStatusPage = lazy(() => import('@/pages/VendorStatus'));
+
 // Buyer modules
 const ProductCatalog = lazy(() => import('./buyer/ProductCatalog'));
 const ProductDetail = lazy(() => import('./buyer/ProductDetail'));
@@ -90,6 +96,40 @@ export const App: React.FC = () => (
                       <Route
                         path='/reset-password'
                         element={<ResetPasswordPage />}
+                      />
+
+                      {/* Onboarding/Welcome routes */}
+                      <Route
+                        path='/admin/bienvenida'
+                        element={
+                          <ProtectedRoute roles={['admin']}>
+                            <AdminWelcomePage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path='/vendedor/bienvenida'
+                        element={
+                          <ProtectedRoute roles={['vendedor']}>
+                            <VendorWelcomePage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path='/comprador/bienvenida'
+                        element={
+                          <ProtectedRoute roles={['comprador']}>
+                            <BuyerWelcomePage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path='/vendedor/estado'
+                        element={
+                          <ProtectedRoute roles={['vendedor']}>
+                            <VendorStatusPage />
+                          </ProtectedRoute>
+                        }
                       />
 
                       {/* Protected buyer routes */}
