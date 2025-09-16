@@ -1,9 +1,62 @@
 {
+  "routes": [
+    {
+      "route": "/assets/*.js",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "Vary": "Accept-Encoding",
+        "X-Content-Type-Options": "nosniff",
+        "Content-Type": "application/javascript; charset=utf-8"
+      }
+    },
+    {
+      "route": "/js/*.js",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "Vary": "Accept-Encoding",
+        "X-Content-Type-Options": "nosniff",
+        "Content-Type": "application/javascript; charset=utf-8"
+      }
+    },
+    {
+      "route": "/assets/*.css",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "Vary": "Accept-Encoding",
+        "X-Content-Type-Options": "nosniff",
+        "Content-Type": "text/css; charset=utf-8"
+      }
+    },
+    {
+      "route": "/assets/*",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "Vary": "Accept-Encoding",
+        "X-Content-Type-Options": "nosniff"
+      }
+    },
+    {
+      "route": "/sw.js",
+      "headers": {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Content-Type": "application/javascript; charset=utf-8"
+      }
+    },
+    {
+      "route": "/manifest.json",
+      "headers": {
+        "Cache-Control": "public, max-age=86400",
+        "Content-Type": "application/manifest+json"
+      }
+    }
+  ],
   "navigationFallback": {
     "rewrite": "/index.html",
     "exclude": [
       "/assets/*",
+      "/js/*",
       "/assert/*",
+      "/api/*",
       "/favicon.svg",
       "/logo.svg",
       "/Administrador/*",
@@ -15,7 +68,8 @@
       "/Navegación principal/*",
       "/Pedidos/*",
       "/Usuario/*",
-      "/Vendedor/*"
+      "/Vendedor/*",
+      "/*.{js,mjs,css,map,png,jpg,jpeg,gif,svg,ico,webp,avif,woff,woff2,ttf,eot,json,xml,txt,wasm}"
     ]
   },
   "responseOverrides": {
@@ -41,27 +95,5 @@
     ".svg": "image/svg+xml; charset=utf-8",
     ".html": "text/html; charset=utf-8",
     ".htm": "text/html; charset=utf-8"
-  },
-  "routes": [
-    {
-      "route": "/assets/*.js",
-      "headers": {
-        "Cache-Control": "public, max-age=31536000, immutable",
-        "Content-Type": "application/javascript; charset=utf-8"
-      }
-    },
-    {
-      "route": "/assets/*.css",
-      "headers": {
-        "Cache-Control": "public, max-age=31536000, immutable",
-        "Content-Type": "text/css; charset=utf-8"
-      }
-    },
-    {
-      "route": "/assets/*",
-      "headers": {
-        "Cache-Control": "public, max-age=31536000, immutable"
-      }
-    }
-  ]
+  }
 }
