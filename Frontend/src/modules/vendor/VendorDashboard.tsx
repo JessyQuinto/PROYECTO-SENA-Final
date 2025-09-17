@@ -360,6 +360,51 @@ const VendorDashboard: React.FC = () => {
     }
   };
 
+  // Eliminar producto (intenta hard delete; si hay FKs, sugiere archivar)
+  const deleteProduct = async (p: Product) => {
+    if (
+      !confirm(
+        '¿Eliminar producto? Esta acción es irreversible y puede fallar si el producto tiene pedidos o evaluaciones. En ese caso, usa "Archivar".'
+      )
+    )
+      return;
+    try {
+      // Intentar eliminar imagen del storage si la URL es del bucket product-images
+      if (p.imagen_url && p.imagen_url.includes('/storage/v1/object/public/product-images/')) {
+        const idx = p.imagen_url.indexOf('/storage/v1/object/public/product-images/');
+        const path = p.imagen_url.substring(idx + '/storage/v1/object/public/product-images/'.length);
+        if (path) {
+          // Ignorar error de borrado de imagen (no bloquear eliminación del producto)
+          await supabase.storage.from('product-images').remove([path]).catch(() => {});
+        }
+      }
+
+      const { error } = await supabase.from('productos').delete().eq('id', p.id);
+      if (error) {
+        // 23503: violación de llave foránea (por pedidos/evaluaciones)
+        if ((error as any).code === '23503') {
+          (window as any).toast?.error(
+            'No se puede eliminar porque tiene pedidos o evaluaciones asociadas. Usa "Archivar" para ocultarlo de la tienda.',
+            { role: 'vendedor', action: 'delete' }
+          );
+          return;
+        }
+        throw error;
+      }
+
+      setProducts(prev => prev.filter(x => x.id !== p.id));
+      (window as any).toast?.success('Producto eliminado', {
+        role: 'vendedor',
+        action: 'delete',
+      });
+    } catch (e: any) {
+      (window as any).toast?.error(e?.message || 'No se pudo eliminar el producto', {
+        role: 'vendedor',
+        action: 'delete',
+      });
+    }
+  };
+
   const resetForm = () => {
     setForm({
       nombre: '',
@@ -966,6 +1011,16 @@ const VendorDashboard: React.FC = () => {
                                     >
                                       <Icon category="Estados y Feedback" name="MdiArchive" className="w-4 h-4" />
                                       <span>Archivar</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => deleteProduct(p)}
+                                      className="btn btn-danger btn-sm flex items-center gap-1"
+                                      aria-label="Eliminar producto"
+                                      title="Eliminar producto"
+                                    >
+                                      <Icon category="Vendedor" name="LineMdTrash" className="w-4 h-4" />
+                                      <span>Eliminar</span>
                                     </button>
                                     <button
                                       type="button"

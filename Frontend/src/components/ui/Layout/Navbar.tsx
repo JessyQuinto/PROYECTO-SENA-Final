@@ -3,11 +3,11 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthContext';
 import { Button } from '@/components/ui/shadcn/button';
 import ThemeToggle from '@/components/ui/ThemeToggle';
-import { cn } from '@/lib/utils';
+// import { cn } from '@/lib/utils';
 
 // Separate components for better maintainability
 import NavigationMenu from './NavigationMenu.tsx';
-import UserMenu, { UserAvatar, SignOutButton } from './UserMenu.tsx';
+import { UserAvatar, SignOutButton } from './UserMenu.tsx';
 import CartDropdown from './CartDropdown.tsx';
 import MobileMenu from './MobileMenu.tsx';
 
@@ -49,7 +49,7 @@ const Navbar: React.FC = () => {
     if (isSigningOut) {
       return navigationItems.filter(item => item.public);
     }
-    
+
     return navigationItems.filter(item => {
       if (item.public) return true;
       if (!user || loading) return false;
@@ -73,7 +73,7 @@ const Navbar: React.FC = () => {
     setNavItems(filteredNavItems);
 
     // Event handlers
-    const handleStorageChange = (e: StorageEvent | Event) => {
+    const handleStorageChange = () => {
       console.log(
         '[Navbar] Storage/logout event detected, updating navigation'
       );
@@ -104,10 +104,10 @@ const Navbar: React.FC = () => {
     };
   }, [filteredNavItems, filterNavItems, isSigningOut, navigationItems]);
 
-  const isActivePage = useCallback((path: string) => location.pathname === path, [location.pathname]);
+  // const isActivePage = useCallback((path: string) => location.pathname === path, [location.pathname]);
 
   return (
-    <nav 
+    <nav
       className='bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40 sticky top-0 z-50 safe-area-padding'
       role='navigation'
       aria-label='Navegación principal'
@@ -157,9 +157,12 @@ const Navbar: React.FC = () => {
               </div>
             )}
 
-            {/* 3. Theme toggle (optimizado para móviles) */}
-            <div className='touch-target'>
-              <ThemeToggle className='mobile-theme-toggle' />
+            {/* 3. Theme toggle
+                - Desktop only to avoid duplication on mobile (mobile toggle lives in MobileMenu)
+            */}
+            {/* Toggle de tema - solo visible en desktop */}
+            <div className="hidden md:flex items-center">
+              <ThemeToggle />
             </div>
 
             {/* 4. Sign out button (solo en desktop) */}

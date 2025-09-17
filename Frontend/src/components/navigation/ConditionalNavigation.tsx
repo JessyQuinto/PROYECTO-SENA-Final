@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/auth/AuthContext';
@@ -16,6 +16,30 @@ export const ConditionalNavigation: React.FC = () => {
     isVendorRejected,
   } = usePermissions();
 
+  // --- THEME TOGGLE ---
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    try {
+      const stored = localStorage.getItem('site-theme');
+      if (stored === 'dark' || stored === 'light') return stored;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
+    } catch {
+      return 'light';
+    }
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    try {
+      localStorage.setItem('site-theme', theme);
+    } catch {}
+  }, [theme]);
+
+  const toggleTheme = () =>
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+
+  // --- NO AUTENTICADO ---
   if (!isAuthenticated) {
     return (
       <div className="flex items-center space-x-4">
@@ -31,13 +55,26 @@ export const ConditionalNavigation: React.FC = () => {
         >
           Registrarse
         </Link>
+        {/* Theme toggle (solo en desktop, evita duplicado en mobile) */}
+        <button
+          onClick={toggleTheme}
+          className="hidden sm:inline-flex items-center justify-center p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+          aria-label="Cambiar tema"
+        >
+          {theme === 'dark' ? (
+            <Icon category="Tema" name="LineMdSunnyOutline" className="w-5 h-5" />
+          ) : (
+            <Icon category="Tema" name="LineMdMoon" className="w-5 h-5" />
+          )}
+        </button>
       </div>
     );
   }
 
+  // --- AUTENTICADO ---
   return (
     <div className="flex items-center space-x-4">
-      {/* Navegación para compradores */}
+      {/* Buyer */}
       {isBuyer && (
         <>
           <Link
@@ -65,7 +102,7 @@ export const ConditionalNavigation: React.FC = () => {
         </>
       )}
 
-      {/* Navegación para vendedores */}
+      {/* Vendor */}
       {isVendor && (
         <>
           {isVendorApproved && (
@@ -117,7 +154,7 @@ export const ConditionalNavigation: React.FC = () => {
         </>
       )}
 
-      {/* Navegación para administradores */}
+      {/* Admin */}
       {isAdmin && (
         <>
           <Link
@@ -145,7 +182,20 @@ export const ConditionalNavigation: React.FC = () => {
         </>
       )}
 
-      {/* Perfil del usuario */}
+      {/* Theme toggle (solo desktop, evita duplicado en mobile) */}
+      <button
+        onClick={toggleTheme}
+        className="hidden sm:inline-flex items-center justify-center p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+        aria-label="Cambiar tema"
+      >
+        {theme === 'dark' ? (
+          <Icon category="Tema" name="LineMdSunnyOutline" className="w-5 h-5" />
+        ) : (
+          <Icon category="Tema" name="LineMdMoon" className="w-5 h-5" />
+        )}
+      </button>
+
+      {/* Perfil */}
       <div className="relative group">
         <button className="flex items-center gap-2 text-gray-700 hover:text-primary transition-colors">
           <Icon
@@ -162,8 +212,7 @@ export const ConditionalNavigation: React.FC = () => {
             className="w-4 h-4"
           />
         </button>
-        
-        {/* Dropdown del perfil */}
+
         <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
           <div className="py-2">
             <Link

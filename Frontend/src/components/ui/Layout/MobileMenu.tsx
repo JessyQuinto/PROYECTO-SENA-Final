@@ -41,8 +41,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   const { signOut } = useAuth();
   const { items: cartItems } = useCart();
   const menuRef = useRef<HTMLDivElement>(null);
-  const firstFocusableRef = useRef<HTMLElement>(null);
-  
+
   const cartCount = cartItems.reduce(
     (sum, item) => sum + (item.cantidad || 0),
     0
@@ -51,22 +50,22 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   // Handle keyboard navigation and accessibility
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (!isOpen) return;
-    
+
     if (event.key === 'Escape') {
       onClose();
       return;
     }
-    
+
     if (event.key === 'Tab') {
       const focusableElements = menuRef.current?.querySelectorAll(
         'a, button, [tabindex]:not([tabindex="-1"])'
       );
-      
+
       if (!focusableElements || focusableElements.length === 0) return;
-      
+
       const firstElement = focusableElements[0] as HTMLElement;
       const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
-      
+
       if (event.shiftKey) {
         if (document.activeElement === firstElement) {
           event.preventDefault();
@@ -85,7 +84,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   useEffect(() => {
     if (isOpen) {
       document.addEventListener('keydown', handleKeyDown);
-      
+
       // Focus first focusable element when menu opens
       const timer = setTimeout(() => {
         const firstFocusable = menuRef.current?.querySelector(
@@ -93,7 +92,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
         ) as HTMLElement;
         firstFocusable?.focus();
       }, 100);
-      
+
       return () => {
         document.removeEventListener('keydown', handleKeyDown);
         clearTimeout(timer);
@@ -115,7 +114,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       ref={menuRef}
       id={id}
       className='
@@ -130,13 +129,12 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
       aria-label='Menú de navegación móvil'
     >
       <div className='px-4 py-6 space-y-4'>
-        {/* Theme toggle - optimizado para móviles */}
-        <div className='flex items-center justify-between py-3 px-2 rounded-lg bg-muted/30'>
-          <span className='text-sm font-medium text-foreground'>Tema</span>
-          <div className='touch-target'>
-            <ThemeToggle />
-          </div>
+        {/* Toggle de tema - solo visible en mobile */}
+        <div className="flex items-center justify-between py-2 px-2 rounded-lg bg-muted/30 md:hidden">
+          <span className="text-sm font-medium">Tema</span>
+          <ThemeToggle className="mobile-theme-toggle" />
         </div>
+
 
         {/* Cart link for buyers - optimizado para móviles */}
         {user?.role === 'comprador' && (
@@ -171,7 +169,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               <span>Carrito</span>
             </div>
             {cartCount > 0 && (
-              <span 
+              <span
                 className='
                   flex h-6 w-6 items-center justify-center 
                   rounded-full bg-destructive text-xs font-bold text-destructive-foreground
@@ -245,9 +243,9 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                   </div>
                 </div>
               </div>
-              <Button 
-                variant='outline' 
-                size='sm' 
+              <Button
+                variant='outline'
+                size='sm'
                 onClick={handleSignOut}
                 className='touch-target'
                 aria-label='Cerrar sesión'
