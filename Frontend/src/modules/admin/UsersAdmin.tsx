@@ -10,7 +10,7 @@ type UserRole = 'admin' | 'vendedor' | 'comprador';
 type VendedorEstado = 'pendiente' | 'aprobado' | 'rechazado' | null;
 
 // Definir un tipo específico para los estados que se pueden notificar
-type NotifiableVendorStatus = 'aprobado' | 'rechazado' | 'bloqueado' | 'reactivado' | 'eliminado';
+// (removed) NotifiableVendorStatus unused
 
 interface UsuarioRow {
   id: string;
@@ -54,22 +54,8 @@ const UsersAdmin: React.FC = () => {
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false); // Deshabilitado por defecto
   const [refreshInterval, setRefreshInterval] = useState(60000); // 60 segundos por defecto
-
-  // 🆕 NUEVO: Estados para el modal de detalles de usuario
-  const [selectedUser, setSelectedUser] = useState<UsuarioRow | null>(null);
-  const [showUserModal, setShowUserModal] = useState(false);
-  
-  // Función para abrir el modal de detalles
-  const openUserDetails = (user: UsuarioRow) => {
-    setSelectedUser(user);
-    setShowUserModal(true);
-  };
-  
-  // Función para cerrar el modal
-  const closeUserModal = () => {
-    setSelectedUser(null);
-    setShowUserModal(false);
-  };
+  // Expandible en línea (mobile-first) para detalles de usuario
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
   
   // Super admin único autorizado (el único que puede modificar otros admins)
   const SUPER_ADMIN_EMAIL = 'admin@tesoros-choco.com';
@@ -359,39 +345,14 @@ const UsersAdmin: React.FC = () => {
     }
   };
 
-  // Función para verificar si un vendedor tiene productos (para mostrar advertencia)
-  const [vendedoresConProductos, setVendedoresConProductos] = useState<
-    Set<string>
-  >(new Set());
-
-  const checkVendedorProductos = async (vendedorId: string) => {
-    try {
-      const { data: productos, error } = await supabase
-        .from('productos')
-        .select('id')
-        .eq('vendedor_id', vendedorId)
-        .limit(1);
-
-      if (!error && productos && productos.length > 0) {
-        setVendedoresConProductos(prev => new Set(prev).add(vendedorId));
-      }
-    } catch (e) {
-      console.warn('Error checking vendor products:', e);
-    }
-  };
-
-  // Verificar productos de vendedores al cargar
-  useEffect(() => {
-    const vendedores = users.filter(u => u.role === 'vendedor');
-    vendedores.forEach(v => checkVendedorProductos(v.id));
-  }, [users]);
+  // (removed) vendedoresConProductos tracking - not used anymore
 
   const setVendorStatus = async (
     id: string,
     estado: Exclude<VendedorEstado, null>
   ) => {
     // Usar la función RPC simplificada en lugar de UPDATE directo
-    const { data, error } = await supabase.rpc('simple_admin_update_vendor_status', {
+    const { error } = await supabase.rpc('simple_admin_update_vendor_status', {
       target_user_id: id,
       new_status: estado
     });
@@ -918,12 +879,13 @@ const UsersAdmin: React.FC = () => {
                           <th className='px-6 py-4 text-left text-sm font-semibold text-gray-700'>Usuario</th>
                           <th className='px-6 py-4 text-left text-sm font-semibold text-gray-700'>Rol</th>
                           <th className='px-6 py-4 text-left text-sm font-semibold text-gray-700'>Estado</th>
-                          <th className='px-6 py-4 text-left text-sm font-semibold text-gray-700'>Acciones</th>
+                          <th className='px-6 py-4 text-left text-sm font-semibold text-gray-700'>Detalles</th>
                         </tr>
                       </thead>
                       <tbody className='divide-y divide-gray-200'>
                         {paginatedUsers.map(u => (
-                          <tr key={u.id} className='hover:bg-gray-50 transition-colors duration-150'>
+                          <React.Fragment key={u.id}>
+                          <tr className='hover:bg-gray-50 transition-colors duration-150'>
                             {/* Información básica del usuario */}
                             <td className='px-6 py-4'>
                               <div className='flex items-center space-x-3'>
@@ -972,18 +934,214 @@ const UsersAdmin: React.FC = () => {
                               </div>
                             </td>
                             
-                            {/* Acciones */}
+                            {/* Detalles (toggle) */}
                             <td className='px-6 py-4'>
                               <Button
-                                onClick={() => openUserDetails(u)}
+                                onClick={() => setExpandedUserId(prev => prev === u.id ? null : u.id)}
                                 className='inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white'
                                 size='sm'
+                                aria-expanded={expandedUserId === u.id}
+                                aria-controls={`user-details-${u.id}`}
                               >
                                 <Icon category='Interface' name='MdiEye' className='w-4 h-4' />
-                                Ver Detalles
+                                {expandedUserId === u.id ? 'Ocultar detalles' : 'Ver detalles'}
                               </Button>
                             </td>
                           </tr>
+                          {expandedUserId === u.id && (
+                            <tr>
+                              <td id={`user-details-${u.id}`} colSpan={4} className='px-6 pb-6 bg-gray-50'>
+                                <div className='border rounded-lg p-4 bg-white shadow-sm'>
+                                  {/* Información general */}
+                                  <div className='mb-4'>
+                                    <h3 className='text-base font-semibold mb-3 flex items-center gap-2'>
+                                      <Icon category='Interface' name='MdiInformation' className='w-5 h-5' />
+                                      Información General
+                                    </h3>
+                                    <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+                                      <div>
+                                        <label className='text-sm font-medium text-gray-700'>ID de Usuario</label>
+                                        <p className='text-sm text-gray-900 font-mono break-all'>{u.id}</p>
+                                      </div>
+                                      <div>
+                                        <label className='text-sm font-medium text-gray-700'>Fecha de Registro</label>
+                                        <p className='text-sm text-gray-900'>
+                                          {u.created_at ? new Date(u.created_at).toLocaleString() : 'No disponible'}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <label className='text-sm font-medium text-gray-700'>Rol Actual</label>
+                                        <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
+                                          u.role === 'admin' ? 'bg-red-100 text-red-800'
+                                          : u.role === 'vendedor' ? 'bg-yellow-100 text-yellow-800'
+                                          : 'bg-blue-100 text-blue-800'
+                                        }`}>
+                                          {u.role === 'admin' ? '🛡️ Administrador' 
+                                           : u.role === 'vendedor' ? '🏪 Vendedor' 
+                                           : '🛒 Comprador'}
+                                        </span>
+                                      </div>
+                                      <div>
+                                        <label className='text-sm font-medium text-gray-700'>Estado de Cuenta</label>
+                                        <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
+                                          u.bloqueado ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                                        }`}>
+                                          {u.bloqueado ? '🚫 Bloqueado' : '✅ Activo'}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Gestión de rol */}
+                                  {u.role !== 'admin' && canShowButton(u, 'changeRole') && (
+                                    <div className='mb-4'>
+                                      <h3 className='text-base font-semibold mb-3 flex items-center gap-2'>
+                                        <Icon category='Interface' name='MdiAccountSwitch' className='w-5 h-5' />
+                                        Gestión de Rol
+                                      </h3>
+                                      <div className='space-y-3'>
+                                        <div>
+                                          <label className='block text-sm font-medium text-gray-700 mb-2'>Cambiar rol de usuario:</label>
+                                          <select
+                                            className='w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed'
+                                            value={u.role || 'comprador'}
+                                            disabled={changingRoles.has(u.id)}
+                                            onChange={e => {
+                                              const newRole = e.target.value as 'vendedor' | 'comprador' | 'admin';
+                                              if (confirm(`¿Estás seguro de que quieres cambiar el rol de ${u.email} de "${u.role}" a "${newRole}"?`)) {
+                                                changeUserRole(u.id, newRole);
+                                              } else {
+                                                e.target.value = u.role || 'comprador';
+                                              }
+                                            }}
+                                          >
+                                            <option value='comprador'>🛒 Comprador</option>
+                                            <option value='vendedor'>🏪 Vendedor</option>
+                                            {currentUser?.email === SUPER_ADMIN_EMAIL && (
+                                              <option value='admin'>🛡️ Administrador</option>
+                                            )}
+                                          </select>
+                                        </div>
+                                        <div className='space-y-2'>
+                                          {u.role === 'vendedor' && (
+                                            <div className='text-sm text-orange-600 bg-orange-50 px-3 py-2 rounded'>
+                                              ⚠️ Al cambiar a comprador, se perderán todos los productos registrados
+                                            </div>
+                                          )}
+                                          {u.role === 'comprador' && (
+                                            <div className='text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded'>
+                                              ℹ️ Al cambiar a vendedor, el usuario requerirá aprobación administrativa
+                                            </div>
+                                          )}
+                                          {u.role === 'vendedor' && (vendorProducts.get(u.id) || 0) > 0 && (
+                                            <div className='text-sm text-red-600 bg-red-50 px-3 py-2 rounded font-medium'>
+                                              🔒 No se puede cambiar el rol: el usuario tiene {vendorProducts.get(u.id)} productos registrados
+                                            </div>
+                                          )}
+                                          {changingRoles.has(u.id) && (
+                                            <div className='flex items-center gap-2 text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded'>
+                                              <div className='loading loading-spinner loading-sm'></div>
+                                              <span>Procesando cambio de rol...</span>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Gestión específica para vendedores */}
+                                  {u.role === 'vendedor' && (
+                                    <div className='mb-4'>
+                                      <h3 className='text-base font-semibold mb-3 flex items-center gap-2'>
+                                        <Icon category='Interface' name='MdiStore' className='w-5 h-5' />
+                                        Gestión de Vendedor
+                                      </h3>
+                                      <div className='space-y-3'>
+                                        <div>
+                                          <label className='block text-sm font-medium text-gray-700 mb-2'>Estado de aprobación:</label>
+                                          <span className={`inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium ${
+                                            u.vendedor_estado === 'aprobado' ? 'bg-green-100 text-green-800'
+                                            : u.vendedor_estado === 'rechazado' ? 'bg-red-100 text-red-800'
+                                            : 'bg-yellow-100 text-yellow-800'
+                                          }`}>
+                                            {u.vendedor_estado === 'aprobado' && <Icon category='Interface' name='MdiCheckCircle' className='w-4 h-4' />}
+                                            {u.vendedor_estado === 'pendiente' && <Icon category='Interface' name='MdiClock' className='w-4 h-4' />}
+                                            {u.vendedor_estado === 'rechazado' && <Icon category='Interface' name='MdiCloseCircle' className='w-4 h-4' />}
+                                            {u.vendedor_estado === 'aprobado' ? 'Aprobado' 
+                                             : u.vendedor_estado === 'rechazado' ? 'Rechazado'
+                                             : 'Pendiente de aprobación'}
+                                          </span>
+                                        </div>
+                                        {canShowButton(u, 'vendorActions') && (
+                                          <div className='flex flex-wrap gap-3'>
+                                            <Button onClick={() => setVendorStatus(u.id, 'aprobado')} className='bg-green-600 hover:bg-green-700 text-white' size='sm'>
+                                              <Icon category='Interface' name='MdiCheck' className='w-4 h-4 mr-2' />
+                                              Aprobar Vendedor
+                                            </Button>
+                                            <Button onClick={() => setVendorStatus(u.id, 'rechazado')} className='bg-red-600 hover:bg-red-700 text-white' size='sm'>
+                                              <Icon category='Interface' name='MdiClose' className='w-4 h-4 mr-2' />
+                                              Rechazar Vendedor
+                                            </Button>
+                                          </div>
+                                        )}
+                                        <div>
+                                          <label className='block text-sm font-medium text-gray-700 mb-2'>Productos registrados:</label>
+                                          <span className='inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 text-sm rounded-full'>
+                                            <Icon category='Interface' name='MdiPackageVariant' className='w-4 h-4' />
+                                            {vendorProducts.get(u.id) || 0} productos
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Acciones de administración */}
+                                  <div className='mb-2'>
+                                    <h3 className='text-base font-semibold mb-3 flex items-center gap-2'>
+                                      <Icon category='Interface' name='MdiCog' className='w-5 h-5' />
+                                      Acciones de Administración
+                                    </h3>
+                                    <div className='flex flex-wrap gap-3'>
+                                      {canShowButton(u, 'blockActions') && (
+                                        <>
+                                          {!u.bloqueado && (
+                                            <Button onClick={() => suspend(u.id, true)} className='bg-orange-600 hover:bg-orange-700 text-white' size='sm'>
+                                              <Icon category='Interface' name='MdiBlockHelper' className='w-4 h-4 mr-2' />
+                                              Bloquear Usuario
+                                            </Button>
+                                          )}
+                                          {u.bloqueado && (
+                                            <Button onClick={() => suspend(u.id, false)} className='bg-green-600 hover:bg-green-700 text-white' size='sm'>
+                                              <Icon category='Interface' name='MdiCheckCircle' className='w-4 h-4 mr-2' />
+                                              Desbloquear Usuario
+                                            </Button>
+                                          )}
+                                        </>
+                                      )}
+                                      {canShowButton(u, 'deleteUser') && (
+                                        <Button onClick={() => removeUser(u.id)} className='bg-red-600 hover:bg-red-700 text-white' size='sm'>
+                                          <Icon category='Interface' name='MdiDelete' className='w-4 h-4 mr-2' />
+                                          Eliminar Usuario
+                                        </Button>
+                                      )}
+                                    </div>
+                                    {u.email === SUPER_ADMIN_EMAIL && (
+                                      <div className='mt-3 text-sm text-green-600 bg-green-50 px-3 py-2 rounded'>
+                                        👑 Este es el Super Administrador del sistema. Solo puede ser modificado por sí mismo.
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  <div className='mt-4'>
+                                    <Button variant='outline' size='sm' onClick={() => setExpandedUserId(null)}>
+                                      Cerrar
+                                    </Button>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                          </React.Fragment>
                         ))}
                       </tbody>
                     </table>
@@ -1046,312 +1204,10 @@ const UsersAdmin: React.FC = () => {
             </>
           )}
 
-          {/* Modal de detalles del usuario */}
-          {showUserModal && selectedUser && (
-            <UserDetailsModal
-              user={selectedUser}
-              currentUser={currentUser}
-              vendorProducts={vendorProducts}
-              cartItems={cartItems}
-              changingRoles={changingRoles}
-              canShowButton={canShowButton}
-              onClose={closeUserModal}
-              onVendorStatusChange={setVendorStatus}
-              onUserBlock={suspend}
-              onUserDelete={removeUser}
-              onRoleChange={changeUserRole}
-              SUPER_ADMIN_EMAIL={SUPER_ADMIN_EMAIL}
-            />
-          )}
+          {/* Modal eliminado: detalles ahora se muestran en línea */}
         </div>
       </div>
     </AdminLayout>
   );
 };
-
-// 🆕 NUEVO: Componente modal para detalles del usuario
-interface UserDetailsModalProps {
-  user: UsuarioRow;
-  currentUser: { id: string; role: string; email?: string } | null;
-  vendorProducts: Map<string, number>;
-  cartItems: any[];
-  changingRoles: Set<string>;
-  canShowButton: (user: UsuarioRow, buttonType: string) => boolean;
-  onClose: () => void;
-  onVendorStatusChange: (id: string, estado: 'aprobado' | 'rechazado') => void;
-  onUserBlock: (id: string, blocked: boolean) => void;
-  onUserDelete: (id: string) => void;
-  onRoleChange: (id: string, newRole: 'vendedor' | 'comprador' | 'admin') => void;
-  SUPER_ADMIN_EMAIL: string;
-}
-
-const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
-  user,
-  currentUser,
-  vendorProducts,
-  cartItems,
-  changingRoles,
-  canShowButton,
-  onClose,
-  onVendorStatusChange,
-  onUserBlock,
-  onUserDelete,
-  onRoleChange,
-  SUPER_ADMIN_EMAIL,
-}) => {
-  return (
-    <div className='fixed inset-0 z-50 overflow-y-auto'>
-      <div className='flex min-h-screen items-center justify-center p-4'>
-        <div className='fixed inset-0 bg-black bg-opacity-50 transition-opacity' onClick={onClose} />
-        
-        <div className='relative bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto'>
-          {/* Header del modal */}
-          <div className='sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between'>
-            <div className='flex items-center space-x-3'>
-              <div className='h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg'>
-                {(user.nombre_completo || user.email || 'U').charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <h2 className='text-xl font-semibold text-gray-900'>
-                  {user.nombre_completo || 'Sin nombre'}
-                </h2>
-                <p className='text-sm text-gray-600'>{user.email}</p>
-              </div>
-            </div>
-            <Button onClick={onClose} variant='outline' size='sm'>
-              <Icon category='Interface' name='MdiClose' className='w-4 h-4' />
-              Cerrar
-            </Button>
-          </div>
-
-          {/* Contenido del modal */}
-          <div className='p-6 space-y-6'>
-            {/* Información general */}
-            <Card>
-              <CardContent className='p-4'>
-                <h3 className='text-lg font-semibold mb-4 flex items-center gap-2'>
-                  <Icon category='Interface' name='MdiInformation' className='w-5 h-5' />
-                  Información General
-                </h3>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                  <div>
-                    <label className='text-sm font-medium text-gray-700'>ID de Usuario</label>
-                    <p className='text-sm text-gray-900 font-mono'>{user.id}</p>
-                  </div>
-                  <div>
-                    <label className='text-sm font-medium text-gray-700'>Fecha de Registro</label>
-                    <p className='text-sm text-gray-900'>
-                      {user.created_at ? new Date(user.created_at).toLocaleString() : 'No disponible'}
-                    </p>
-                  </div>
-                  <div>
-                    <label className='text-sm font-medium text-gray-700'>Rol Actual</label>
-                    <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
-                      user.role === 'admin' ? 'bg-red-100 text-red-800'
-                      : user.role === 'vendedor' ? 'bg-yellow-100 text-yellow-800'
-                      : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {user.role === 'admin' ? '🛡️ Administrador' 
-                       : user.role === 'vendedor' ? '🏪 Vendedor' 
-                       : '🛒 Comprador'}
-                    </span>
-                  </div>
-                  <div>
-                    <label className='text-sm font-medium text-gray-700'>Estado de Cuenta</label>
-                    <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
-                      user.bloqueado ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                    }`}>
-                      {user.bloqueado ? '🚫 Bloqueado' : '✅ Activo'}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Gestión de rol */}
-            {user.role !== 'admin' && canShowButton(user, 'changeRole') && (
-              <Card>
-                <CardContent className='p-4'>
-                  <h3 className='text-lg font-semibold mb-4 flex items-center gap-2'>
-                    <Icon category='Interface' name='MdiAccountSwitch' className='w-5 h-5' />
-                    Gestión de Rol
-                  </h3>
-                  <div className='space-y-4'>
-                    <div>
-                      <label className='block text-sm font-medium text-gray-700 mb-2'>
-                        Cambiar rol de usuario:
-                      </label>
-                      <select
-                        className='w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed'
-                        value={user.role || 'comprador'}
-                        disabled={changingRoles.has(user.id)}
-                        onChange={e => {
-                          const newRole = e.target.value as 'vendedor' | 'comprador' | 'admin';
-                          if (confirm(`¿Estás seguro de que quieres cambiar el rol de ${user.email} de "${user.role}" a "${newRole}"?`)) {
-                            onRoleChange(user.id, newRole);
-                          } else {
-                            e.target.value = user.role || 'comprador';
-                          }
-                        }}
-                      >
-                        <option value='comprador'>🛒 Comprador</option>
-                        <option value='vendedor'>🏪 Vendedor</option>
-                        {currentUser?.email === SUPER_ADMIN_EMAIL && (
-                          <option value='admin'>🛡️ Administrador</option>
-                        )}
-                      </select>
-                    </div>
-                    
-                    {/* Información sobre restricciones */}
-                    <div className='space-y-2'>
-                      {user.role === 'vendedor' && (
-                        <div className='text-sm text-orange-600 bg-orange-50 px-3 py-2 rounded'>
-                          ⚠️ Al cambiar a comprador, se perderán todos los productos registrados
-                        </div>
-                      )}
-                      {user.role === 'comprador' && (
-                        <div className='text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded'>
-                          ℹ️ Al cambiar a vendedor, el usuario requerirá aprobación administrativa
-                        </div>
-                      )}
-                      
-                      {user.role === 'vendedor' && (vendorProducts.get(user.id) || 0) > 0 && (
-                        <div className='text-sm text-red-600 bg-red-50 px-3 py-2 rounded font-medium'>
-                          🔒 No se puede cambiar el rol: el usuario tiene {vendorProducts.get(user.id)} productos registrados
-                        </div>
-                      )}
-                      
-                      {changingRoles.has(user.id) && (
-                        <div className='flex items-center gap-2 text-sm text-blue-600 bg-blue-50 px-33 py-2 rounded'>
-                          <div className='loading loading-spinner loading-sm'></div>
-                          <span>Procesando cambio de rol...</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Gestión específica para vendedores */}
-            {user.role === 'vendedor' && (
-              <Card>
-                <CardContent className='p-4'>
-                  <h3 className='text-lg font-semibold mb-4 flex items-center gap-2'>
-                    <Icon category='Interface' name='MdiStore' className='w-5 h-5' />
-                    Gestión de Vendedor
-                  </h3>
-                  <div className='space-y-4'>
-                    <div>
-                      <label className='block text-sm font-medium text-gray-700 mb-2'>
-                        Estado de aprobación:
-                      </label>
-                      <span className={`inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium ${
-                        user.vendedor_estado === 'aprobado' ? 'bg-green-100 text-green-800'
-                        : user.vendedor_estado === 'rechazado' ? 'bg-red-100 text-red-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {user.vendedor_estado === 'aprobado' && <Icon category='Interface' name='MdiCheckCircle' className='w-4 h-4' />}
-                        {user.vendedor_estado === 'pendiente' && <Icon category='Interface' name='MdiClock' className='w-4 h-4' />}
-                        {user.vendedor_estado === 'rechazado' && <Icon category='Interface' name='MdiCloseCircle' className='w-4 h-4' />}
-                        {user.vendedor_estado === 'aprobado' ? 'Aprobado' 
-                         : user.vendedor_estado === 'rechazado' ? 'Rechazado'
-                         : 'Pendiente de aprobación'}
-                      </span>
-                    </div>
-                    
-                    {canShowButton(user, 'vendorActions') && (
-                      <div className='flex gap-3'>
-                        <Button
-                          onClick={() => onVendorStatusChange(user.id, 'aprobado')}
-                          className='bg-green-600 hover:bg-green-700 text-white'
-                          size='sm'
-                        >
-                          <Icon category='Interface' name='MdiCheck' className='w-4 h-4 mr-2' />
-                          Aprobar Vendedor
-                        </Button>
-                        <Button
-                          onClick={() => onVendorStatusChange(user.id, 'rechazado')}
-                          className='bg-red-600 hover:bg-red-700 text-white'
-                          size='sm'
-                        >
-                          <Icon category='Interface' name='MdiClose' className='w-4 h-4 mr-2' />
-                          Rechazar Vendedor
-                        </Button>
-                      </div>
-                    )}
-                    
-                    <div>
-                      <label className='block text-sm font-medium text-gray-700 mb-2'>
-                        Productos registrados:
-                      </label>
-                      <span className='inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 text-sm rounded-full'>
-                        <Icon category='Interface' name='MdiPackageVariant' className='w-4 h-4' />
-                        {vendorProducts.get(user.id) || 0} productos
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Acciones de administración */}
-            <Card>
-              <CardContent className='p-4'>
-                <h3 className='text-lg font-semibold mb-4 flex items-center gap-2'>
-                  <Icon category='Interface' name='MdiCog' className='w-5 h-5' />
-                  Acciones de Administración
-                </h3>
-                <div className='flex flex-wrap gap-3'>
-                  {canShowButton(user, 'blockActions') && (
-                    <>
-                      {!user.bloqueado && (
-                        <Button
-                          onClick={() => onUserBlock(user.id, true)}
-                          className='bg-orange-600 hover:bg-orange-700 text-white'
-                          size='sm'
-                        >
-                          <Icon category='Interface' name='MdiBlockHelper' className='w-4 h-4 mr-2' />
-                          Bloquear Usuario
-                        </Button>
-                      )}
-                      {user.bloqueado && (
-                        <Button
-                          onClick={() => onUserBlock(user.id, false)}
-                          className='bg-green-600 hover:bg-green-700 text-white'
-                          size='sm'
-                        >
-                          <Icon category='Interface' name='MdiCheckCircle' className='w-4 h-4 mr-2' />
-                          Desbloquear Usuario
-                        </Button>
-                      )}
-                    </>
-                  )}
-                  
-                  {canShowButton(user, 'deleteUser') && (
-                    <Button
-                      onClick={() => onUserDelete(user.id)}
-                      className='bg-red-600 hover:bg-red-700 text-white'
-                      size='sm'
-                    >
-                      <Icon category='Interface' name='MdiDelete' className='w-4 h-4 mr-2' />
-                      Eliminar Usuario
-                    </Button>
-                  )}
-                </div>
-                
-                {user.email === SUPER_ADMIN_EMAIL && (
-                  <div className='mt-4 text-sm text-green-600 bg-green-50 px-3 py-2 rounded'>
-                    👑 Este es el Super Administrador del sistema. Solo puede ser modificado por sí mismo.
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 export default UsersAdmin;
