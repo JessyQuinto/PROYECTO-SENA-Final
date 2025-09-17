@@ -1,6 +1,6 @@
 import React, { lazy, Suspense } from 'react';
 import { AuthProvider } from '@/auth/AuthContext';
-import { BrowserRouter, Routes, Route, FutureConfig } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, FutureConfig, Navigate } from 'react-router-dom';
 import MainLayout from '@/components/ui/Layout/MainLayout';
 import { Home } from '@/pages/Home';
 import { ProtectedRoute } from './ProtectedRoute';
@@ -48,6 +48,7 @@ const OrderReceiptPage = lazy(() => import('./buyer/OrderReceiptPage'));
 const OrderDetailPage = lazy(() => import('./buyer/OrderDetailPage'));
 const BuyerProfile = lazy(() => import('./buyer/BuyerProfile'));
 const BuyerProfilesManager = lazy(() => import('./buyer/ProfilesManager'));
+const NotFoundPage = lazy(() => import('@/pages/NotFound'));
 
 // Loading component
 const LoadingSpinner = () => (
@@ -143,11 +144,7 @@ export const App: React.FC = () => (
                       />
                       <Route
                         path='/pagar'
-                        element={
-                          <ProtectedRoute roles={['comprador']}>
-                            <CheckoutPage />
-                          </ProtectedRoute>
-                        }
+                        element={<Navigate to='/checkout' replace />}
                       />
                       <Route
                         path='/checkout'
@@ -275,12 +272,10 @@ export const App: React.FC = () => (
                       />
                       <Route
                         path='/vendedor/dashboard'
-                        element={
-                          <ProtectedRoute roles={['vendedor']}>
-                            <VendorDashboard />
-                          </ProtectedRoute>
-                        }
+                        element={<Navigate to='/vendedor' replace />}
                       />
+                      {/* 404 - Not Found */}
+                      <Route path='*' element={<NotFoundPage />} />
                     </Routes>
                   </Suspense>
                 </MainLayout>
