@@ -92,7 +92,7 @@ return (
 
         {infoMessage && (
           <Alert variant="info" className="mb-4">
-            <Icon name="LucideInfo" className="w-4 h-4" />
+            <Icon category="General" name="LucideInfo" className="w-4 h-4" />
             <AlertDescription className="text-sm">{infoMessage}</AlertDescription>
           </Alert>
         )}

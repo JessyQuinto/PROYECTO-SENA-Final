@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/useToast';
 import { Button } from '@/components/ui/shadcn/button';
 import { supabase } from '@/lib/supabaseClient';
 import { useEmailVerificationWatcher } from '@/hooks/useEmailVerificationWatcher';
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 const VerifyEmailPage: React.FC = () => {
   const location = useLocation();
@@ -15,7 +16,7 @@ const VerifyEmailPage: React.FC = () => {
   const handleVerificationSuccess = () => {
     toast.success('¡Cuenta verificada exitosamente! 🎉', { 
       action: 'login',
-      duration: 3000 
+      durationMs: 3000 
     });
     
     // ✅ NUEVO: Redirección automática con delay para mejor UX
@@ -34,7 +35,7 @@ const VerifyEmailPage: React.FC = () => {
 
   // ✅ NUEVO: Detección adicional de cambios de sesión
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: any, session: any) => {
       if (event === 'SIGNED_IN' && session?.user) {
         // Verificar si el email está confirmado
         const isVerified = Boolean(

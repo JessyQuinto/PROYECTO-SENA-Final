@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React, { lazy, Suspense } from 'react';
 import { AuthProvider } from '@/auth/AuthContext';
 import { BrowserRouter, Routes, Route, FutureConfig } from 'react-router-dom';
 import MainLayout from '@/components/ui/Layout/MainLayout';
@@ -267,6 +267,14 @@ export const App: React.FC = () => (
                       {/* Protected vendor routes */}
                       <Route
                         path='/vendedor'
+                        element={
+                          <ProtectedRoute roles={['vendedor']}>
+                            <VendorDashboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path='/vendedor/dashboard'
                         element={
                           <ProtectedRoute roles={['vendedor']}>
                             <VendorDashboard />

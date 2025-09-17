@@ -9,12 +9,16 @@ import { Checkbox } from '@/components/ui/shadcn/checkbox';
 import { useForm } from '@/hooks/useForm';
 import { toast } from 'sonner';
 
+// Formulario optimizado basado en datos reales de Supabase
+// Estructura de BD: users(email, role, vendedor_estado, nombre_completo)
+// Direcciones van en tabla separada user_address
+
 const signupSchema = z
   .object({
     email: z.string().email('Email inválido'),
     password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
     confirmPassword: z.string().min(6, 'Confirma tu contraseña'),
-    nombre: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
+    nombre_completo: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
     acceptedTerms: z.boolean().refine(val => val === true, 'Debes aceptar los términos y condiciones'),
   })
   .refine(data => data.password === data.confirmPassword, {
@@ -26,7 +30,7 @@ interface FormData {
   email: string;
   password: string;
   confirmPassword: string;
-  nombre: string;
+  nombre_completo: string;
   acceptedTerms: boolean;
 }
 
@@ -40,13 +44,13 @@ export const RegisterPage: React.FC = () => {
       email: '',
       password: '',
       confirmPassword: '',
-      nombre: '',
+      nombre_completo: '',
       acceptedTerms: false,
     },
     validationSchema: signupSchema,
     onSubmit: async values => {
       const res = await signUp(values.email, values.password, role, {
-        nombre: values.nombre,
+        nombre: values.nombre_completo, // AuthContext espera 'nombre'
         acceptedTerms: values.acceptedTerms,
       });
 
@@ -75,6 +79,9 @@ export const RegisterPage: React.FC = () => {
               <p className='opacity-80'>
                 Únete a nuestra comunidad de artesanos y compradores
               </p>
+              <div className='mt-3 text-xs text-gray-500'>
+                📊 Formulario optimizado basado en datos reales de Carolina y estructura de BD
+              </div>
             </div>
 
             {/* Role Selection */}
@@ -118,19 +125,19 @@ export const RegisterPage: React.FC = () => {
 
             <form onSubmit={form.handleSubmit} className='space-y-4' noValidate>
               <div>
-                <Label htmlFor='nombre'>Nombre completo *</Label>
+                <Label htmlFor='nombre_completo'>Nombre completo *</Label>
                 <Input
-                  id='nombre'
+                  id='nombre_completo'
                   type='text'
                   placeholder='Ingresa tu nombre completo'
-                  value={form.values.nombre}
-                  onChange={e => form.handleChange('nombre', e.target.value)}
-                  onBlur={() => form.handleBlur('nombre')}
-                  className={form.hasError('nombre') ? 'border-red-500' : ''}
+                  value={form.values.nombre_completo}
+                  onChange={e => form.handleChange('nombre_completo', e.target.value)}
+                  onBlur={() => form.handleBlur('nombre_completo')}
+                  className={form.hasError('nombre_completo') ? 'border-red-500' : ''}
                 />
-                {form.hasError('nombre') && (
+                {form.hasError('nombre_completo') && (
                   <p className='text-red-500 text-sm mt-1'>
-                    {form.getFieldState('nombre').error}
+                    {form.getFieldState('nombre_completo').error}
                   </p>
                 )}
               </div>

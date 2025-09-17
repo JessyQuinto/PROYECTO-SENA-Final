@@ -84,12 +84,11 @@ export const productionCSP: Partial<CSPDirectives> = {
   'default-src': ["'self'"],
   'script-src': [
     "'self'",
-    "'sha256-[HASH]'", // Replace with actual hash of inline scripts
     'https://cdn.jsdelivr.net',
   ],
   'style-src': [
     "'self'",
-    "'sha256-[HASH]'", // Replace with actual hash of inline styles
+    "'unsafe-inline'", // Temporary for styled components
     'https://fonts.googleapis.com',
   ],
   'img-src': [
