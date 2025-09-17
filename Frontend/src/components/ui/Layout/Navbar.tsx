@@ -112,7 +112,7 @@ const Navbar: React.FC = () => {
       role='navigation'
       aria-label='Navegación principal'
     >
-      <div className='mobile-container mx-auto'>
+  <div className='mobile-container mx-auto px-2 md:px-0'>
         <div className='flex items-center justify-between h-14 md:h-14'>
           {/* Logo optimizado para móviles */}
           <Link
