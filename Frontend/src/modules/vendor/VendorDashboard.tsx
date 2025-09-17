@@ -64,7 +64,9 @@ const VendorDashboard: React.FC = () => {
   useVendorStatusListener();
   const [stats, setStats] = useState<VendorStats | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
+  // Producto expandido en la lista (para ver detalles/acciones)
+  const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
+  const [orders] = useState<Order[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItemRowUI[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
@@ -807,7 +809,7 @@ const VendorDashboard: React.FC = () => {
                         Calificación
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Acciones
+                        Detalles
                       </th>
                     </tr>
                   </thead>
@@ -817,7 +819,8 @@ const VendorDashboard: React.FC = () => {
                       const productRating = Math.floor(Math.random() * 2) + 3; // Mock rating between 3-5
                       
                       return (
-                        <tr key={p.id} className="hover:bg-gray-50">
+                        <React.Fragment key={p.id}>
+                        <tr className="hover:bg-gray-50">
                           <td className="px-4 py-3 whitespace-nowrap">
                             <div className="flex items-center">
                               {p.imagen_url ? (
@@ -891,60 +894,93 @@ const VendorDashboard: React.FC = () => {
                             </div>
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => {
-                                  setForm({
-                                    id: p.id,
-                                    nombre: p.nombre,
-                                    descripcion: p.descripcion || '',
-                                    precio: String(p.precio),
-                                    stock: String(p.stock),
-                                    categoria_id: p.categoria_id || '',
-                                    imagen_url: p.imagen_url || null,
-                                  });
-                                  setActiveTab('add-product');
-                                }}
-                                className="text-blue-600 hover:text-blue-900 flex items-center gap-1"
-                                title="Editar producto"
-                              >
-                                <Icon
-                                  category="Estados y Feedback"
-                                  name="MdiPencil"
-                                  className="w-4 h-4"
-                                />
-                              </button>
-                              
-                              <button
-                                onClick={() => toggleProductStatus(p.id, p.estado)}
-                                className={`flex items-center gap-1 ${
-                                  p.estado === 'activo'
-                                    ? 'text-orange-600 hover:text-orange-900'
-                                    : 'text-green-600 hover:text-green-900'
-                                }`}
-                                title={p.estado === 'activo' ? 'Desactivar' : 'Activar'}
-                              >
-                                <Icon
-                                  category="Estados y Feedback"
-                                  name={p.estado === 'activo' ? 'MdiPause' : 'MdiPlay'}
-                                  className="w-4 h-4"
-                                />
-                              </button>
-                              
-                              <button
-                                onClick={() => archiveProduct(p.id, true)}
-                                className="text-red-600 hover:text-red-900 flex items-center gap-1"
-                                title="Archivar producto"
-                              >
-                                <Icon
-                                  category="Estados y Feedback"
-                                  name="MdiArchive"
-                                  className="w-4 h-4"
-                                />
-                              </button>
-                            </div>
+                            <button
+                              type="button"
+                              className="btn btn-outline btn-xs"
+                              onClick={() => setExpandedProductId(prev => prev === p.id ? null : p.id)}
+                              aria-expanded={expandedProductId === p.id}
+                              aria-controls={`product-details-${p.id}`}
+                            >
+                              {expandedProductId === p.id ? 'Ocultar detalles' : 'Ver detalles'}
+                            </button>
                           </td>
                         </tr>
+                        {expandedProductId === p.id && (
+                          <tr>
+                            <td colSpan={6} className="px-4 pb-4" id={`product-details-${p.id}`}>
+                              <div className="border rounded-lg p-4 bg-gray-50">
+                                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                                  <div className="flex items-start gap-3">
+                                    {p.imagen_url ? (
+                                      <img src={p.imagen_url} alt={p.nombre} className="w-16 h-16 rounded-md object-cover" />
+                                    ) : (
+                                      <div className="w-16 h-16 rounded-md bg-gray-200 flex items-center justify-center">
+                                        <Icon category="Catálogo y producto" name="MynauiImage" className="w-6 h-6 text-gray-400" />
+                                      </div>
+                                    )}
+                                    <div>
+                                      <p className="font-medium text-gray-900">{p.nombre}</p>
+                                      {p.descripcion && (
+                                        <p className="text-sm text-gray-600 mt-1 line-clamp-3">{p.descripcion}</p>
+                                      )}
+                                      <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-600">
+                                        <span>Precio: <span className="font-medium">${Number(p.precio).toLocaleString()}</span></span>
+                                        <span>•</span>
+                                        <span>Stock: <span className="font-medium">{p.stock}</span></span>
+                                        <span>•</span>
+                                        <span>Estado: <span className="font-medium capitalize">{p.estado}</span></span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => startEdit(p)}
+                                      className="btn btn-outline btn-sm flex items-center gap-1"
+                                      aria-label="Editar producto"
+                                      title="Editar producto"
+                                    >
+                                      <Icon category="Estados y Feedback" name="MdiPencil" className="w-4 h-4" />
+                                      <span>Editar</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleProductStatus(p.id, p.estado)}
+                                      className={`btn btn-outline btn-sm flex items-center gap-1 ${
+                                        p.estado === 'activo'
+                                          ? 'text-orange-700 hover:text-orange-900 border-orange-300 hover:border-orange-400'
+                                          : 'text-green-700 hover:text-green-900 border-green-300 hover:border-green-400'
+                                      }`}
+                                      aria-label={p.estado === 'activo' ? 'Desactivar producto' : 'Activar producto'}
+                                      title={p.estado === 'activo' ? 'Desactivar producto' : 'Activar producto'}
+                                    >
+                                      <Icon category="Estados y Feedback" name={p.estado === 'activo' ? 'MdiPause' : 'MdiPlay'} className="w-4 h-4" />
+                                      <span>{p.estado === 'activo' ? 'Desactivar' : 'Activar'}</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => archiveProduct(p.id, true)}
+                                      className="btn btn-outline btn-sm flex items-center gap-1 text-red-700 hover:text-red-900 border-red-300 hover:border-red-400"
+                                      aria-label="Archivar producto"
+                                      title="Archivar producto"
+                                    >
+                                      <Icon category="Estados y Feedback" name="MdiArchive" className="w-4 h-4" />
+                                      <span>Archivar</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="btn btn-ghost btn-sm"
+                                      onClick={() => setExpandedProductId(null)}
+                                    >
+                                      Cerrar
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                        </React.Fragment>
                       );
                     })}
                   </tbody>
