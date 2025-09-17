@@ -1,6 +1,5 @@
 import React from 'react';
 import { useAuth } from '@/auth/AuthContext';
-import { useRedirection } from '@/hooks/useRedirection';
 import { Card, CardContent } from '@/components/ui/shadcn/card';
 import { Button } from '@/components/ui/shadcn/button';
 import Icon from '@/components/ui/Icon';
@@ -65,7 +64,6 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
   redirectTo
 }) => {
   const { user, loading } = useAuth();
-  const { redirectToRole } = useRedirection();
 
   // Mostrar loading mientras se verifica la autenticación
   if (loading) {
@@ -81,11 +79,8 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
 
   // Usuario no autenticado
   if (!user) {
-    if (redirectTo) {
-      redirectToRole({ returnTo: redirectTo });
-      return null;
-    }
-    
+    // NO usar redirectToRole para evitar conflictos con AuthContext
+    // AuthContext manejará automáticamente la redirección
     const Fallback = FallbackComponent || DefaultFallback;
     return <Fallback />;
   }
@@ -98,8 +93,10 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
 
   // Verificar aprobación para vendedores
   if (requiresApproval && user.role === 'vendedor' && user.vendedor_estado !== 'aprobado') {
-    redirectToRole({ returnTo: '/vendedor/estado' });
-    return null;
+    // NO usar redirectToRole para evitar conflictos con AuthContext
+    // Mostrar componente de fallback en su lugar
+    const Fallback = FallbackComponent || DefaultFallback;
+    return <Fallback role={user.role as UserRole} />;
   }
 
   // Usuario autorizado

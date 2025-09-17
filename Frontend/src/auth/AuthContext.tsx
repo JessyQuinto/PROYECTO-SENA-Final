@@ -382,40 +382,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [toast]);
 
-  // ✅ EFECTO PARA REDIRECCIÓN AUTOMÁTICA DESPUÉS DEL LOGIN
-  useEffect(() => {
-    if (user && !loading) {
-      // Solo redirigir si no estamos en una página protegida ya
-      const currentPath = window.location.pathname;
-      const publicPaths = ['/login', '/register', '/verifica-tu-correo', '/'];
-      
-      if (publicPaths.includes(currentPath)) {
-        // Determinar ruta de destino basada en rol
-        let targetPath = '/';
-        
-        switch (user.role) {
-          case 'admin':
-            targetPath = '/admin';
-            break;
-          case 'vendedor':
-            targetPath = user.vendedor_estado === 'aprobado' ? '/vendedor' : '/vendedor/estado';
-            break;
-          case 'comprador':
-            targetPath = '/productos';
-            break;
-        }
-        
-        console.log(`[AuthContext] Redirecting ${user.role} user to:`, targetPath);
-        
-        // Usar replace para no agregar a historial
-        setTimeout(() => {
-          if (window.location.pathname === currentPath) {
-            window.location.replace(targetPath);
-          }
-        }, 100);
-      }
-    }
-  }, [user, loading]);
+  // ✅ EFECTO PARA REDIRECCIÓN AUTOMÁTICA DESPUÉS DEL LOGIN - REMOVIDO PARA EVITAR BUCLE
+  // La redirección se maneja manualmente después del login exitoso
 
   const signIn = useCallback(async (email: string, password: string, options?: { returnTo?: string }) => {
     console.log('[AuthContext] signIn called with email:', email);
@@ -458,6 +426,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log('[AuthContext] Loading profile for user:', data.user.id);
         await loadProfile(data.user.id);
       }
+
+      // ✅ REDIRECCIÓN MANUAL DESPUÉS DEL LOGIN EXITOSO
+      // Usar un pequeño delay para asegurar que el estado del usuario se haya actualizado
+      setTimeout(() => {
+        if (options?.returnTo && options.returnTo !== '/login') {
+          console.log('[AuthContext] Redirecting to returnTo:', options.returnTo);
+          window.location.replace(options.returnTo);
+        } else {
+          // Redirección por rol solo desde páginas públicas
+          const currentPath = window.location.pathname;
+          const publicPaths = ['/login', '/register', '/verifica-tu-correo', '/'];
+          
+          if (publicPaths.includes(currentPath)) {
+            // El usuario será establecido por loadProfile, usar redirección manual
+            redirectUserByRole(false);
+          }
+        }
+      }, 150);
 
       console.log('[AuthContext] Sign in completed successfully');
       return { error: undefined };
@@ -663,48 +649,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const redirectUserByRole = useCallback((isFirstLogin = false) => {
     if (!user) return;
     
-    const shouldRedirect = sessionStorage.getItem('auth_should_redirect');
+    // Verificar si hay una URL específica de retorno
     const returnTo = sessionStorage.getItem('auth_return_to');
     
-    if (shouldRedirect === 'true') {
-      // Limpiar flags de redirección
-      sessionStorage.removeItem('auth_should_redirect');
-      sessionStorage.removeItem('auth_return_to');
-      
-      // Si hay una URL específica de retorno, usarla
-      if (returnTo && returnTo !== '/login' && returnTo !== '/register') {
-        try {
-          window.history.replaceState({}, document.title, returnTo);
-          return;
-        } catch (e) {
-          console.warn('[AuthContext] Error redirecting to returnTo:', e);
-        }
-      }
-      
-      // Caso contrario, redirección automática por rol
-      const redirectPath = getRedirectPathForUser(user, isFirstLogin);
-      console.log(`[AuthContext] Redirecting ${user.role} to:`, redirectPath);
-      
+    if (returnTo && returnTo !== '/login' && returnTo !== '/register') {
       try {
-        window.history.replaceState({}, document.title, redirectPath);
-        
-        // Disparar evento personalizado para notificar cambio de ruta
-        window.dispatchEvent(new CustomEvent('authRedirect', {
-          detail: { path: redirectPath, role: user.role, isFirstLogin }
-        }));
+        sessionStorage.removeItem('auth_return_to');
+        window.location.replace(returnTo);
+        return;
       } catch (e) {
-        console.error('[AuthContext] Error during role-based redirect:', e);
+        console.warn('[AuthContext] Error redirecting to returnTo:', e);
       }
+    }
+    
+    // Redirección automática por rol
+    const redirectPath = getRedirectPathForUser(user, isFirstLogin);
+    console.log(`[AuthContext] Redirecting ${user.role} to:`, redirectPath);
+    
+    try {
+      window.location.replace(redirectPath);
+      
+      // Disparar evento personalizado para notificar cambio de ruta
+      window.dispatchEvent(new CustomEvent('authRedirect', {
+        detail: { path: redirectPath, role: user.role, isFirstLogin }
+      }));
+    } catch (e) {
+      console.error('[AuthContext] Error during role-based redirect:', e);
     }
   }, [user]);
 
-  // ✅ Efecto para manejar redirección cuando el usuario se actualiza
-  useEffect(() => {
-    if (user && !loading) {
-      // Solo redirigir si acabamos de hacer login
-      redirectUserByRole(false);
-    }
-  }, [user, loading, redirectUserByRole]);
+  // ✅ REDIRECCIÓN AUTOMÁTICA REMOVIDA PARA EVITAR BUCLE INFINITO
+  // La redirección se maneja explícitamente después del login exitoso
 
   return (
     <AuthContext.Provider

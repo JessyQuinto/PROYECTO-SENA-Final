@@ -29,6 +29,9 @@ const LoginPage: React.FC = () => {
   const infoMessage = location.state?.message;
   const returnTo = location.state?.returnTo;
 
+  // ✅ REDIRECCIÓN AUTOMÁTICA REMOVIDA PARA EVITAR BUCLE INFINITO
+  // La redirección se maneja por AuthContext después del login exitoso
+
   const form = useForm<FormData>({
     initialValues: {
       email: '',
@@ -57,7 +60,7 @@ const LoginPage: React.FC = () => {
         return;
       }
 
-      // ✅ MEJORADO: Pasar opciones de redirección al signIn
+      // ✅ MEJORADO: Manejo de redirección tras login exitoso
       const result = await signIn(values.email, values.password, {
         returnTo: returnTo
       });
@@ -74,6 +77,8 @@ const LoginPage: React.FC = () => {
       toast.success('Inicio de sesión exitoso', {
         action: 'login',
       });
+      
+      // La redirección será manejada por el AuthContext automáticamente
     },
   });
 

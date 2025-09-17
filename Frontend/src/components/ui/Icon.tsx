@@ -45,7 +45,7 @@ export const Icon: React.FC<IconProps> = ({
       onError={e => {
         const target = e.currentTarget as HTMLImageElement;
         if (target.src.endsWith('.svg')) {
-          target.src = '/favicon.svg';
+          target.src = '/logo.svg';
         }
       }}
     />

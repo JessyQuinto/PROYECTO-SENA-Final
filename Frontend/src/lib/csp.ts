@@ -63,6 +63,8 @@ export const developmentCSP: Partial<CSPDirectives> = {
     "'self'",
     'https://*.supabase.co',
     'https://*.supabase.com',
+    'https://marketplace-backend-prod.azurewebsites.net',
+    'http://localhost:3001',
     'http://localhost:4000',
     'ws:', // WebSocket for development
     'wss:', // Secure WebSocket
@@ -104,6 +106,7 @@ export const productionCSP: Partial<CSPDirectives> = {
     "'self'",
     'https://*.supabase.co',
     'https://*.supabase.com',
+    'https://marketplace-backend-prod.azurewebsites.net',
     'wss:', // For real-time subscriptions
   ],
   'media-src': ["'self'", 'https:'],
