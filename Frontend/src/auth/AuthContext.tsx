@@ -252,23 +252,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const params = new URLSearchParams(raw);
         const type = params.get('type');
         if (type === 'signup') {
-          await supabase.auth.signOut();
-          setUser(null);
+          // ✅ CORREGIDO: Manejar la verificación exitosa sin cerrar sesión inmediatamente
           try {
-            window.history.replaceState(
-              {},
-              document.title,
-              window.location.pathname
-            );
-          } catch {}
-          toast.success('Correo confirmado. Inicia sesión.', {
-            action: 'login',
-          });
-          setLoading(false);
-          try {
-            window.location.replace('/login');
-          } catch {}
-          return; // Importante: no continuar con listeners
+            // Verificar que el usuario realmente esté verificado
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user && isEmailConfirmed({ user } as Session)) {
+              // Usuario verificado correctamente
+              toast.success('¡Correo verificado exitosamente! Bienvenido a Tesoros Chocó 🎉', {
+                action: 'login',
+                durationMs: 4000
+              });
+              
+              // Limpiar la URL
+              window.history.replaceState({}, document.title, '/login?verified=true');
+              
+              // No cerrar sesión, permitir que continúe el flujo normal
+              return;
+            } else {
+              // Algo salió mal con la verificación
+              await supabase.auth.signOut();
+              setUser(null);
+              toast.error('Error en la verificación. Intenta iniciar sesión.', {
+                action: 'login',
+              });
+              window.history.replaceState({}, document.title, '/login');
+              setLoading(false);
+              return;
+            }
+          } catch (error) {
+            console.error('[Auth] Error handling email verification:', error);
+            await supabase.auth.signOut();
+            setUser(null);
+            toast.error('Error procesando la verificación. Intenta iniciar sesión.', {
+              action: 'login',
+            });
+            window.history.replaceState({}, document.title, '/login');
+            setLoading(false);
+            return;
+          }
         }
       } catch {}
     })();
@@ -361,6 +382,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [toast]);
 
+  // ✅ EFECTO PARA REDIRECCIÓN AUTOMÁTICA DESPUÉS DEL LOGIN
+  useEffect(() => {
+    if (user && !loading) {
+      // Solo redirigir si no estamos en una página protegida ya
+      const currentPath = window.location.pathname;
+      const publicPaths = ['/login', '/register', '/verifica-tu-correo', '/'];
+      
+      if (publicPaths.includes(currentPath)) {
+        // Determinar ruta de destino basada en rol
+        let targetPath = '/';
+        
+        switch (user.role) {
+          case 'admin':
+            targetPath = '/admin';
+            break;
+          case 'vendedor':
+            targetPath = user.vendedor_estado === 'aprobado' ? '/vendedor' : '/vendedor/estado';
+            break;
+          case 'comprador':
+            targetPath = '/productos';
+            break;
+        }
+        
+        console.log(`[AuthContext] Redirecting ${user.role} user to:`, targetPath);
+        
+        // Usar replace para no agregar a historial
+        setTimeout(() => {
+          if (window.location.pathname === currentPath) {
+            window.location.replace(targetPath);
+          }
+        }, 100);
+      }
+    }
+  }, [user, loading]);
+
   const signIn = useCallback(async (email: string, password: string, options?: { returnTo?: string }) => {
     console.log('[AuthContext] signIn called with email:', email);
 
@@ -403,13 +459,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await loadProfile(data.user.id);
       }
 
-      // ✅ NUEVO: Redirección automática después del login exitoso
-      // Almacenar información de redirección para usar después de que se actualice el estado
-      if (options?.returnTo) {
-        sessionStorage.setItem('auth_return_to', options.returnTo);
-      }
-      sessionStorage.setItem('auth_should_redirect', 'true');
-
       console.log('[AuthContext] Sign in completed successfully');
       return { error: undefined };
     } catch (error) {
@@ -436,7 +485,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       password,
       options: {
         data: { role, ...extra },
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: `${window.location.origin}/verifica-tu-correo`,
       },
     });
     if (error) return { error: error.message };
@@ -461,9 +510,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               }
             );
             ok = resp.ok;
-          } catch {
+            if (!ok) {
+              console.warn('[auth] Backend post-signup failed, using fallback');
+            }
+          } catch (fetchError) {
+            console.warn('[auth] Backend connection failed, using fallback:', fetchError);
             ok = false;
           }
+          
           if (!ok) {
             // Fallback si backend no disponible (idempotente con upsert)
             const { error: insertError } = await supabase
@@ -479,12 +533,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 { onConflict: 'id' }
               );
             if (insertError) {
-              if (import.meta.env.DEV) {
-                console.warn(
-                  '[auth] Error creando perfil de usuario (fallback):',
-                  insertError
-                );
-              }
+              console.warn('[auth] Error creando perfil de usuario (fallback):', insertError.message);
+            } else {
+              console.log('[auth] Perfil creado exitosamente via fallback');
             }
           }
         } else {
@@ -502,18 +553,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               { onConflict: 'id' }
             );
           if (insertError) {
-            if (import.meta.env.DEV) {
-              console.warn(
-                '[auth] Error creando perfil de usuario (fallback):',
-                insertError
-              );
-            }
+            console.warn('[auth] Error creando perfil de usuario (fallback):', insertError.message);
+          } else {
+            console.log('[auth] Perfil creado exitosamente');
           }
         }
       } catch (e) {
-        if (import.meta.env.DEV) {
-          console.warn('[auth] Error en post-signup:', e);
-        }
+        console.warn('[auth] Error en post-signup:', e);
       }
     }
 

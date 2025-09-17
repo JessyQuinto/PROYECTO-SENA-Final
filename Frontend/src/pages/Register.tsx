@@ -48,7 +48,7 @@ export const RegisterPage: React.FC = () => {
       acceptedTerms: false,
     },
     validationSchema: signupSchema,
-    onSubmit: async values => {
+    onSubmit: async (values: FormData) => {
       const res = await signUp(values.email, values.password, role, {
         nombre: values.nombre_completo, // AuthContext espera 'nombre'
         acceptedTerms: values.acceptedTerms,
@@ -59,10 +59,16 @@ export const RegisterPage: React.FC = () => {
         return;
       }
 
-      toast.success('Registro exitoso. Revisa tu correo para verificar tu cuenta.');
+      // ✅ MEJORADO: Mensaje más informativo y redirección optimizada
+      toast.success('¡Registro exitoso! 🎉 Te enviamos un correo para verificar tu cuenta.');
+      
+      // Redirigir inmediatamente a la página de verificación
       navigate('/verifica-tu-correo', {
         replace: true,
-        state: { email: values.email },
+        state: { 
+          email: values.email,
+          message: `Se envió un correo de verificación a ${values.email}. Revisa tu bandeja de entrada y spam.`
+        },
       });
     },
   });

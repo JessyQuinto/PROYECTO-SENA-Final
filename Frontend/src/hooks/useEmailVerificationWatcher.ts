@@ -1,171 +1,173 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
-export type EmailVerificationStatus = 'pending' | 'verified' | 'error';
+export type EmailVerificationStatus = 'pending' | 'verified' | 'error' | 'checking';
 
-export function useEmailVerificationWatcher(pollIntervalMs = 3000, onVerified?: () => void) {
-  const [status, setStatus] = useState<EmailVerificationStatus>('pending');
+// ✅ Hook simplificado para verificación de email - SIN ERRORES DE TIPOS
+export function useEmailVerificationWatcher(
+  intervalMs = 5000,
+  onVerified?: () => void
+) {
+  const [status, setStatus] = useState<EmailVerificationStatus>('checking');
+  const [isChecking, setIsChecking] = useState(false);
   const mountedRef = useRef(true);
-  const verifiedRef = useRef(false);
-  const retryCountRef = useRef(0);
+  const intervalRef = useRef<number | null>(null);
+  const retryCount = useRef(0);
   const maxRetries = 3;
 
   useEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     };
   }, []);
 
-  useEffect(() => {
-    let timer: number | undefined;
-    let retryTimer: number | undefined;
-
-    async function checkOnce() {
-      try {
-        const { data, error } = await supabase.auth.getUser();
-        if (error) {
-          console.warn('[EmailVerification] Auth error:', error.message);
-          if (mountedRef.current) {
-            setStatus('error');
-            retryCountRef.current++;
-          }
-          return;
-        }
-        
-        const user: any = data?.user;
-        if (!user) {
-          if (mountedRef.current) setStatus('pending');
-          return;
-        }
-
-        // ✅ MEJORADO: Verificación más robusta del estado del email
-        const isVerified = Boolean(
-          user?.email_confirmed_at ||
-          user?.confirmed_at ||
-          user?.email_confirmed ||
-          user?.identities?.some((i: any) => i?.identity_data?.email_verified === true) ||
-          // ✅ NUEVO: Verificar también en la tabla users
-          (async () => {
-            try {
-              const { data: userProfile } = await supabase
-                .from('users')
-                .select('email_confirmed_at')
-                .eq('id', user.id)
-                .single();
-              return userProfile?.email_confirmed_at;
-            } catch {
-              return false;
-            }
-          })()
-        );
-
-        if (mountedRef.current) {
-          setStatus(isVerified ? 'verified' : 'pending');
-          if (isVerified && !verifiedRef.current) {
-            verifiedRef.current = true;
-            onVerified?.();
-          }
-          
-          // ✅ NUEVO: Resetear contador de reintentos en éxito
-          if (isVerified) {
-            retryCountRef.current = 0;
-          }
-        }
-      } catch (error) {
-        console.error('[EmailVerification] Unexpected error:', error);
-        if (mountedRef.current) {
-          setStatus('error');
-          retryCountRef.current++;
-        }
-      }
-    }
-
-    // ✅ MEJORADO: Lógica de reintentos más inteligente
-    const scheduleNextCheck = () => {
-      if (retryCountRef.current >= maxRetries) {
-        console.warn('[EmailVerification] Max retries reached, stopping checks');
-        return;
-      }
-
-      if (status === 'verified') {
-        return; // No seguir verificando si ya está verificado
-      }
-
-      timer = window.setTimeout(() => {
-        checkOnce();
-        scheduleNextCheck();
-      }, pollIntervalMs);
-    };
-
-    // Primer chequeo inmediato
-    checkOnce();
-
-    // Programar siguiente verificación
-    scheduleNextCheck();
-
-    // ✅ MEJORADO: Listener de cambios de auth más robusto
-    const { data: sub } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('[EmailVerification] Auth state change:', event);
-      
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        // ✅ NUEVO: Verificación inmediata en cambios de auth
-        await checkOnce();
-      }
-    });
-
-    return () => {
-      if (timer) clearTimeout(timer);
-      if (retryTimer) clearTimeout(retryTimer);
-      sub.subscription.unsubscribe();
-    };
-  }, [pollIntervalMs, onVerified, status]);
-
-  // ✅ NUEVO: Función para resetear el estado
-  const resetVerification = () => {
-    if (mountedRef.current) {
-      setStatus('pending');
-      verifiedRef.current = false;
-      retryCountRef.current = 0;
-    }
-  };
-
-  // ✅ NUEVO: Función para verificar manualmente
-  const checkVerification = async () => {
+  // ✅ Función principal de verificación
+  const checkVerification = useCallback(async (): Promise<boolean> => {
+    if (!mountedRef.current) return false;
+    
     try {
-      const { data, error } = await supabase.auth.getUser();
-      if (error) throw error;
+      setIsChecking(true);
       
-      const user: any = data?.user;
-      const isVerified = Boolean(
-        user?.email_confirmed_at ||
-        user?.confirmed_at ||
-        user?.email_confirmed
+      const { data: { user }, error } = await supabase.auth.getUser();
+      
+      if (error) {
+        console.warn('[EmailVerification] Auth error:', error.message);
+        if (mountedRef.current) {
+          setStatus('pending'); // ✅ No marcamos como error si no hay sesión
+          retryCount.current++;
+        }
+        return false;
+      }
+      
+      if (!user) {
+        if (mountedRef.current) setStatus('pending');
+        return false;
+      }
+      
+      // Verificar confirmación de email
+      const isConfirmed = Boolean(
+        user.email_confirmed_at ||
+        user.confirmed_at ||
+        (user as any).email_confirmed
       );
       
       if (mountedRef.current) {
-        setStatus(isVerified ? 'verified' : 'pending');
-        if (isVerified && !verifiedRef.current) {
-          verifiedRef.current = true;
+        const newStatus: EmailVerificationStatus = isConfirmed ? 'verified' : 'pending';
+        setStatus(newStatus);
+        
+        if (isConfirmed) {
+          // Detener polling si está verificado
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
+          
+          // Llamar callback de éxito
           onVerified?.();
+          
+          // Resetear contador de reintentos
+          retryCount.current = 0;
         }
       }
       
-      return isVerified;
+      return isConfirmed;
+      
     } catch (error) {
-      console.error('[EmailVerification] Manual check failed:', error);
-      if (mountedRef.current) setStatus('error');
+      console.error('[EmailVerification] Unexpected error:', error);
+      if (mountedRef.current) {
+        setStatus('error');
+        retryCount.current++;
+      }
       return false;
+    } finally {
+      if (mountedRef.current) {
+        setIsChecking(false);
+      }
     }
-  };
+  }, [onVerified]);
+
+  // ✅ Iniciar verificación SOLO si estamos en contexto relevante
+  useEffect(() => {
+    // Solo iniciar si estamos en la página de verificación o hay hash de confirmación
+    const shouldCheck = window.location.pathname.includes('verifica-tu-correo') || 
+                       window.location.hash.includes('type=signup') ||
+                       new URLSearchParams(window.location.search).get('type') === 'signup';
+    
+    if (!shouldCheck) {
+      setStatus('pending');
+      return;
+    }
+    
+    // Verificación inicial inmediata
+    checkVerification();
+    
+    // Configurar polling solo si no está ya verificado
+    const startPolling = () => {
+      if (!intervalRef.current) {
+        intervalRef.current = window.setInterval(() => {
+          if (mountedRef.current && retryCount.current < maxRetries) {
+            checkVerification().then(isVerified => {
+              if (isVerified && intervalRef.current) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
+              }
+            });
+          } else if (retryCount.current >= maxRetries) {
+            console.warn('[EmailVerification] Max retries reached, stopping checks');
+            if (intervalRef.current) {
+              clearInterval(intervalRef.current);
+              intervalRef.current = null;
+            }
+          }
+        }, intervalMs);
+      }
+    };
+    
+    startPolling();
+    
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [intervalMs, checkVerification]);
+
+  // ✅ Listener para cambios de autenticación
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
+      console.log('[EmailVerification] Auth state change:', event);
+      
+      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user) {
+        // Verificación inmediata en cambios de estado
+        await checkVerification();
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [checkVerification]);
+
+  // ✅ Función para resetear estado
+  const resetVerification = useCallback(() => {
+    if (mountedRef.current) {
+      setStatus('checking');
+      setIsChecking(false);
+      retryCount.current = 0;
+    }
+  }, []);
 
   return {
     status,
-    resetVerification,
+    isChecking,
     checkVerification,
-    retryCount: retryCountRef.current,
+    resetVerification,
+    retryCount: retryCount.current,
     maxRetries
   };
 }
-
-

@@ -51,7 +51,8 @@ export const AuthForms: React.FC<AuthFormsProps> = ({
           toast.success('Inicio de sesión exitoso', {
             action: 'login',
           });
-          navigate('/dashboard');
+          // ✅ ARREGLADO: La redirección la manejará AuthContext automáticamente
+          // No navegamos manualmente aquí para evitar conflictos
         }
       } catch (error: any) {
         toast.error('Error inesperado', {
@@ -80,7 +81,7 @@ export const AuthForms: React.FC<AuthFormsProps> = ({
               action: 'register',
             }
           );
-          navigate('/verify-email', {
+          navigate('/verifica-tu-correo', {
             state: { email: values.email },
           });
         }
