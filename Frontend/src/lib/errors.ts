@@ -86,8 +86,8 @@ export class BaseAppError extends Error {
       timestamp: this.timestamp,
       stack: this.stack,
       context: {
-        url: window.location.href,
-        userAgent: navigator.userAgent,
+        url: typeof window !== 'undefined' ? window.location.href : '',
+        userAgent: typeof window !== 'undefined' ? navigator.userAgent : '',
       },
     };
   }
@@ -194,6 +194,22 @@ export const ErrorUtils = {
 
   getUserFriendlyMessage: (error: any): string => {
     if (ErrorUtils.isAppError(error)) {
+      // Para errores de validación, devolvemos el mensaje personalizado
+      if (ErrorUtils.isValidationError(error)) {
+        return 'Los datos ingresados no son válidos. Por favor, revisa la información.';
+      }
+      
+      // Para errores de autenticación, devolvemos el mensaje personalizado
+      if (ErrorUtils.isAuthError(error)) {
+        return 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.';
+      }
+      
+      // Para errores de red, devolvemos el mensaje personalizado
+      if (ErrorUtils.isNetworkError(error)) {
+        return 'Problema de conexión. Por favor, verifica tu conexión a internet.';
+      }
+      
+      // Para otros errores de aplicación, devolvemos el mensaje original
       return error.message;
     }
 
@@ -217,8 +233,8 @@ export const ErrorUtils = {
     const baseInfo = {
       timestamp: new Date(),
       context: {
-        url: window.location.href,
-        userAgent: navigator.userAgent,
+        url: typeof window !== 'undefined' ? window.location.href : '',
+        userAgent: typeof window !== 'undefined' ? navigator.userAgent : '',
       },
     };
 

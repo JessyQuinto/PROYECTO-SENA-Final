@@ -1,4 +1,4 @@
-import { useAuth } from '@/auth/AuthContext';
+import { useAuth } from '../auth/AuthContext';
 
 /**
  * Hook unificado que proporciona un estado de autenticación consistente

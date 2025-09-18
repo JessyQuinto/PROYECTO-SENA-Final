@@ -1,0 +1,254 @@
+import { describe, it, expect, vi, beforeEach, afterEach, Mock } from 'vitest';
+import { useQuery, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
+import { supabase } from '../../lib/supabaseClient';
+import {
+  useProducts,
+  useInfiniteProducts,
+  useProduct,
+  useProductRatings,
+  useCategories,
+  useProductCache,
+  productQueryKeys
+} from '../../hooks/useProductsQuery';
+
+// Mock de dependencias
+vi.mock('@tanstack/react-query', () => ({
+  useQuery: vi.fn(),
+  useQueryClient: vi.fn(),
+  useInfiniteQuery: vi.fn(),
+}));
+
+vi.mock('../../lib/supabaseClient', () => ({
+  supabase: {
+    from: vi.fn(),
+  },
+}));
+
+describe('useProductsQuery Hook', () => {
+  const mockQueryClient = {
+    invalidateQueries: vi.fn(),
+    prefetchQuery: vi.fn(),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (useQueryClient as Mock).mockReturnValue(mockQueryClient);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe('productQueryKeys', () => {
+    it('should generate correct query keys', () => {
+      expect(productQueryKeys.all).toEqual(['products']);
+      expect(productQueryKeys.lists()).toEqual(['products', 'list']);
+      expect(productQueryKeys.details()).toEqual(['products', 'detail']);
+      expect(productQueryKeys.ratings()).toEqual(['products', 'ratings']);
+      
+      const filters = { searchTerm: 'test' };
+      expect(productQueryKeys.list(filters)).toEqual(['products', 'list', { filters }]);
+      
+      const productId = 'product123';
+      expect(productQueryKeys.detail(productId)).toEqual(['products', 'detail', productId]);
+      
+      const productIds = ['product1', 'product2'];
+      expect(productQueryKeys.rating(productIds)).toEqual(['products', 'ratings', { productIds }]);
+    });
+  });
+
+  describe('useProducts', () => {
+    it('should call useQuery with correct parameters', () => {
+      const mockResult = { data: [], isLoading: false, error: null };
+      (useQuery as Mock).mockReturnValue(mockResult);
+      
+      const filters = { searchTerm: 'test' };
+      const result = useProducts(filters);
+      
+      expect(useQuery).toHaveBeenCalledWith({
+        queryKey: productQueryKeys.list(filters),
+        queryFn: expect.any(Function),
+        staleTime: 5 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
+        keepPreviousData: true,
+        refetchOnWindowFocus: false,
+      });
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('useInfiniteProducts', () => {
+    it('should call useInfiniteQuery with correct parameters', () => {
+      const mockResult = { data: {}, isLoading: false, error: null, fetchNextPage: vi.fn() };
+      (useInfiniteQuery as Mock).mockReturnValue(mockResult);
+      
+      const filters = { categoryId: 'cat1' };
+      const result = useInfiniteProducts(filters);
+      
+      expect(useInfiniteQuery).toHaveBeenCalledWith({
+        queryKey: [...productQueryKeys.list(filters), 'infinite'],
+        queryFn: expect.any(Function),
+        getNextPageParam: expect.any(Function),
+        staleTime: 5 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
+        refetchOnWindowFocus: false,
+      });
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('useProduct', () => {
+    it('should call useQuery with correct parameters for single product', () => {
+      const mockResult = { data: null, isLoading: false, error: null };
+      (useQuery as Mock).mockReturnValue(mockResult);
+      
+      const productId = 'product123';
+      const result = useProduct(productId);
+      
+      expect(useQuery).toHaveBeenCalledWith({
+        queryKey: productQueryKeys.detail(productId),
+        queryFn: expect.any(Function),
+        enabled: true,
+        staleTime: 10 * 60 * 1000,
+        gcTime: 30 * 60 * 1000,
+      });
+      expect(result).toEqual(mockResult);
+    });
+
+    it('should disable query when productId is empty', () => {
+      const mockResult = { data: null, isLoading: false, error: null };
+      (useQuery as Mock).mockReturnValue(mockResult);
+      
+      const productId = '';
+      useProduct(productId);
+      
+      expect(useQuery).toHaveBeenCalledWith({
+        queryKey: productQueryKeys.detail(productId),
+        queryFn: expect.any(Function),
+        enabled: false,
+        staleTime: 10 * 60 * 1000,
+        gcTime: 30 * 60 * 1000,
+      });
+    });
+  });
+
+  describe('useProductRatings', () => {
+    it('should call useQuery with correct parameters for product ratings', () => {
+      const mockResult = { data: {}, isLoading: false, error: null };
+      (useQuery as Mock).mockReturnValue(mockResult);
+      
+      const productIds = ['product1', 'product2'];
+      const result = useProductRatings(productIds);
+      
+      expect(useQuery).toHaveBeenCalledWith({
+        queryKey: productQueryKeys.rating(productIds),
+        queryFn: expect.any(Function),
+        enabled: true,
+        staleTime: 10 * 60 * 1000,
+        gcTime: 30 * 60 * 1000,
+      });
+      expect(result).toEqual(mockResult);
+    });
+
+    it('should disable query when productIds is empty', () => {
+      const mockResult = { data: {}, isLoading: false, error: null };
+      (useQuery as Mock).mockReturnValue(mockResult);
+      
+      const productIds: string[] = [];
+      useProductRatings(productIds);
+      
+      expect(useQuery).toHaveBeenCalledWith({
+        queryKey: productQueryKeys.rating(productIds),
+        queryFn: expect.any(Function),
+        enabled: false,
+        staleTime: 10 * 60 * 1000,
+        gcTime: 30 * 60 * 1000,
+      });
+    });
+  });
+
+  describe('useCategories', () => {
+    it('should call useQuery with correct parameters for categories', () => {
+      const mockResult = { data: [], isLoading: false, error: null };
+      (useQuery as Mock).mockReturnValue(mockResult);
+      
+      const result = useCategories();
+      
+      expect(useQuery).toHaveBeenCalledWith({
+        queryKey: ['categories'],
+        queryFn: expect.any(Function),
+        staleTime: 60 * 60 * 1000,
+        gcTime: 2 * 60 * 60 * 1000,
+      });
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('useProductCache', () => {
+    it('should return cache management functions', () => {
+      const { 
+        invalidateProducts, 
+        invalidateProduct, 
+        prefetchProduct, 
+        warmCache 
+      } = useProductCache();
+      
+      expect(typeof invalidateProducts).toBe('function');
+      expect(typeof invalidateProduct).toBe('function');
+      expect(typeof prefetchProduct).toBe('function');
+      expect(typeof warmCache).toBe('function');
+    });
+
+    it('should invalidate products list cache', () => {
+      const { invalidateProducts } = useProductCache();
+      
+      invalidateProducts();
+      
+      expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: productQueryKeys.lists()
+      });
+    });
+
+    it('should invalidate specific product cache', () => {
+      const { invalidateProduct } = useProductCache();
+      const productId = 'product123';
+      
+      invalidateProduct(productId);
+      
+      expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: productQueryKeys.detail(productId)
+      });
+    });
+
+    it('should prefetch product data', () => {
+      const { prefetchProduct } = useProductCache();
+      const productId = 'product123';
+      
+      prefetchProduct(productId);
+      
+      expect(mockQueryClient.prefetchQuery).toHaveBeenCalledWith({
+        queryKey: productQueryKeys.detail(productId),
+        queryFn: expect.any(Function),
+        staleTime: 10 * 60 * 1000,
+      });
+    });
+
+    it('should warm cache with categories and products', () => {
+      const { warmCache } = useProductCache();
+      
+      warmCache();
+      
+      expect(mockQueryClient.prefetchQuery).toHaveBeenCalledTimes(2);
+      // First call for categories
+      expect(mockQueryClient.prefetchQuery).toHaveBeenNthCalledWith(1, {
+        queryKey: ['categories'],
+        queryFn: expect.any(Function),
+      });
+      // Second call for products
+      expect(mockQueryClient.prefetchQuery).toHaveBeenNthCalledWith(2, {
+        queryKey: productQueryKeys.list({}),
+        queryFn: expect.any(Function),
+      });
+    });
+  });
+});

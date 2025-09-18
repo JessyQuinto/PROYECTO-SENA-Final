@@ -25,6 +25,9 @@ export class ErrorHandler {
 
   // Set up global error handlers
   private setupGlobalErrorHandlers(): void {
+    // Only set up global handlers in browser environment
+    if (typeof window === 'undefined') return;
+
     // Handle uncaught JavaScript errors
     window.addEventListener('error', event => {
       this.handleError(event.error || new Error(event.message), {
