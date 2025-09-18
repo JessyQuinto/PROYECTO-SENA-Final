@@ -4,6 +4,14 @@
 
 **Tesoros Chocó** es una plataforma educativa desarrollada para el SENA con el fin de digitalizar y promover las artesanías tradicionales del departamento del Chocó, Colombia.
 
+## URLs de Despliegue
+
+### Frontend (Azure Static Web Apps)
+https://ambitious-ground-03b86cf10.2.azurestaticapps.net
+
+### Backend (Azure App Service)
+https://marketplace-backend-prod.azurewebsites.net
+
 ## Configuración del Entorno de Desarrollo
 
 ### Prerrequisitos
@@ -136,11 +144,19 @@ Hemos creado colecciones completas de Postman para probar todas las funcionalida
 - [Tesoros Chocó - Comprador](https://www.postman.com/bold-zodiac-382577/workspace/tesoros-choco/collection/13226867-1355fb2b-b951-4c75-8d65-53222eb089ec?action=share&source=copy-link&creator=13226867)
 - Incluye: Login, catálogo de productos, carrito de compras, órdenes, perfil de usuario
 
-#### 🔑 Credenciales de Prueba
+#### 🔑 Perfiles utilizados
 
-- **Administrador**: `admin@tesoros-choco.com` / `admin123`
-- **Vendedor**: `quintojessy2222@gmail.com` / `Rulexi700.`
-- **Comprador**: `marianareyesgonzalez4@gmail.com` / `Rulexi700.`
+**🛡️ Admin**
+- Credenciales: `admin@tesoros-choco.com` / `admin123`
+- Estado: ✓ Activo
+
+**🏪 Vendedor**
+- Credenciales: `carolinaalexandrazapata@gmail.com` / `Rulexi700.`
+- Estado: ✓ Activo, ✓ Aprobado
+
+**🛒 Comprador**
+- Credenciales: `quintojessy2222@gmail.com` / `Rulexi700.`
+- Estado: ✓ Activo
 
 #### 📝 Características de las Colecciones
 
