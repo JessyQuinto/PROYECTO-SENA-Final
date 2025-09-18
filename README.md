@@ -119,12 +119,34 @@ Para despliegue en producción, asegúrate de configurar las variables de entorn
 # Frontend
 cd Frontend
 bun run test
-bun run test:coverage
+bun run test:run
 
 # Backend
 cd Backend
 bun run test
 ```
+
+### Pruebas de Cobertura
+
+Para ejecutar las pruebas con generación de reporte de cobertura:
+
+```bash
+# En el directorio Frontend
+cd Frontend
+bun run test:coverage
+```
+
+Esto ejecutará todas las pruebas y generará un reporte de cobertura en el directorio `coverage/`. El reporte incluye:
+
+- **Texto en consola**: Muestra el porcentaje de cobertura de branches, functions, lines y statements
+- **Archivo JSON**: `coverage/coverage-final.json` con datos detallados
+- **Reporte HTML**: `coverage/index.html` que se puede abrir en un navegador para ver un reporte visual
+
+La configuración actual requiere un mínimo del 70% de cobertura para branches, functions, lines y statements. Si la cobertura es menor, las pruebas fallarán.
+
+Para ver el reporte HTML de cobertura:
+1. Ejecuta `bun run test:coverage` en el directorio Frontend
+2. Abre `Frontend/coverage/index.html` en tu navegador
 
 ### Pruebas de API con Postman
 
