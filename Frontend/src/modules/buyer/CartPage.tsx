@@ -10,52 +10,9 @@ const CartPage: React.FC = () => {
   const { items, total, update, remove, clear } = useCart();
   const navigate = useNavigate();
 
-  const checkout = async () => {
+  const checkout = () => {
     if (items.length === 0) return;
-    try {
-      const session = await supabase.auth.getSession();
-      const token = session.data.session?.access_token;
-      
-      if (!token) {
-        throw new Error('No hay sesión activa');
-      }
-
-      const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL as string | undefined;
-      if (!backendUrl) {
-        throw new Error('Backend no configurado');
-      }
-
-      const response = await fetch(`${backendUrl.replace(/\/$/, '')}/rpc/crear_pedido`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          items: items.map(i => ({
-            producto_id: i.productoId,
-            cantidad: i.cantidad,
-          })),
-          payment: {
-            metodo: 'contraentrega' // Checkout rápido siempre es contraentrega
-          },
-          simulate_payment: true
-        })
-      });
-
-      const result = await response.json();
-      
-      if (response.ok && result.ok) {
-        clear();
-        alert(`¡Pedido creado exitosamente! ID: ${result.order_id}`);
-        navigate(`/recibo/${result.order_id}`);
-      } else {
-        throw new Error(result.error || 'Error al crear el pedido');
-      }
-    } catch (e: any) {
-      console.error('Error en checkout:', e);
-      alert(`Error: ${e?.message || 'No se pudo crear el pedido'}`);
-    }
+    navigate('/checkout');
   };
 
   return (

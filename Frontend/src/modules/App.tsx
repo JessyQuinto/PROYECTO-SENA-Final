@@ -43,7 +43,7 @@ const ProductDetail = lazy(() => import('./buyer/ProductDetail'));
 const CartPage = lazy(() => import('./buyer/CartPage'));
 const MyOrdersPage = lazy(() => import('./buyer/MyOrdersPage'));
 const ReviewsPage = lazy(() => import('./buyer/ReviewsPage'));
-const CheckoutPage = lazy(() => import('./buyer/CheckoutPage'));
+const SimplifiedCheckoutPage = lazy(() => import('./buyer/SimplifiedCheckout'));
 const OrderReceiptPage = lazy(() => import('./buyer/OrderReceiptPage'));
 const OrderDetailPage = lazy(() => import('./buyer/OrderDetailPage'));
 const BuyerProfile = lazy(() => import('./buyer/BuyerProfile'));
@@ -150,7 +150,7 @@ export const App: React.FC = () => (
                         path='/checkout'
                         element={
                           <ProtectedRoute roles={['comprador']}>
-                            <CheckoutPage />
+                            <SimplifiedCheckoutPage />
                           </ProtectedRoute>
                         }
                       />
