@@ -17,6 +17,13 @@ const allowedOrigins = (process.env.FRONTEND_ORIGINS || '*')
   .map((s) => s.trim())
   .filter((s) => s.length > 0);
 
+// Agregar localhost:3000 para desarrollo si no está ya en la lista
+if (process.env.NODE_ENV !== 'production' || allowedOrigins.includes('*')) {
+  if (!allowedOrigins.includes('http://localhost:3000')) {
+    allowedOrigins.push('http://localhost:3000');
+  }
+}
+
 // Soporte simple de comodines: usar '*' en host o subdominio (p.ej., https://miapp-*.azurestaticapps.net)
 const originMatchers = allowedOrigins.map((o) => {
   if (o === '*') return { type: 'any' as const };
@@ -40,6 +47,12 @@ const corsOptions: cors.CorsOptions = {
       if (m.type === 'exact' && m.value === o) return callback(null, true);
       if (m.type === 'regex' && m.re.test(o)) return callback(null, true);
     }
+    
+    // En modo desarrollo, permitir localhost:3000 incluso si no está en la lista
+    if (process.env.NODE_ENV !== 'production' && o === 'http://localhost:3000') {
+      return callback(null, true);
+    }
+    
     return callback(new Error('Not allowed by CORS'));
   },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -462,6 +475,14 @@ app.post('/rpc/crear_pedido', async (req: Request, res: Response, next: NextFunc
         userMessage = 'Uno o más productos ya no están disponibles.';
       } else if (errPedido.message?.includes('ambiguous')) {
         userMessage = 'Error interno del sistema. Por favor, inténtalo de nuevo.';
+      } else if (errPedido.message?.includes('violates foreign key constraint')) {
+        userMessage = 'Error de integridad de datos. Por favor, verifica tu carrito.';
+      } else if (errPedido.message?.includes('null value in column')) {
+        userMessage = 'Datos incompletos. Por favor, verifica tu información de envío.';
+      } else if (errPedido.message?.includes('auth')) {
+        userMessage = 'Error de autenticación. Por favor, inicia sesión nuevamente.';
+      } else if (errPedido.message?.includes('permission')) {
+        userMessage = 'No tienes permiso para realizar esta acción.';
       }
       
       return res.status(400).json({ 
@@ -474,7 +495,7 @@ app.post('/rpc/crear_pedido', async (req: Request, res: Response, next: NextFunc
 
     // Guardar envío si viene (RPC con user_id explícito)
     if (shippingData && orderId) {
-      await supabaseUser.rpc('guardar_envio_backend', {
+      const { error: envioError } = await supabaseUser.rpc('guardar_envio_backend', {
         p_user_id: caller.id,
         p_order_id: orderId,
         p_nombre: shippingData.nombre,
@@ -482,6 +503,11 @@ app.post('/rpc/crear_pedido', async (req: Request, res: Response, next: NextFunc
         p_ciudad: shippingData.ciudad,
         p_telefono: shippingData.telefono
       });
+      
+      // Log error de envío pero no detener el proceso
+      if (envioError) {
+        console.warn('[crear_pedido] Error guardando envío:', envioError);
+      }
     }
 
     // Guardar información de pago simulada (solo para registro)
@@ -503,9 +529,12 @@ app.post('/rpc/crear_pedido', async (req: Request, res: Response, next: NextFunc
       };
       
       try {
-        await admin.from('order_payments').insert(paymentRecord);
+        const { error: paymentInsertError } = await admin.from('order_payments').insert(paymentRecord);
+        if (paymentInsertError) {
+          console.warn('[crear_pedido] No se pudo guardar info de pago:', paymentInsertError);
+        }
       } catch (paymentError) {
-        console.warn('[crear_pedido] No se pudo guardar info de pago:', paymentError);
+        console.warn('[crear_pedido] Error al guardar info de pago:', paymentError);
         // No bloquear la creación del pedido por este error
       }
     }
@@ -540,10 +569,40 @@ app.post('/payments/simulate', async (req: Request, res: Response, next: NextFun
   const { order_id, approved } = parsed.data;
   try {
     const supabase = getSupabaseAdmin();
-    const nuevo = approved ? 'procesando' : 'cancelado';
-    const { error } = await supabase.from('orders').update({ estado: nuevo }).eq('id', order_id);
+    
+    // Verificar que el pedido exista
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .select('id, estado')
+      .eq('id', order_id)
+      .single();
+      
+    if (orderError || !order) {
+      return res.status(404).json({ error: 'Pedido no encontrado' });
+    }
+    
+    // Verificar que el pedido esté en estado válido para simulación
+    if (order.estado !== 'pendiente' && order.estado !== 'procesando') {
+      return res.status(400).json({ error: 'El pedido no está en un estado válido para simulación de pago' });
+    }
+    
+    const nuevoEstado = approved ? 'procesando' : 'cancelado';
+    const { error } = await supabase.from('orders').update({ estado: nuevoEstado }).eq('id', order_id);
     if (error) return res.status(500).json({ error: error.message });
-    res.json({ ok: true, estado: nuevo });
+    
+    // Si el pago es aprobado, actualizar también el estado del pago
+    if (approved) {
+      const { error: paymentError } = await supabase
+        .from('order_payments')
+        .update({ estado: 'procesado' })
+        .eq('order_id', order_id);
+        
+      if (paymentError) {
+        console.warn('[simulate_payment] No se pudo actualizar el estado del pago:', paymentError);
+      }
+    }
+    
+    res.json({ ok: true, estado: nuevoEstado });
   } catch (e) { next(e); }
 });
 

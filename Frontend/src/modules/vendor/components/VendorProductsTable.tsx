@@ -68,7 +68,7 @@ export const VendorProductsTable: React.FC<Props> = ({
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">${'{'}Number(p.precio).toLocaleString(){'}'}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">${Number(p.precio).toLocaleString()}</td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                           <span className={p.stock <= 5 ? 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800' : 'text-sm text-gray-900'}>
                             {p.stock <= 5 && (
@@ -111,7 +111,7 @@ export const VendorProductsTable: React.FC<Props> = ({
                                     <p className="font-medium text-gray-900">{p.nombre}</p>
                                     {p.descripcion && <p className="text-sm text-gray-600 mt-1 line-clamp-3">{p.descripcion}</p>}
                                     <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-600">
-                                      <span>Precio: <span className="font-medium">${'{'}Number(p.precio).toLocaleString(){'}'}</span></span>
+                                      <span>Precio: <span className="font-medium">${Number(p.precio).toLocaleString()}</span></span>
                                       <span>•</span>
                                       <span>Stock: <span className="font-medium">{p.stock}</span></span>
                                       <span>•</span>

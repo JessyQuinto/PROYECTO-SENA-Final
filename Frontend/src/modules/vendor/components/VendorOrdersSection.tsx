@@ -35,7 +35,7 @@ export const VendorOrdersSection: React.FC<Props> = ({ orders, orderItems, onMar
                     <tr key={order.id} className='border-b border-gray-100'>
                       <td className='py-3 px-4 text-sm font-mono'>#{order.id.slice(0, 8)}</td>
                       <td className='py-3 px-4 text-sm'>{order.comprador_email}</td>
-                      <td className='py-3 px-4 text-sm font-medium'>${'{'}order.total{'}'}</td>
+                      <td className='py-3 px-4 text-sm font-medium'>${order.total}</td>
                       <td className='py-3 px-4'>
                         <span className={`badge ${order.estado === 'entregado' ? 'badge-success' : order.estado === 'enviado' ? 'badge-primary' : order.estado === 'procesando' ? 'badge-warning' : 'badge-secondary'}`}>
                           {order.estado}

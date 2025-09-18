@@ -1,101 +1,107 @@
-# Tesoros Chocó - Marketplace de Artesanías
+# Tesoros Chocó - PROYECTO-SENA-Final
 
-## 📋 Descripción General
+## Descripción del Proyecto
 
-**Tesoros Chocó** es una plataforma de comercio electrónico diseñada para conectar artesanos del departamento del Chocó, Colombia, con compradores que valoran productos únicos y auténticos hechos a mano. La plataforma facilita la comercialización de artesanías tradicionales, promoviendo la economía local y preservando las técnicas ancestrales de la región.
+**Tesoros Chocó** es una plataforma educativa desarrollada para el SENA con el fin de digitalizar y promover las artesanías tradicionales del departamento del Chocó, Colombia.
 
-## 🎯 Objetivos del Proyecto
-
-- **Digitalización del Comercio Artesanal**: Llevar las artesanías del Chocó al comercio digital
-- **Empoderamiento Económico**: Generar ingresos sostenibles para los artesanos locales
-- **Preservación Cultural**: Mantener vivas las técnicas y tradiciones artesanales
-- **Conectividad Regional**: Eliminar barreras geográficas para la comercialización
-- **Educación del Consumidor**: Informar sobre el origen, materiales y técnicas de cada pieza
-
-## 🏗️ Arquitectura del Sistema
-
-El proyecto está estructurado como una aplicación web moderna con arquitectura cliente-servidor:
-
-- **Frontend**: Aplicación React con TypeScript, Vite y Tailwind CSS
-- **Backend**: API REST con Express.js y TypeScript
-- **Base de Datos**: PostgreSQL gestionado por Supabase
-- **Autenticación**: Sistema de roles con JWT (admin, vendedor, comprador)
-- **Almacenamiento**: Supabase Storage para imágenes de productos
-
-## 🚀 Instalación Rápida
+## Configuración del Entorno de Desarrollo
 
 ### Prerrequisitos
 
 - Node.js >= 20.0.0
 - Bun (recomendado) o npm
-- Cuenta de Supabase
+- Cuenta en Supabase
 
-### 1. Clonar el Repositorio
+### Estructura del Proyecto
 
-```bash
-git clone <url-del-repositorio>
-cd PROYECTO-SENA-Final
+```
+PROYECTO-SENA-Final/
+├── Backend/          # Servidor Express con TypeScript
+├── Frontend/         # Aplicación React con Vite
+└── Docs/             # Documentación del proyecto
 ```
 
-### 2. Instalar Dependencias
+### Configuración de Variables de Entorno
+
+#### Backend (.env)
+Crear `Backend/.env` con:
+```env
+SUPABASE_URL=https://jdmexfawmetmfabpwlfs.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkbWV4ZmF3bWV0bWZhYnB3bGZzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDYzMDMxNiwiZXhwIjoyMDcwMjA2MzE2fQ.YN8rJSYn5NVL5jNZHUAKLgWUIhyy6U1h_AoZ6aExFrw
+FRONTEND_ORIGINS=http://localhost:5173,https://localhost:5173,http://localhost:3000,https://localhost:3000
+NODE_ENV=development
+PORT=3001
+```
+
+#### Frontend (.env.local)
+Crear `Frontend/.env.local` con:
+```env
+# Supabase Configuration
+VITE_SUPABASE_URL=https://jdmexfawmetmfabpwlfs.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkbWV4ZmF3bWV0bWZhYnB3bGZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ2MzAzMTYsImV4cCI6MjA3MDIwNjMxNn0.nb6WPz87vBq5CjZuL4LB8ZV45jeD-B-a4qzJh0j4J6g
+
+# Backend URL (para desarrollo local)
+VITE_BACKEND_URL=http://localhost:3001
+
+# App Configuration
+VITE_APP_NAME=Tesoros Chocó
+VITE_APP_VERSION=1.0.0
+VITE_APP_URL=http://localhost:5173
+
+# Feature Flags
+VITE_ENABLE_ANALYTICS=false
+VITE_ENABLE_DEBUG_MODE=true
+```
+
+### Instalación de Dependencias
 
 ```bash
-# Instalar dependencias del workspace
+# En la raíz del proyecto
+cd PROYECTO-SENA-Final
+
+# Instalar dependencias (usando bun - recomendado)
 bun install
 
-# O con npm
+# O alternativamente con npm
 npm install
 ```
 
-### 3. Configurar Variables de Entorno
+### Ejecución en Modo Desarrollo
 
-#### Frontend (.env.local)
-```bash
-cd Frontend
-cp env.example .env.local
-```
-
-Editar `.env.local`:
-```env
-VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
-VITE_SUPABASE_ANON_KEY=tu-anon-key
-VITE_BACKEND_URL=http://localhost:3001
-```
-
-#### Backend (.env)
-```bash
-cd Backend
-cp .env.example .env
-```
-
-Editar `.env`:
-```env
-SUPABASE_URL=https://tu-proyecto.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=tu-service-role-key
-FRONTEND_ORIGINS=http://localhost:3000
-```
-
-### 4. Ejecutar en Desarrollo
-
-#### Terminal 1 - Backend
+#### Iniciar el Backend
 ```bash
 cd Backend
 bun run dev
-# El backend estará en http://localhost:3001 (o 4000 según PORT)
+# El servidor estará disponible en http://localhost:3001
 ```
 
-#### Terminal 2 - Frontend
+#### Iniciar el Frontend
 ```bash
 cd Frontend
 bun run dev
-# El frontend estará en http://localhost:3000
+# La aplicación estará disponible en http://localhost:5173
 ```
 
-### 5. Acceder a la Aplicación
+### Solución de Problemas Comunes
 
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:3001
-- **Supabase Dashboard**: https://app.supabase.com
+#### Error de CORS
+Si encuentras errores de CORS:
+1. Asegúrate de que `FRONTEND_ORIGINS` en `Backend/.env` incluye `http://localhost:5173` y `http://localhost:3000`
+2. Verifica que `VITE_BACKEND_URL` en `Frontend/.env.local` apunte a `http://localhost:3001`
+3. Reinicia ambos servidores después de hacer cambios
+
+#### "Failed to fetch" al procesar pedidos
+1. Verifica que el backend esté corriendo en `http://localhost:3001`
+2. Asegúrate de que `VITE_BACKEND_URL` en `Frontend/.env.local` esté correctamente configurado
+3. Revisa la consola del navegador para ver la URL a la que se está enviando la solicitud
+
+#### El frontend sigue apuntando al backend de producción
+1. Verifica que tengas un archivo `Frontend/.env.local` con `VITE_BACKEND_URL=http://localhost:3001`
+2. Asegúrate de que no haya otros archivos `.env` que estén sobrescribiendo esta variable
+
+### Despliegue
+
+Para despliegue en producción, asegúrate de configurar las variables de entorno apropiadas en tu plataforma de hosting (Azure, Vercel, etc.).
 
 ## 🧪 Testing
 

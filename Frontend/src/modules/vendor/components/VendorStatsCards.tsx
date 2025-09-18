@@ -39,7 +39,7 @@ export const VendorStatsCards: React.FC<{ stats: VendorStats; rating?: { promedi
             </div>
             <div className="ml-3">
               <p className="text-sm font-medium text-gray-500">Ventas</p>
-              <p className="text-2xl font-semibold text-gray-900">${'{'}stats.ventasDelMes.toLocaleString(){'}'}</p>
+              <p className="text-2xl font-semibold text-gray-900">${stats.ventasDelMes.toLocaleString()}</p>
             </div>
           </div>
         </div>

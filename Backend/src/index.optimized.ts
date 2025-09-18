@@ -88,6 +88,8 @@ const corsOptions: cors.CorsOptions = {
 };
 
 app.use(cors(corsOptions));
+// Ensure explicit handling of CORS preflight for all routes
+app.options('*', cors(corsOptions));
 
 // Optimized logging for production
 app.use(morgan('combined', {
@@ -373,6 +375,187 @@ app.post('/auth/post-signup', rateLimit, async (req: Request, res: Response, nex
     }
     
     res.json({ ok: true });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// ==============================
+// Centralized Purchase Endpoint (production)
+// ==============================
+const crearPedidoFullSchema = z.object({
+  items: z.array(z.object({ producto_id: z.string().uuid(), cantidad: z.number().int().positive() })).min(1),
+  shipping: z
+    .object({
+      nombre: z.string().min(1),
+      direccion: z.string().min(1),
+      ciudad: z.string().min(1),
+      telefono: z.string().min(5)
+    })
+    .optional(),
+  payment: z
+    .object({
+      metodo: z.enum(['tarjeta', 'contraentrega']),
+      tarjeta: z
+        .object({
+          numero: z.string().min(13).max(19),
+          nombre: z.string().min(1),
+          expiracion: z.string().regex(/^(0[1-9]|1[0-2])\/([0-9]{2})$/),
+          cvv: z.string().min(3).max(4)
+        })
+        .optional()
+    })
+    .optional(),
+  simulate_payment: z.boolean().optional(),
+  is_quick_checkout: z.boolean().optional()
+});
+
+// Execute RPC in user context and optionally persist shipping/payment simulation
+app.post('/rpc/crear_pedido', async (req: Request, res: Response, next: NextFunction) => {
+  const parsed = crearPedidoFullSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'Payload inválido', detail: parsed.error.flatten() });
+
+  const authHeader = req.headers.authorization || '';
+  if (!authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Falta Authorization Bearer token' });
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+    return res.status(500).json({ error: 'Backend no configurado (SUPABASE_URL / SUPABASE_ANON_KEY)' });
+  }
+
+  try {
+    const supabaseUser = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
+      auth: { autoRefreshToken: false, persistSession: false }
+    });
+
+    const { data: userData } = await supabaseUser.auth.getUser();
+    const caller = userData?.user;
+    if (!caller) return res.status(401).json({ error: 'No autenticado' });
+
+    const { data: userProfile, error: profileError } = await supabaseUser
+      .from('users')
+      .select('role, bloqueado')
+      .eq('id', caller.id)
+      .single();
+    if (profileError || !userProfile) return res.status(401).json({ error: 'Perfil de usuario no encontrado' });
+    if (userProfile.bloqueado) return res.status(403).json({ error: 'Usuario bloqueado' });
+    if (userProfile.role !== 'comprador') return res.status(403).json({ error: 'Solo compradores pueden crear pedidos' });
+
+    const { items, shipping, payment, simulate_payment, is_quick_checkout } = parsed.data;
+
+    // Resolve quick checkout fallbacks (optional)
+    let shippingData = shipping;
+    let paymentData = payment;
+    if (is_quick_checkout) {
+      if (!shippingData) {
+        const { data: savedAddresses } = await supabaseUser
+          .from('user_address')
+          .select('*')
+          .eq('user_id', caller.id)
+          .eq('tipo', 'envio')
+          .eq('es_predeterminada', true)
+          .limit(1)
+          .maybeSingle();
+        if (savedAddresses) {
+          shippingData = {
+            nombre: savedAddresses.nombre,
+            direccion: savedAddresses.direccion,
+            ciudad: savedAddresses.ciudad,
+            telefono: savedAddresses.telefono || ''
+          } as any;
+        }
+      }
+      if (!paymentData) {
+        const { data: savedPayments } = await supabaseUser
+          .from('user_payment_profile')
+          .select('*')
+          .eq('user_id', caller.id)
+          .eq('es_predeterminada', true)
+          .limit(1)
+          .maybeSingle();
+        if (savedPayments) {
+          paymentData = { metodo: savedPayments.metodo } as any;
+        }
+      }
+    }
+
+    if (!shippingData) return res.status(400).json({ error: 'Faltan datos de envío' });
+    if (!paymentData) return res.status(400).json({ error: 'Faltan datos de pago' });
+
+    // Simple simulated validations for card
+    if (paymentData?.metodo === 'tarjeta' && paymentData.tarjeta) {
+      const { numero, nombre, expiracion, cvv } = paymentData.tarjeta;
+      console.log('[SIMULACIÓN] Procesando pago con tarjeta:', {
+        numero: `****-****-****-${numero.slice(-4)}`,
+        nombre,
+        expiracion,
+        cvv: '***'
+      });
+      if (numero.includes('0000')) {
+        return res.status(400).json({ error: 'Tarjeta rechazada: Número inválido (simulado)', code: 'CARD_DECLINED' });
+      }
+      if (cvv === '000') {
+        return res.status(400).json({ error: 'CVV inválido (simulado)', code: 'INVALID_CVV' });
+      }
+    }
+
+    // Create order via backend RPC using explicit user_id
+    const { data: orderId, error: errPedido } = await supabaseUser.rpc('crear_pedido_backend', { p_user_id: caller.id, items });
+    if (errPedido) {
+      console.warn('[crear_pedido] RPC error', {
+        message: errPedido.message,
+        code: (errPedido as any).code,
+        details: (errPedido as any).details,
+        hint: (errPedido as any).hint,
+        user_id: caller.id,
+        items_count: items.length
+      });
+      let userMessage = errPedido.message;
+      if (errPedido.message?.includes('Stock insuficiente')) {
+        userMessage = 'Algunos productos no tienen stock suficiente. Por favor, revisa tu carrito.';
+      } else if (errPedido.message?.includes('Producto no encontrado')) {
+        userMessage = 'Uno o más productos ya no están disponibles.';
+      } else if (errPedido.message?.includes('ambiguous')) {
+        userMessage = 'Error interno del sistema. Por favor, inténtalo de nuevo.';
+      }
+      return res.status(400).json({ error: userMessage, code: (errPedido as any).code, details: (errPedido as any).details, hint: (errPedido as any).hint });
+    }
+
+    // Persist shipping info if provided
+    if (shippingData && orderId) {
+      await supabaseUser.rpc('guardar_envio_backend', {
+        p_user_id: caller.id,
+        p_order_id: orderId,
+        p_nombre: shippingData.nombre,
+        p_direccion: (shippingData as any).direccion,
+        p_ciudad: (shippingData as any).ciudad,
+        p_telefono: (shippingData as any).telefono
+      });
+    }
+
+    // Save simulated payment info (non-blocking)
+    if (paymentData && orderId) {
+      const admin = getSupabaseAdmin();
+      const paymentRecord: any = {
+        order_id: orderId,
+        metodo: paymentData.metodo,
+        estado: 'simulado'
+      };
+      if (paymentData.metodo === 'tarjeta' && paymentData.tarjeta) {
+        paymentRecord.last4 = paymentData.tarjeta.numero.slice(-4);
+        paymentRecord.nombre_tarjeta = paymentData.tarjeta.nombre;
+        paymentRecord.exp_mm = parseInt(paymentData.tarjeta.expiracion.split('/')[0]);
+        paymentRecord.exp_yy = parseInt(paymentData.tarjeta.expiracion.split('/')[1]);
+      }
+      try { await admin.from('order_payments').insert(paymentRecord); } catch (e) { /* ignore */ }
+    }
+
+    if (simulate_payment && orderId) {
+      const admin = getSupabaseAdmin();
+      const { error: eUpd } = await admin.from('orders').update({ estado: 'procesando' }).eq('id', orderId);
+      if (eUpd) console.warn('[crear_pedido simulate] warning', eUpd.message);
+    }
+
+    return res.json({ ok: true, order_id: orderId });
   } catch (e) {
     next(e);
   }

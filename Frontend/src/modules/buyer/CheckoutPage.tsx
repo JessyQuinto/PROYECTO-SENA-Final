@@ -152,6 +152,21 @@ export default function CheckoutPage() {
             departamento: defShip.departamento,
             codigoPostal: defShip.codigo_postal || '',
           });
+        } else if (loadedAddresses.length > 0) {
+          // Si no hay predeterminada, usar la primera dirección de envío
+          const firstShip = loadedAddresses.find(a => a.tipo === 'envio');
+          if (firstShip) {
+            setSelectedShipId(firstShip.id);
+            setShipping({
+              nombre: firstShip.nombre,
+              telefono: firstShip.telefono || '',
+              direccion: firstShip.direccion,
+              direccion2: firstShip.direccion2 || '',
+              ciudad: firstShip.ciudad,
+              departamento: firstShip.departamento,
+              codigoPostal: firstShip.codigo_postal || '',
+            });
+          }
         }
 
         const defPay =
@@ -159,6 +174,10 @@ export default function CheckoutPage() {
         if (defPay) {
           setSelectedPayId(defPay.id);
           setPaymentMethod(defPay.metodo);
+        } else if (loadedPayments.length > 0) {
+          // Si no hay predeterminado, usar el primer método de pago
+          setSelectedPayId(loadedPayments[0].id);
+          setPaymentMethod(loadedPayments[0].metodo);
         }
       } catch (error) {
         console.error('Error loading profiles:', error);
@@ -182,17 +201,29 @@ export default function CheckoutPage() {
     
     // Formatear número de tarjeta con espacios
     if (field === 'numero') {
-      processedValue = value.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, '$1 ');
+      // Eliminar caracteres no numéricos
+      processedValue = value.replace(/\D/g, '');
+      // Limitar a 19 caracteres (máximo para tarjetas)
+      processedValue = processedValue.substring(0, 19);
+      // Agregar espacios cada 4 dígitos
+      processedValue = processedValue.replace(/(\d{4})(?=\d)/g, '$1 ');
     }
     
     // Formatear fecha de expiración
     if (field === 'expiracion') {
-      processedValue = value.replace(/\D/g, '').replace(/(\d{2})(?=\d)/, '$1/');
+      // Eliminar caracteres no numéricos
+      processedValue = value.replace(/\D/g, '');
+      // Limitar a 4 caracteres
+      processedValue = processedValue.substring(0, 4);
+      // Agregar barra después de los primeros 2 dígitos
+      if (processedValue.length >= 2) {
+        processedValue = processedValue.substring(0, 2) + '/' + processedValue.substring(2, 4);
+      }
     }
     
-    // Limitar CVV a números
+    // Limitar CVV a números y longitud apropiada
     if (field === 'cvv') {
-      processedValue = value.replace(/\D/g, '');
+      processedValue = value.replace(/\D/g, '').substring(0, 4);
     }
     
     setCard(prev => ({ ...prev, [field]: processedValue }));
@@ -220,10 +251,11 @@ export default function CheckoutPage() {
     if (currentStep === 'resumen') return true;
     if (currentStep === 'envio') {
       return (
-        shipping.nombre &&
-        shipping.direccion &&
-        shipping.ciudad &&
-        shipping.departamento
+        shipping.nombre.trim() !== '' &&
+        shipping.direccion.trim() !== '' &&
+        shipping.ciudad.trim() !== '' &&
+        shipping.departamento.trim() !== '' &&
+        shipping.telefono.trim() !== ''
       );
     }
     if (currentStep === 'pago') {
@@ -255,6 +287,57 @@ export default function CheckoutPage() {
     else if (currentStep === 'envio') setCurrentStep('resumen');
   };
 
+  const validateOrderData = () => {
+    // Validar que haya items en el carrito
+    if (!items || items.length === 0) {
+      throw new Error('El carrito está vacío');
+    }
+
+    // Validar datos de envío
+    const shippingData = {
+      nombre: shipping.nombre.trim(),
+      direccion: shipping.direccion.trim(),
+      ciudad: shipping.ciudad.trim(),
+      departamento: shipping.departamento.trim(),
+      telefono: shipping.telefono.trim()
+    };
+
+    if (!shippingData.nombre) {
+      throw new Error('Nombre completo es obligatorio');
+    }
+    if (!shippingData.direccion) {
+      throw new Error('Dirección es obligatoria');
+    }
+    if (!shippingData.ciudad) {
+      throw new Error('Ciudad es obligatoria');
+    }
+    if (!shippingData.departamento) {
+      throw new Error('Departamento es obligatorio');
+    }
+    if (!shippingData.telefono || shippingData.telefono.length < 5) {
+      throw new Error('Teléfono válido es obligatorio');
+    }
+
+    // Validar datos de pago
+    if (paymentMethod === 'tarjeta') {
+      const numeroLimpio = card.numero.replace(/\s/g, '');
+      if (numeroLimpio.length < 13 || numeroLimpio.length > 19) {
+        throw new Error('Número de tarjeta inválido');
+      }
+      if (!card.expiracion.match(/^(0[1-9]|1[0-2])\/([0-9]{2})$/)) {
+        throw new Error('Fecha de expiración inválida. Formato: MM/AA');
+      }
+      if (card.cvv.length < 3 || card.cvv.length > 4) {
+        throw new Error('CVV inválido');
+      }
+      if (!card.nombre.trim()) {
+        throw new Error('Nombre en la tarjeta es obligatorio');
+      }
+    }
+
+    return { shippingData, paymentData: { metodo: paymentMethod } };
+  };
+
   const processOrder = async () => {
     setLoading(true);
     try {
@@ -265,21 +348,40 @@ export default function CheckoutPage() {
         throw new Error('No hay sesión activa');
       }
 
+      // Verificar que VITE_BACKEND_URL esté definida
       const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL as string | undefined;
       if (!backendUrl) {
-        throw new Error('Backend no configurado');
+        throw new Error('Backend no configurado. Por favor, verifica tu archivo .env.local');
       }
+
+      console.log('[DEBUG] Usando backend URL:', backendUrl); // Para debugging
+
+      // Validar datos del pedido
+      validateOrderData();
 
       // Usar datos simplificados para checkout rápido
       const shippingData = isQuickCheckout ? {
-        nombre: addresses.find(a => a.tipo === 'envio' && a.es_predeterminada)?.nombre || shipping.nombre,
-        direccion: addresses.find(a => a.tipo === 'envio' && a.es_predeterminada)?.direccion || shipping.direccion,
-        ciudad: addresses.find(a => a.tipo === 'envio' && a.es_predeterminada)?.ciudad || shipping.ciudad,
-        telefono: addresses.find(a => a.tipo === 'envio' && a.es_predeterminada)?.telefono || shipping.telefono
-      } : shipping;
+        nombre: (addresses.find(a => a.tipo === 'envio' && a.es_predeterminada)?.nombre || shipping.nombre || '').trim(),
+        direccion: (addresses.find(a => a.tipo === 'envio' && a.es_predeterminada)?.direccion || shipping.direccion || '').trim(),
+        ciudad: (addresses.find(a => a.tipo === 'envio' && a.es_predeterminada)?.ciudad || shipping.ciudad || '').trim(),
+        telefono: (addresses.find(a => a.tipo === 'envio' && a.es_predeterminada)?.telefono || shipping.telefono || '').trim()
+      } : {
+        nombre: shipping.nombre.trim(),
+        direccion: shipping.direccion.trim(),
+        direccion2: shipping.direccion2.trim() || undefined,
+        ciudad: shipping.ciudad.trim(),
+        departamento: shipping.departamento.trim(),
+        codigoPostal: shipping.codigoPostal.trim() || undefined,
+        telefono: shipping.telefono.trim() || undefined
+      };
+
+      // Validar que los datos de envío no estén vacíos
+      if (!shippingData.nombre || !shippingData.direccion || !shippingData.ciudad || !shippingData.telefono) {
+        throw new Error('Información de envío incompleta. Por favor verifica tus datos o asegúrate de tener una dirección predeterminada.');
+      }
 
       const paymentData = isQuickCheckout ? {
-        metodo: payments.find(p => p.es_predeterminada)?.metodo || paymentMethod,
+        metodo: payments.find(p => p.es_predeterminada)?.metodo || paymentMethod || 'contraentrega',
         ...(payments.find(p => p.es_predeterminada)?.metodo === 'tarjeta' && {
           tarjeta: {
             numero: '****',
@@ -300,7 +402,10 @@ export default function CheckoutPage() {
         })
       };
 
-      const response = await fetch(`${backendUrl.replace(/\/$/, '')}/rpc/crear_pedido`, {
+      const fullBackendUrl = `${backendUrl.replace(/\/$/, '')}/rpc/crear_pedido`;
+      console.log('[DEBUG] Enviando solicitud a:', fullBackendUrl); // Para debugging
+
+      const response = await fetch(fullBackendUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -325,10 +430,30 @@ export default function CheckoutPage() {
         alert(`¡Pedido creado exitosamente! ID: ${result.order_id}`);
         navigate(`/recibo/${result.order_id}`);
       } else {
+        // Manejo mejorado de errores
         const errorMessage = result.error || 'Error desconocido al crear el pedido';
         const errorCode = result.code ? ` (Código: ${result.code})` : '';
         const errorDetails = result.details ? `\nDetalles: ${JSON.stringify(result.details)}` : '';
-        throw new Error(`${errorMessage}${errorCode}${errorDetails}`);
+        
+        // Mensajes de error más específicos
+        let userMessage = errorMessage;
+        if (errorMessage.includes('stock')) {
+          userMessage = 'Algunos productos no tienen stock suficiente. Por favor, revisa tu carrito.';
+        } else if (errorMessage.includes('Producto no encontrado')) {
+          userMessage = 'Uno o más productos ya no están disponibles.';
+        } else if (errorMessage.includes('autenticación')) {
+          userMessage = 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.';
+        } else if (errorMessage.includes('permiso')) {
+          userMessage = 'No tienes permiso para realizar esta acción.';
+        } else if (errorMessage.includes('integridad')) {
+          userMessage = 'Error de integridad de datos. Por favor, verifica tu información.';
+        } else if (errorMessage.includes('tarjeta') || errorMessage.includes('CVV')) {
+          userMessage = errorMessage;
+        } else if (errorMessage.includes('envío')) {
+          userMessage = 'Información de envío incompleta. Por favor verifica tus datos.';
+        }
+        
+        throw new Error(`${userMessage}${errorCode}${errorDetails}`);
       }
     } catch (error: any) {
       console.error('Error processing order:', error);
@@ -342,6 +467,12 @@ export default function CheckoutPage() {
           userMessage = 'Algunos productos no tienen stock suficiente.';
         } else if (error.message.includes('tarjeta') || error.message.includes('CVV')) {
           userMessage = error.message;
+        } else if (error.message.includes('sesión')) {
+          userMessage = 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.';
+        } else if (error.message.includes('envío')) {
+          userMessage = 'Información de envío incompleta. Por favor verifica tus datos o asegúrate de tener una dirección predeterminada.';
+        } else if (error.message.includes('fetch')) {
+          userMessage = 'No se pudo conectar con el servidor. Por favor, verifica que el backend esté corriendo.';
         } else {
           userMessage = error.message;
         }
@@ -358,7 +489,7 @@ export default function CheckoutPage() {
       <div className='card-body'>
         <div className='flex justify-between items-center mb-6'>
           <h2 className='text-2xl font-bold text-gray-900'>
-            {isQuickCheckout ? '_checkout_rápido' : '📋 Resumen de tu compra'}
+            {isQuickCheckout ? '⚡ Checkout Rápido' : '📋 Resumen de tu compra'}
           </h2>
           {!isQuickCheckout && (
             <button 
@@ -374,7 +505,7 @@ export default function CheckoutPage() {
           // Vista simplificada para checkout rápido
           <div className='space-y-6'>
             <div className='bg-blue-50 p-4 rounded-lg'>
-              <h3 className='font-medium text-blue-900 mb-2'>_checkout express</h3>
+              <h3 className='font-medium text-blue-900 mb-2'>⚡ Checkout Express</h3>
               <p className='text-sm text-blue-700'>
                 Usando tu dirección y método de pago predeterminados
               </p>
@@ -405,6 +536,39 @@ export default function CheckoutPage() {
                   <span className='text-green-600'>${total}</span>
                 </div>
               </div>
+              
+              {/* Mostrar información de envío y pago predeterminados */}
+              {addresses.filter(a => a.tipo === 'envio' && a.es_predeterminada).length > 0 && (
+                <div className='bg-gray-50 p-4 rounded-lg'>
+                  <h4 className='font-medium mb-2'>📍 Dirección de envío</h4>
+                  <p className='text-sm'>
+                    {addresses.find(a => a.tipo === 'envio' && a.es_predeterminada)?.nombre}
+                  </p>
+                  <p className='text-sm text-gray-600'>
+                    {addresses.find(a => a.tipo === 'envio' && a.es_predeterminada)?.direccion}
+                  </p>
+                  <p className='text-sm text-gray-600'>
+                    {addresses.find(a => a.tipo === 'envio' && a.es_predeterminada)?.ciudad}, 
+                    {addresses.find(a => a.tipo === 'envio' && a.es_predeterminada)?.departamento}
+                  </p>
+                </div>
+              )}
+              
+              {payments.filter(p => p.es_predeterminada).length > 0 && (
+                <div className='bg-gray-50 p-4 rounded-lg'>
+                  <h4 className='font-medium mb-2'>💳 Método de pago</h4>
+                  <p className='text-sm'>
+                    {payments.find(p => p.es_predeterminada)?.etiqueta}
+                  </p>
+                  <p className='text-sm text-gray-600'>
+                    {payments.find(p => p.es_predeterminada)?.metodo === 'tarjeta' && payments.find(p => p.es_predeterminada)?.last4
+                      ? `Tarjeta terminada en ${payments.find(p => p.es_predeterminada)?.last4}`
+                      : payments.find(p => p.es_predeterminada)?.metodo === 'contraentrega'
+                        ? 'Pago contra entrega'
+                        : 'Método de pago guardado'}
+                  </p>
+                </div>
+              )}
               
               <div className='flex items-center space-x-2 mt-4'>
                 <Checkbox

@@ -71,7 +71,7 @@ const VendorDashboard: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   // Producto expandido en la lista (para ver detalles/acciones)
   const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
-  const [orders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItemRowUI[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
@@ -131,6 +131,7 @@ const VendorDashboard: React.FC = () => {
   useEffect(() => {
     if (user?.id) {
       loadVendorData();
+      loadVendorOrders();
       loadVendorSettings();
     }
   }, [user]);
@@ -154,6 +155,61 @@ const VendorDashboard: React.FC = () => {
       setCfgNotifNewOrder(v.notifNewOrder !== false);
       setCfgNotifItemShipped(v.notifItemShipped !== false);
     } catch {}
+  };
+
+  // Cargar pedidos e ítems relacionados al vendedor
+  const loadVendorOrders = async () => {
+    if (!user?.id) return;
+    try {
+      // 1) Traer ítems de pedido para este vendedor
+      const { data: itemsData, error: itemsErr } = await supabase
+        .from('order_items')
+        .select(`id, order_id, cantidad, enviado, created_at, productos(nombre)`) // requiere FK definida
+        .eq('vendedor_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(200);
+      if (itemsErr) throw itemsErr;
+
+      const items = (itemsData || []).map((row: any) => ({
+        id: row.id,
+        order_id: row.order_id,
+        producto_nombre: row.productos && row.productos.length > 0 ? row.productos[0].nombre : 'Producto',
+        cantidad: row.cantidad,
+        enviado: !!row.enviado,
+        created_at: row.created_at,
+      })) as OrderItemRowUI[];
+
+      setOrderItems(items);
+
+      // 2) Traer órdenes únicas relacionadas (si hay)
+      const orderIds = Array.from(new Set(items.map(i => i.order_id)));
+      if (orderIds.length === 0) {
+        setOrders([]);
+        return;
+      }
+
+      const { data: ordersData, error: ordersErr } = await supabase
+        .from('orders')
+        .select(`id, estado, total, created_at, users:comprador_id ( email )`)
+        .in('id', orderIds);
+      if (ordersErr) {
+        // Si RLS impide ver orders, al menos mostrar pedidos con placeholder
+        const fallback = orderIds.map((id) => ({ id, total: 0, estado: 'procesando', created_at: new Date().toISOString() } as Order));
+        setOrders(fallback);
+        return;
+      }
+
+      const ordersList: Order[] = (ordersData || []).map((o: any) => ({
+        id: o.id,
+        total: o.total,
+        estado: o.estado,
+        created_at: o.created_at,
+        comprador_email: o.users && o.users.length > 0 ? o.users[0].email : undefined,
+      }));
+      setOrders(ordersList);
+    } catch (e) {
+      console.warn('No se pudieron cargar pedidos del vendedor:', (e as any)?.message || e);
+    }
   };
 
   const saveVendorSettings = async () => {
@@ -550,17 +606,29 @@ const VendorDashboard: React.FC = () => {
 
   const markItemSent = async (orderItemId: string) => {
     try {
-      // Simplificado: Solo actualizar estado local por ahora
-      setOrderItems(prev =>
-        prev.map(it => (it.id === orderItemId ? { ...it, enviado: true } : it))
-      );
-      
-      (window as any).toast?.success('Producto marcado como enviado', {
-        role: 'vendedor',
-        action: 'ship',
-      });
+      // Intentar via backend centralizado (actualiza estado y valida permisos)
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+      const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL as string | undefined;
+      if (backendUrl && token) {
+        const res = await fetch(`${backendUrl.replace(/\/$/, '')}/order-items/${orderItemId}/shipped`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        const payload = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(payload?.error || 'No se pudo marcar como enviado');
+      } else {
+        // Fallback: marcar localmente si no hay backend configurado
+      }
+
+      // Actualizar localmente la UI
+      setOrderItems(prev => prev.map(it => (it.id === orderItemId ? { ...it, enviado: true } : it)));
+      (window as any).toast?.success('Producto marcado como enviado', { role: 'vendedor', action: 'ship' });
     } catch (e: any) {
-      (window as any).toast?.error('No se pudo marcar como enviado', {
+      (window as any).toast?.error(e?.message || 'No se pudo marcar como enviado', {
         role: 'vendedor',
         action: 'ship',
       });
