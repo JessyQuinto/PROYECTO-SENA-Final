@@ -53,6 +53,85 @@ node_modules/
 # OS specific
 .DS_Store
 
+# Windows specific
+Thumbs.db
+Desktop.ini
+
+# Linux specific
+*~
+
+# macOS specific
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+
+# IDE specific
+*.code-workspace
+*.iml
+*.iws
+*.ipr
+
+# Editor specific
+*.sublime-project
+*.sublime-workspace
+
+# VS Code specific
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+.vscode/extensions.json
+.history/
+
+# IntelliJ IDEA specific
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# Vim specific
+*.swp
+*.swo
+*.un~
+
+# Emacs specific
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+*.rej
+*.patch
+*.diff
+
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+*.pid
+*.seed
+*.pid.lock
+
+# Diagnostic reports
+*.tgz
+
 # Task files
 # tasks.json
 # tasks/
@@ -64,13 +143,38 @@ Frontend/dist/
 Frontend/coverage/
 Backend/dist/
 
+# Additional coverage and test files
+*.coverage
+coverage-final.json
+*.lcov
+*.lcov.info
+
 # Test related files
 *.test.ts.disabled
 *.spec.ts.disabled
+*.test.js
+*.test.jsx
+*.test.ts
+*.test.tsx
+*.spec.js
+*.spec.jsx
+*.spec.ts
+*.spec.tsx
+__tests__/
+__mocks__/
+test/
+tests/
+*.test.*
+*.spec.*
 
 # Temporary files
 *.tmp
 *.temp
+*.temp.*
+.temp/
+temp/
+*.log
+*.log.*
 
 # IDE specific files
 .cursor/
@@ -78,3 +182,30 @@ Backend/dist/
 
 # Husky git hooks
 .husky/
+
+# Jest and testing artifacts
+jest/
+jest.config.js
+jest.setup.js
+
+# Vitest and testing artifacts
+vitest.config.*
+vitest.setup.*
+__vitest__/
+
+# Cypress and testing artifacts
+cypress/
+cypress.config.*
+
+# Playwright and testing artifacts
+playwright/
+playwright.config.*
+
+# Other testing artifacts
+.nyc_output/
+.tap/
+.taprc
+.lintstagedrc
+
+# IDE test run configurations
+*.run.xml

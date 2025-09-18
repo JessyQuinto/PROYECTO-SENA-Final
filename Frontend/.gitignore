@@ -1,6 +1,7 @@
 # Dependencies and build output
 node_modules/
 dist/
+coverage/
 
 # Environment files
 .env
@@ -8,7 +9,62 @@ dist/
 .env.local
 .env.production
 
+# Test related files
+*.test.ts.disabled
+*.spec.ts.disabled
+*.test.js
+*.test.jsx
+*.test.ts
+*.test.tsx
+*.spec.js
+*.spec.jsx
+*.spec.ts
+*.spec.tsx
+__tests__/
+__mocks__/
+test/
+tests/
+*.test.*
+*.spec.*
+
+# Coverage files
+*.coverage
+coverage-final.json
+*.lcov
+*.lcov.info
+
+# Temporary files
+*.tmp
+*.temp
+*.temp.*
+.temp/
+temp/
+
 # OS/editor noise
 .DS_Store
 Thumbs.db
 .vscode/
+
+# Jest and testing artifacts
+jest/
+jest.config.js
+jest.setup.js
+
+# Vitest and testing artifacts
+vitest.config.*
+vitest.setup.*
+__vitest__/
+
+# Cypress and testing artifacts
+cypress/
+cypress.config.*
+
+# Playwright and testing artifacts
+playwright/
+playwright.config.*
+
+# Other testing artifacts
+.nyc_output/
+.tap/
+.taprc
+.lintstagedrc
