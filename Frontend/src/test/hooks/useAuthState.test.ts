@@ -21,7 +21,7 @@ describe('useAuthState Hook', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (useAuth as jest.Mock).mockReturnValue(mockAuthContext);
+    (useAuth as ReturnType<typeof vi.fn>).mockReturnValue(mockAuthContext);
   });
 
   afterEach(() => {
