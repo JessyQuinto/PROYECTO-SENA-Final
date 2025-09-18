@@ -606,28 +606,36 @@ const VendorDashboard: React.FC = () => {
 
   const markItemSent = async (orderItemId: string) => {
     try {
-      // Intentar via backend centralizado (actualiza estado y valida permisos)
+      // Verificar que tengamos sesión y token
       const session = await supabase.auth.getSession();
       const token = session.data.session?.access_token;
       const backendUrl = (import.meta as any).env?.VITE_BACKEND_URL as string | undefined;
-      if (backendUrl && token) {
-        const res = await fetch(`${backendUrl.replace(/\/$/, '')}/order-items/${orderItemId}/shipped`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-        const payload = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(payload?.error || 'No se pudo marcar como enviado');
-      } else {
-        // Fallback: marcar localmente si no hay backend configurado
+      
+      if (!backendUrl) {
+        throw new Error('URL del backend no configurada');
+      }
+      
+      if (!token) {
+        throw new Error('No hay sesión activa');
       }
 
-      // Actualizar localmente la UI
+      // Intentar via backend centralizado (actualiza estado y valida permisos)
+      const res = await fetch(`${backendUrl.replace(/\/$/, '')}/order-items/${orderItemId}/shipped`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload?.error || `Error HTTP ${res.status}: No se pudo marcar como enviado`);
+      
+      // Actualizar localmente la UI solo si la llamada al backend fue exitosa
       setOrderItems(prev => prev.map(it => (it.id === orderItemId ? { ...it, enviado: true } : it)));
       (window as any).toast?.success('Producto marcado como enviado', { role: 'vendedor', action: 'ship' });
     } catch (e: any) {
+      console.error('Error al marcar item como enviado:', e);
       (window as any).toast?.error(e?.message || 'No se pudo marcar como enviado', {
         role: 'vendedor',
         action: 'ship',
