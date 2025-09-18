@@ -47,7 +47,7 @@ const SimplifiedCheckoutPage = lazy(() => import('./buyer/SimplifiedCheckout'));
 const OrderReceiptPage = lazy(() => import('./buyer/OrderReceiptPage'));
 const OrderDetailPage = lazy(() => import('./buyer/OrderDetailPage'));
 const BuyerProfile = lazy(() => import('./buyer/BuyerProfile'));
-const BuyerProfilesManager = lazy(() => import('./buyer/ProfilesManager'));
+const BuyerProfilesSettings = lazy(() => import('./buyer/UserProfileSettings'));
 const NotFoundPage = lazy(() => import('@/pages/NotFound'));
 
 // Loading component
@@ -198,7 +198,7 @@ export const App: React.FC = () => (
                         path='/perfil/perfiles'
                         element={
                           <ProtectedRoute roles={['comprador']}>
-                            <BuyerProfilesManager />
+                            <BuyerProfilesSettings />
                           </ProtectedRoute>
                         }
                       />

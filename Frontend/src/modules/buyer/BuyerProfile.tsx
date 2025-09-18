@@ -1,13 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import { Card, CardContent } from '@/components/ui/shadcn/card';
 import { Button } from '@/components/ui/shadcn/button';
 import Icon from '../../components/ui/Icon';
+import { useUserProfile, AddressSelector, PaymentSelector } from './UserProfileManager';
 
 const BuyerProfile: React.FC = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'preferences'>('profile');
+  const { addresses, payments, loading, loadProfiles } = useUserProfile();
+  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'preferences' | 'addresses' | 'payments'>('profile');
+
+  // Cargar perfiles al montar el componente
+  useEffect(() => {
+    loadProfiles();
+  }, []);
 
   const deleteAccount = async () => {
     if (!confirm('¿Eliminar tu cuenta? Esta acción es irreversible.')) return;
@@ -71,6 +78,26 @@ const BuyerProfile: React.FC = () => {
                 }`}
               >
                 Información del perfil
+              </button>
+              <button
+                onClick={() => setActiveTab('addresses')}
+                className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
+                  activeTab === 'addresses'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                Direcciones
+              </button>
+              <button
+                onClick={() => setActiveTab('payments')}
+                className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
+                  activeTab === 'payments'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                Métodos de pago
               </button>
               <button
                 onClick={() => setActiveTab('preferences')}
@@ -150,6 +177,80 @@ const BuyerProfile: React.FC = () => {
                       </p>
                     </div>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          {activeTab === 'addresses' && (
+            <Card>
+              <CardContent className='p-6'>
+                <h2 className='text-xl font-semibold mb-6'>Direcciones de envío y facturación</h2>
+                <p className='text-gray-600 mb-6'>
+                  Gestiona tus direcciones guardadas para agilizar el proceso de checkout.
+                </p>
+                
+                {loading ? (
+                  <div className='text-center py-8'>
+                    <div className='inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500'></div>
+                    <p className='mt-2'>Cargando direcciones...</p>
+                  </div>
+                ) : (
+                  <AddressSelector 
+                    addresses={addresses} 
+                    onSelect={(address) => console.log('Seleccionar dirección:', address)}
+                    onEdit={(address) => console.log('Editar dirección:', address)}
+                    onDelete={(id) => console.log('Eliminar dirección:', id)}
+                    onSetDefault={(id, tipo) => console.log('Establecer como predeterminada:', id, tipo)}
+                  />
+                )}
+                
+                <div className='mt-6'>
+                  <Button variant="outline" className='flex items-center gap-2'>
+                    <Icon
+                      category='Vendedor'
+                      name='FaSolidEdit'
+                      className='w-4 h-4'
+                    />
+                    Agregar nueva dirección
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          {activeTab === 'payments' && (
+            <Card>
+              <CardContent className='p-6'>
+                <h2 className='text-xl font-semibold mb-6'>Métodos de pago</h2>
+                <p className='text-gray-600 mb-6'>
+                  Gestiona tus métodos de pago guardados para agilizar el proceso de checkout.
+                </p>
+                
+                {loading ? (
+                  <div className='text-center py-8'>
+                    <div className='inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500'></div>
+                    <p className='mt-2'>Cargando métodos de pago...</p>
+                  </div>
+                ) : (
+                  <PaymentSelector 
+                    payments={payments} 
+                    onSelect={(payment) => console.log('Seleccionar pago:', payment)}
+                    onEdit={(payment) => console.log('Editar pago:', payment)}
+                    onDelete={(id) => console.log('Eliminar pago:', id)}
+                    onSetDefault={(id) => console.log('Establecer como predeterminado:', id)}
+                  />
+                )}
+                
+                <div className='mt-6'>
+                  <Button variant="outline" className='flex items-center gap-2'>
+                    <Icon
+                      category='Vendedor'
+                      name='FaSolidEdit'
+                      className='w-4 h-4'
+                    />
+                    Agregar nuevo método de pago
+                  </Button>
                 </div>
               </CardContent>
             </Card>

@@ -7,19 +7,9 @@ import { Input } from '@/components/ui/shadcn/input';
 import { Button } from '@/components/ui/shadcn/button';
 import { Checkbox } from '@/components/ui/shadcn/checkbox';
 import Icon from '@/components/ui/Icon';
+import { useUserProfile, AddressSelector, UserAddress } from './UserProfileManager';
 
-interface UserAddress {
-  id: string;
-  tipo: 'envio' | 'facturacion';
-  nombre: string;
-  telefono?: string | null;
-  direccion: string;
-  direccion2?: string | null;
-  ciudad: string;
-  departamento: string;
-  codigo_postal?: string | null;
-  es_predeterminada: boolean;
-}
+// Usando la interfaz del módulo de perfiles
 
 interface ShippingForm {
   nombre: string;
@@ -33,10 +23,10 @@ interface ShippingForm {
 
 export default function SimplifiedCheckout() {
   const { items, total, clear } = useCart();
+  const { addresses, loadProfiles } = useUserProfile();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [agree, setAgree] = useState(false);
-  const [addresses, setAddresses] = useState<UserAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | ''>('');
   
   const [shipping, setShipping] = useState<ShippingForm>({
@@ -51,46 +41,7 @@ export default function SimplifiedCheckout() {
 
   // Cargar direcciones guardadas
   useEffect(() => {
-    const loadAddresses = async () => {
-      try {
-        if (!supabase) return;
-        const session = (await supabase.auth.getSession()).data.session;
-        const uid = session?.user?.id;
-        if (!uid) return;
-
-        const { data, error } = await supabase
-          .from('user_address')
-          .select('*')
-          .eq('user_id', uid)
-          .eq('tipo', 'envio')
-          .order('es_predeterminada', { ascending: false })
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        const loadedAddresses = data as UserAddress[];
-        setAddresses(loadedAddresses);
-
-        // Seleccionar la dirección predeterminada si existe
-        const defaultAddress = loadedAddresses.find(a => a.es_predeterminada) || loadedAddresses[0];
-        if (defaultAddress) {
-          setSelectedAddressId(defaultAddress.id);
-          setShipping({
-            nombre: defaultAddress.nombre,
-            telefono: defaultAddress.telefono || '',
-            direccion: defaultAddress.direccion,
-            direccion2: defaultAddress.direccion2 || '',
-            ciudad: defaultAddress.ciudad,
-            departamento: defaultAddress.departamento,
-            codigoPostal: defaultAddress.codigo_postal || '',
-          });
-        }
-      } catch (error) {
-        console.error('Error loading addresses:', error);
-      }
-    };
-
-    loadAddresses();
+    loadProfiles();
   }, []);
 
   // Actualizar formulario cuando se selecciona una dirección
@@ -259,43 +210,11 @@ export default function SimplifiedCheckout() {
                 {addresses.length > 0 && (
                   <div className='mb-6'>
                     <h3 className='font-medium mb-3'>Usar dirección guardada</h3>
-                    <div className='space-y-3'>
-                      {addresses.map(address => (
-                        <div
-                          key={address.id}
-                          className={`p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-                            selectedAddressId === address.id
-                              ? 'border-green-500 bg-green-50'
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                          onClick={() => handleAddressSelect(address)}
-                        >
-                          <div className='flex items-center justify-between'>
-                            <div>
-                              <p className='font-medium'>{address.nombre}</p>
-                              <p className='text-sm text-gray-600'>
-                                {address.direccion}
-                              </p>
-                              <p className='text-sm text-gray-600'>
-                                {address.ciudad}, {address.departamento}
-                              </p>
-                              {address.telefono && (
-                                <p className='text-sm text-gray-600'>
-                                  Tel: {address.telefono}
-                                </p>
-                              )}
-                            </div>
-                            <div className='text-right'>
-                              {address.es_predeterminada && (
-                                <span className='text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full'>
-                                  Predeterminada
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    <AddressSelector
+                      addresses={addresses.filter(a => a.tipo === 'envio')}
+                      selectedId={selectedAddressId}
+                      onSelect={handleAddressSelect}
+                    />
                   </div>
                 )}
 

@@ -37,7 +37,8 @@
 - **OrderReceiptPage**: Recibo de confirmación
 - **ReviewsPage**: Sistema de calificaciones
 - **BuyerProfile**: Perfil del comprador
-- **ProfilesManager**: Gestión de perfiles
+- **UserProfileManager**: Gestión de perfiles reutilizable
+- **UserProfileSettings**: Configuración de perfiles de usuario
 
 ### 2. Componentes de UI Reutilizables
 
