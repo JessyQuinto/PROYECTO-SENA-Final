@@ -33,7 +33,7 @@ PROYECTO-SENA-Final/
 
 #### Backend (.env)
 Crear `Backend/.env` con:
-```env
+``env
 SUPABASE_URL=https://jdmexfawmetmfabpwlfs.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkbWV4ZmF3bWV0bWZhYnB3bGZzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDYzMDMxNiwiZXhwIjoyMDcwMjA2MzE2fQ.YN8rJSYn5NVL5jNZHUAKLgWUIhyy6U1h_AoZ6aExFrw
 FRONTEND_ORIGINS=http://localhost:5173,https://localhost:5173,http://localhost:3000,https://localhost:3000
@@ -205,6 +205,7 @@ Hemos creado colecciones completas de Postman para probar todas las funcionalida
 - [API del Backend](Docs/API.md)
 - [**📋 Guía Completa de Pruebas con Postman**](Docs/POSTMAN_TESTING.md)
 - [Guía de Despliegue](Docs/DEPLOYMENT.md)
+- [_videos de Funcionamiento de Módulos y Pruebas_](https://drive.google.com/drive/folders/1TzaoRomnwRZKkUAKr17rV5evDqHJ74l6?usp=sharing)
 
 ## 🤝 Contribución
 
